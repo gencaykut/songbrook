@@ -27,7 +27,7 @@ flutter test integration_test/<dosya> -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 dart run tool/claude_search_probe.dart
 ```
 
-- `flutter test`: 2613 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2616 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -62,7 +62,12 @@ Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
    - `AppConstants.appName` hâlâ "BStream Music": yedek dosyaları bu adla doğrulanıyor (`backup_service.dart`). Değiştirirken eski yedekleri de kabul et.
    - Uygulama içi metinler, Windows/Linux kimlikleri ve macOS `PRODUCT_NAME` (`bstream_music.app`) 6. adımda.
 3. ~~**İndirilmiş m4a'larda iOS'taki 2 kat süre**~~ Tamamlandı: yerel dosyalar `moov` süresine göre kırpılıyor (bkz. docs/ios-duration-fix.md §3).
-4. **Gerçek iPhone testi:** Xcode'da Team seç (Runner ve NowPlayingWidget), "Automatically manage signing" bundle ID ve App Group'u portalda kaydeder. İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu, 1. ve 3. adımdaki düzeltmelerin gerçek AVPlayer'da doğrulanması.
+4. ~~**Gerçek iPhone testi**~~ Tamamlandı (iPhone17,2). Team `9K8FGUA9A3` projede; Xcode bundle ID'yi ve App Group'u portala kaydetti.
+   - Cihazda doğrulananlar: stream ve indirilmiş dosya kırpması (completed 204,891 sn), arama, kilit ekranı kartı, otomatik geçiş, widget.
+   - Bulunan ve düzeltilen: varsayılan "BStream Music" oynatıcı stilinde iOS'ta oynatıcıdan çıkış yoktu (gezinme çubuğu gizli, sistem geri tuşu yok). Başlığa küçültme oku eklendi.
+   - Cihazda çalıştırılamayan: `claude_advance_duration_test.dart` (debug başlatma Xcode'da takıldı); elle otomatik geçiş kontrolü geçti.
+   - Cihaza kurulum: `flutter build ios --profile` sonra `xcrun devicectl device install app --device <UDID> build/ios/Profile-iphoneos/Runner.app`. Debug derleme ana ekrandan açılmaz.
+   - Gözlem (6. adım): oynatıcının sağ üstündeki menü simgesi koyu arka planda neredeyse görünmüyor.
 5. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
 6. **Markalama:** Varsayılan dili değiştir ve README'yi güncelle (yanlış "iOS 13" bilgisi dahil). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat.
 7. **Dağıtım ve paylaşım:** macOS notarize dmg, iOS ipa (AltStore/Sideloadly), toplu `git push`, repoyu public yapma kararı, upstream'e PR. Repoyu public yapmak ve PR açmak için önce kullanıcıya sor.

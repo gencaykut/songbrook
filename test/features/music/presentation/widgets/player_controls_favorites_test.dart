@@ -2079,6 +2079,76 @@ void main() {
     },
   );
 
+  testWidgets('BStream header collapses the player on iOS', (tester) async {
+    _configureView(tester, const Size(402, 874));
+    var collapses = 0;
+    await tester.pumpWidget(
+      _playerHarness(
+        platform: TargetPlatform.iOS,
+        snapshot: snapshot,
+        localTrack: localTrack,
+        playlists: _TestPlaylistsController(),
+        onCollapse: () => collapses++,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    final collapse = find.byKey(const ValueKey('player-collapse'));
+    expect(collapse, findsOneWidget);
+    final header = tester.getRect(find.byKey(const ValueKey('player-header')));
+    final title = tester.getRect(
+      find.byKey(const ValueKey('player-tab-title')),
+    );
+    expect(tester.getRect(collapse).left, lessThan(header.left + 48));
+    expect((title.center.dx - header.center.dx).abs(), lessThanOrEqualTo(1));
+
+    await tester.tap(collapse);
+    await tester.pump();
+    expect(collapses, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('BStream landscape header also offers collapse', (tester) async {
+    _configureView(tester, const Size(874, 402));
+    var collapses = 0;
+    await tester.pumpWidget(
+      _playerHarness(
+        platform: TargetPlatform.iOS,
+        snapshot: snapshot,
+        localTrack: localTrack,
+        playlists: _TestPlaylistsController(),
+        onCollapse: () => collapses++,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('player-collapse')));
+    await tester.pump();
+    expect(collapses, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('BStream header has no collapse without a handler', (
+    tester,
+  ) async {
+    _configureView(tester, const Size(402, 874));
+    await tester.pumpWidget(
+      _playerHarness(
+        platform: TargetPlatform.iOS,
+        snapshot: snapshot,
+        localTrack: localTrack,
+        playlists: _TestPlaylistsController(),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('player-header')), findsOneWidget);
+    expect(find.byKey(const ValueKey('player-collapse')), findsNothing);
+  });
+
   testWidgets('BStream landscape header stays legible in a light theme', (
     tester,
   ) async {
@@ -5765,6 +5835,7 @@ Widget _playerHarness({
   YouTubeMusicSearch? youtubeMusicSearch,
   DownloadController? downloadController,
   VoidCallback? onOpenSearch,
+  VoidCallback? onCollapse,
   bool disableAnimations = false,
   ValueListenable<bool>? trackTransitionsEnabledListenable,
   PlayerStyle style = defaultPlayerStyle,
@@ -5847,6 +5918,7 @@ Widget _playerHarness({
             ? PlayerPanel(
                 drawBackground: false,
                 onOpenSearch: onOpenSearch,
+                onCollapse: onCollapse,
                 style: style,
                 artworkStyle: artworkStyle,
                 animatedArtworkEnabled: animatedArtworkEnabled,
@@ -5856,6 +5928,7 @@ Widget _playerHarness({
                 builder: (context, enabled, _) => PlayerPanel(
                   drawBackground: false,
                   onOpenSearch: onOpenSearch,
+                  onCollapse: onCollapse,
                   trackTransitionsEnabled: enabled,
                   style: style,
                   artworkStyle: artworkStyle,

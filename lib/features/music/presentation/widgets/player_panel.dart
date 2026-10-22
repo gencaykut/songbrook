@@ -679,6 +679,7 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                         onOpenArtist: onOpenArtist,
                                         onOpenAlbum: onOpenAlbum,
                                         strings: strings,
+                                        onCollapse: widget.onCollapse,
                                       ),
                                     Expanded(
                                       child: LayoutBuilder(
@@ -1050,6 +1051,8 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                                                     onOpenAlbum,
                                                                 strings:
                                                                     strings,
+                                                                onCollapse: widget
+                                                                    .onCollapse,
                                                               ),
                                                             ),
                                                           ),
@@ -2540,6 +2543,7 @@ class _PlayerHeader extends StatelessWidget {
     required this.onOpenArtist,
     required this.onOpenAlbum,
     required this.strings,
+    this.onCollapse,
   });
 
   final PlayerSnapshot snapshot;
@@ -2555,11 +2559,16 @@ class _PlayerHeader extends StatelessWidget {
   final VoidCallback? onOpenAlbum;
   final AppStrings strings;
 
+  /// iOS has no system Back, and this layout hides the navigation bar, so the
+  /// header needs its own way back to the browsing views.
+  final VoidCallback? onCollapse;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final controlColor =
         foregroundColor ?? AppColors.playbackControlForegroundFor(context);
+    final collapse = onCollapse;
     final visualIdentity = playbackVisualIdentity(
       trackId: snapshot.trackId,
       sourceUrl: snapshot.sourceUrl,
@@ -2572,6 +2581,16 @@ class _PlayerHeader extends StatelessWidget {
       constraints: BoxConstraints(minHeight: compactLandscape ? 48 : 58),
       child: Row(
         children: [
+          if (collapse != null)
+            _HeaderIconSlot(
+              child: IconButton(
+                key: const ValueKey('player-collapse'),
+                tooltip: strings.minimizePlayer,
+                style: IconButton.styleFrom(foregroundColor: controlColor),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32),
+                onPressed: collapse,
+              ),
+            ),
           _HeaderIconSlot(
             child: IconButton(
               key: const ValueKey('player-queue-toggle'),
@@ -2637,6 +2656,8 @@ class _PlayerHeader extends StatelessWidget {
               ),
             ),
           ),
+          // Mirrors the collapse slot so the title stays centred.
+          if (collapse != null) const SizedBox.square(dimension: 48),
           _HeaderIconSlot(
             child: snapshot.isExternal
                 ? const SizedBox.shrink()
