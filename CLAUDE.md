@@ -7,6 +7,7 @@
 - Proje açık kaynak olacak. Kullanıcının ücretli Apple Developer hesabı var; bunu sorma, maliyet ya da engel olarak sayma.
 - Dağıtım: App Store yok. Mac için notarize edilmiş dmg/pkg, iOS için AltStore/Sideloadly (AB'de AltStore PAL), Android için APK/F-Droid.
 - Upstream'e PR ya da issue açmak dışa dönük bir iş; önce kullanıcıya sor.
+- **Push toplu yapılır:** Düzeltmeleri yerelde ayrı commit'ler olarak biriktir; her adımdan sonra push etme. Kullanıcı istediğinde ya da bir iş paketi bittiğinde tek `git push` yap.
 
 ## Ortam
 
