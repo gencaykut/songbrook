@@ -39,7 +39,7 @@ final class BStreamWidgetActionRelay {
   private var audioOutputPlugin: BStreamAudioOutputPlugin?
   private var localAudioQualityPlugin: IOSLocalAudioQualityPlugin?
   private var castPlugin: BStreamCastPlugin?
-  private let widgetGroup = "group.com.bstream.bstreamMusic"
+  private let widgetGroup = "group.io.github.gencaykut.songbrook"
   private let widgetKind = "BStreamNowPlaying"
   private let widgetArtworkQueue = DispatchQueue(label: "com.bstream.homeWidget.artwork", qos: .utility)
 

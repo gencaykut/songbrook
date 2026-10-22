@@ -29,7 +29,7 @@ read_plist() {
   /usr/libexec/PlistBuddy -c "Print :$1" "$info_plist"
 }
 
-test "$(read_plist CFBundleIdentifier)" = "com.bstream.bstreamMusic"
+test "$(read_plist CFBundleIdentifier)" = "io.github.gencaykut.songbrook"
 test "$(read_plist CFBundleExecutable)" = "bstream_music"
 test "$(read_plist CFBundlePackageType)" = "APPL"
 test "$(read_plist CFBundleShortVersionString)" = "$expected_version"

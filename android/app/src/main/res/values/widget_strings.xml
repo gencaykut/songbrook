@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_player_name">BStream Music</string>
-    <string name="widget_description">BStream Music: canción actual y controles</string>
+    <string name="widget_player_name">Songbrook</string>
+    <string name="widget_description">Songbrook: canción actual y controles</string>
     <string name="widget_artwork_description">Portada de la canción</string>
     <string name="widget_previous">Anterior</string>
     <string name="widget_play_pause">Reproducir o pausar</string>

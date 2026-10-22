@@ -44,7 +44,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bstream.bstream_music"
+        applicationId = "io.github.gencaykut.songbrook"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

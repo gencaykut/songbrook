@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>BStream Music</string>
+	<string>Songbrook</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>BStream Music</string>
+	<string>Songbrook</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleURLTypes</key>
@@ -24,7 +24,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>CFBundleURLName</key>
-			<string>com.bstream.bstreamMusic.track</string>
+			<string>io.github.gencaykut.songbrook.track</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>bstreammusic</string>
@@ -40,11 +40,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppleMusicUsageDescription</key>
-	<string>BStream Music necesita acceso para mostrar y reproducir la música guardada en tu dispositivo.</string>
+	<string>Songbrook necesita acceso para mostrar y reproducir la música guardada en tu dispositivo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>BStream Music necesita acceso a tus fotos para elegir un fondo personalizado.</string>
+	<string>Songbrook necesita acceso a tus fotos para elegir un fondo personalizado.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>BStream Music usa tu red local para encontrar dispositivos compatibles y transmitir tu música cuando eliges Transmitir a.</string>
+	<string>Songbrook usa tu red local para encontrar dispositivos compatibles y transmitir tu música cuando eliges Transmitir a.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_googlecast._tcp</string>

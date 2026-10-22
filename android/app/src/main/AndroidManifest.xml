@@ -14,7 +14,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="BStream Music"
+        android:label="Songbrook"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
@@ -45,7 +45,7 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:label="BStream Music"
+            android:label="Songbrook"
             android:exported="true"
             android:launchMode="singleTask"
             android:taskAffinity=""
@@ -135,7 +135,7 @@
         </activity>
         <service
             android:name="com.ryanheise.audioservice.AudioService"
-            android:label="BStream Music"
+            android:label="Songbrook"
             android:foregroundServiceType="mediaPlayback"
             android:exported="true"
             tools:ignore="Instantiatable">

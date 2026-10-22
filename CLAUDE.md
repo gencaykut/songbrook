@@ -1,4 +1,4 @@
-# Proje: BStream-Music fork'u (Mac + iOS + Android YouTube müzik uygulaması)
+# Proje: Songbrook — BStream-Music fork'u (Mac + iOS + Android YouTube müzik uygulaması)
 
 - Kullanıcıyla **Türkçe** konuşulur.
 - Bu repo, `BryamContreras/BStream-Music` (Flutter, BSD-2) projesinin **ayrılan bir fork'u**. Upstream sürekli takip edilmiyor; yalnızca YouTube motoruna (`lib/services/youtube_music/`) gelen düzeltmeler `upstream` remote'undan cherry-pick ile alınıyor.
@@ -57,9 +57,12 @@ dart run tool/claude_search_probe.dart
 Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
 
 1. ~~**Upstream'in yeni commit'ini al:** `7d54c36`~~ Tamamlandı. Analyze temiz, 2596 test geçti, macOS debug derlemesi başarılı.
-2. **Ad, bundle ID ve App Group** (karar kullanıcının). Yalnızca kimlikleri değiştir: `ios/`, `macos/Runner.xcodeproj`, `android/app/build.gradle.kts`, entitlements ve App Group. `com.bstream...` ile başlayan method channel adlarına dokunma; bunlar kullanıcıya görünmüyor ve upstream'le gereksiz fark yaratır.
+2. ~~**Ad, bundle ID ve App Group**~~ Tamamlandı. Ad **Songbrook**. Bundle ID `io.github.gencaykut.songbrook` (iOS, macOS, Android `applicationId`), widget `io.github.gencaykut.songbrook.NowPlayingWidget`, App Group `group.io.github.gencaykut.songbrook`. Görünen ad, izin metinleri ve widget adı değişti.
+   - Bilerek değiştirilmeyenler (upstream'le farkı küçük tutmak için): Dart paket adı `bstream_music`, Android `namespace` ve Kotlin paketleri, method channel ve DispatchQueue adları, `bstreammusic://` URL şeması.
+   - `AppConstants.appName` hâlâ "BStream Music": yedek dosyaları bu adla doğrulanıyor (`backup_service.dart`). Değiştirirken eski yedekleri de kabul et.
+   - Uygulama içi metinler, Windows/Linux kimlikleri ve macOS `PRODUCT_NAME` (`bstream_music.app`) 6. adımda.
 3. ~~**İndirilmiş m4a'larda iOS'taki 2 kat süre**~~ Tamamlandı: yerel dosyalar `moov` süresine göre kırpılıyor (bkz. docs/ios-duration-fix.md §3).
-4. **Gerçek iPhone testi:** İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu, 1. ve 3. adımdaki düzeltmelerin gerçek AVPlayer'da doğrulanması.
+4. **Gerçek iPhone testi:** Xcode'da Team seç (Runner ve NowPlayingWidget), "Automatically manage signing" bundle ID ve App Group'u portalda kaydeder. İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu, 1. ve 3. adımdaki düzeltmelerin gerçek AVPlayer'da doğrulanması.
 5. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
 6. **Markalama:** Varsayılan dili değiştir ve README'yi güncelle (yanlış "iOS 13" bilgisi dahil). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat.
 7. **Dağıtım ve paylaşım:** macOS notarize dmg, iOS ipa (AltStore/Sideloadly), toplu `git push`, repoyu public yapma kararı, upstream'e PR. Repoyu public yapmak ve PR açmak için önce kullanıcıya sor.
