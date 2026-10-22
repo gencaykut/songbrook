@@ -194,6 +194,7 @@ void main() {
       expect(resolved.streamExtension, 'm4a');
       expect(resolved.streamMimeType, 'audio/mp4');
       expect(resolved.streamClientProfileKey, 'visionOS');
+      expect(resolved.streamDuration, const Duration(milliseconds: 205191));
       expect(resolved.streamSource, AudioStreamSource.innerTubeFallback.name);
       expect(resolved.httpHeaders, isNull);
       expect(resolved.streamSampleRate, isNull);
@@ -749,6 +750,7 @@ class _FallbackFileAudioResolver implements AudioStreamResolver {
       clientProfileKey: 'visionOS',
       formatId: '140',
       codec: 'mp4a.40.2',
+      streamDuration: Duration(milliseconds: 205191),
     );
   }
 

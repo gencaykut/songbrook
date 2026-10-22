@@ -19,6 +19,7 @@ class TrackInfo {
     this.streamSampleRate,
     this.streamChannels,
     this.streamClientProfileKey,
+    this.streamDuration,
     this.extractor,
     this.album,
     this.albumBrowseId,
@@ -57,6 +58,12 @@ class TrackInfo {
 
   /// Exact InnerTube client profile that produced [streamUrl].
   final String? streamClientProfileKey;
+
+  /// Millisecond-precise duration of the media behind [streamUrl].
+  ///
+  /// [duration] is catalog metadata rounded to whole seconds and can exceed
+  /// the real audio, so it must not be used to mark the end of a stream.
+  final Duration? streamDuration;
   final String? extractor;
   final String? album;
   final String? albumBrowseId;
@@ -90,6 +97,7 @@ class TrackInfo {
     int? streamSampleRate,
     int? streamChannels,
     String? streamClientProfileKey,
+    Duration? streamDuration,
     String? extractor,
     String? album,
     String? albumBrowseId,
@@ -118,6 +126,7 @@ class TrackInfo {
       streamChannels: streamChannels ?? this.streamChannels,
       streamClientProfileKey:
           streamClientProfileKey ?? this.streamClientProfileKey,
+      streamDuration: streamDuration ?? this.streamDuration,
       extractor: extractor ?? this.extractor,
       album: album ?? this.album,
       albumBrowseId: albumBrowseId ?? this.albumBrowseId,

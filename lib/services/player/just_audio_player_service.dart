@@ -31,6 +31,13 @@ class JustAudioPlayerService
   static const _crossfadeShutdownGrace = Duration(seconds: 2);
   static const _crossfadeRetirementGrace = Duration(milliseconds: 250);
   static const _backgroundPositionSnapshotInterval = Duration(seconds: 1);
+
+  /// How far before the resolver's duration a clipped MP4 source ends.
+  ///
+  /// AVFoundation's playable timeline is a few milliseconds shorter than the
+  /// extractor's duration. Clipping exactly at that duration leaves AVPlayer
+  /// buffering forever for audio that does not exist, so it never completes.
+  static const _fragmentedMp4EndGuard = Duration(milliseconds: 300);
   static const _androidAudioLoadConfiguration = AudioLoadConfiguration(
     androidLoadControl: AndroidLoadControl(
       // Keep enough encoded audio ahead for the native PCM detector to scan a
@@ -55,6 +62,7 @@ class JustAudioPlayerService
     AudioPlayer? crossfadeAudioPlayer,
     JustAudioPlayerFactory? crossfadePlayerFactory,
     bool? supportsSkipSilence,
+    bool? clipMp4ToStreamDuration,
     Duration skipSilenceWriteTimeout = const Duration(seconds: 2),
     Duration operationTimeout = const Duration(seconds: 45),
     JustAudioOperationDeadline? operationDeadline,
@@ -66,6 +74,7 @@ class JustAudioPlayerService
        _crossfadePlayerFactory =
            crossfadePlayerFactory ?? _createCrossfadeAudioPlayer,
        _supportsSkipSilence = supportsSkipSilence ?? Platform.isAndroid,
+       _clipMp4ToStreamDuration = clipMp4ToStreamDuration ?? Platform.isIOS,
        _skipSilenceWriteTimeout = skipSilenceWriteTimeout,
        _operationTimeout = operationTimeout,
        // Public injection names are intentional; stored hooks stay private.
@@ -270,6 +279,20 @@ class JustAudioPlayerService
     ]);
   }
 
+  /// Native duration of a successor that has no catalog duration.
+  ///
+  /// A native auto-advance publishes the successor's index and duration in
+  /// one playback event, and just_audio's durationStream is distinct: when
+  /// two consecutive items have equal durations it never emits again, so the
+  /// successor would otherwise keep a null duration for its whole playback.
+  /// The value is trusted only when the event already belongs to the new
+  /// index; otherwise it still describes the previous item.
+  Duration? _nativeSuccessorDuration(SequenceState state) {
+    final event = _player.playbackEvent;
+    if (event.currentIndex != state.currentIndex) return null;
+    return _usableDuration(event.duration);
+  }
+
   Future<void> _detachPrimaryPlayer() async {
     final subscriptions = List<StreamSubscription<dynamic>>.of(
       _primarySubscriptions,
@@ -333,7 +356,9 @@ class JustAudioPlayerService
         thumbnailUrl: displayArtworkSourceForMediaItem(tag),
         duration:
             _usableDuration(tag.duration) ??
-            (sameLogicalItem ? _usableDuration(_snapshot.duration) : null),
+            (sameLogicalItem
+                ? _usableDuration(_snapshot.duration)
+                : _nativeSuccessorDuration(state)),
         isRemote: isRemote,
         isExternal: tag.extras?['isExternal'] == true,
       ),
@@ -407,6 +432,12 @@ class JustAudioPlayerService
   final AudioPlayer? _injectedCrossfadePlayer;
   final JustAudioPlayerFactory _crossfadePlayerFactory;
   final bool _supportsSkipSilence;
+
+  /// YouTube's fragmented MP4 audio declares its full length both in `moov`
+  /// and across its `moof` fragments. AVFoundation adds the two, so AVPlayer
+  /// reports twice the real duration and only completes after a phantom
+  /// second half, delaying every queue advance by a whole song.
+  final bool _clipMp4ToStreamDuration;
   final Duration _skipSilenceWriteTimeout;
   AudioPlayer? _crossfadePlayer;
   bool _injectedCrossfadePlayerUsed = false;
@@ -2645,11 +2676,36 @@ class JustAudioPlayerService
   }
 
   AudioSource _remoteAudioSource(RemotePlaybackSource source) {
-    return AudioSource.uri(
-      _remoteSourceUri(source),
-      headers: source.httpHeaders,
-      tag: _remoteMediaItem(source),
+    final uri = _remoteSourceUri(source);
+    final tag = _remoteMediaItem(source);
+    final end = _clippedMp4End(source, uri);
+    if (end == null) {
+      return AudioSource.uri(uri, headers: source.httpHeaders, tag: tag);
+    }
+    // The clipping source owns the tag: just_audio exposes it, not the child,
+    // in the sequence that error attribution and queue metadata read.
+    return ClippingAudioSource(
+      child: AudioSource.uri(uri, headers: source.httpHeaders),
+      end: end,
+      tag: tag,
     );
+  }
+
+  Duration? _clippedMp4End(RemotePlaybackSource source, Uri uri) {
+    if (!_clipMp4ToStreamDuration) return null;
+    final duration = source.streamDuration;
+    if (duration == null || duration <= _fragmentedMp4EndGuard * 2) {
+      return null;
+    }
+    final extension = _uriExtension(uri);
+    if (extension != 'm4a' && extension != 'mp4') return null;
+    return duration - _fragmentedMp4EndGuard;
+  }
+
+  String? _uriExtension(Uri uri) {
+    final hint = uri.fragment.isNotEmpty ? uri.fragment : uri.path;
+    final dot = hint.lastIndexOf('.');
+    return dot < 0 ? null : hint.substring(dot + 1).toLowerCase();
   }
 
   Uri _remoteSourceUri(RemotePlaybackSource playbackSource) {

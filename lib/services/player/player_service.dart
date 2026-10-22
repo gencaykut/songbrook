@@ -129,6 +129,12 @@ class RemotePlaybackSource {
   final bool isOnlyLogicalQueueItem;
 
   String get sourceKey => '$queueEntryId\u0000$uri';
+
+  /// Millisecond-precise media duration from the resolver, when known.
+  ///
+  /// It also describes a cached copy of the same stream, which keeps the
+  /// original container layout.
+  Duration? get streamDuration => track.streamDuration;
 }
 
 sealed class CrossfadePlaybackSource {

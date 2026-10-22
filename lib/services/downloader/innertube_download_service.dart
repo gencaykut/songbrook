@@ -118,6 +118,7 @@ final class InnerTubeDownloadService
       streamSampleRate: resolved.format.audioSampleRate,
       streamChannels: resolved.format.audioChannels,
       streamClientProfileKey: resolved.profile.key,
+      streamDuration: resolved.format.approxDuration,
       httpHeaders: resolved.headers,
     );
   }

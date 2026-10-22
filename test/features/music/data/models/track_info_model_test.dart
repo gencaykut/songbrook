@@ -42,6 +42,7 @@ void main() {
       thumbnailUrl: 'https://i.ytimg.com/vi/DlFXDl_ROAM/hq720.jpg',
       catalogThumbnailUrl: 'https://music.example/catalog-artwork.jpg',
       streamClientProfileKey: 'webMusic',
+      streamDuration: const Duration(milliseconds: 251681),
       streamSampleRate: 48000,
       streamChannels: 2,
       url: 'https://www.youtube.com/watch?v=DlFXDl_ROAM',
@@ -59,6 +60,8 @@ void main() {
     expect(encoded['album_browse_id'], 'MPREmayhem001');
     expect(track.streamClientProfileKey, 'webMusic');
     expect(encoded['stream_client_profile_key'], 'webMusic');
+    expect(track.streamDuration, const Duration(milliseconds: 251681));
+    expect(encoded['stream_duration_ms'], 251681);
     expect(track.streamSampleRate, 48000);
     expect(track.streamChannels, 2);
     expect(encoded['stream_sample_rate'], 48000);

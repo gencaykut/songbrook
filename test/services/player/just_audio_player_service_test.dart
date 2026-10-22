@@ -512,6 +512,115 @@ void main() {
     }
   });
 
+  group('fragmented MP4 end clipping', () {
+    test(
+      'ends a remote MP4 just before its stream duration and keeps the tag',
+      () async {
+        final fixture = await _Fixture.create(clipMp4ToStreamDuration: true);
+        try {
+          await fixture.service.playRemoteSource(
+            _mp4RemoteSource(
+              'makina',
+              streamDuration: const Duration(milliseconds: 205191),
+            ),
+          );
+
+          final source = fixture.backend.sourceLoadCalls.single.sources.single;
+          expect(source, isA<ClippingAudioSource>());
+          final clipping = source as ClippingAudioSource;
+          expect(clipping.start, isNull);
+          expect(clipping.end, const Duration(milliseconds: 204891));
+          expect(clipping.child.uri.fragment, '.m4a');
+          expect(clipping.child.headers, {'User-Agent': 'test-agent'});
+          expect(
+            (clipping.tag as MediaItem).extras?['queueEntryId'],
+            'remote:makina',
+          );
+          expect(_queueEntryId(fixture.backend), 'remote:makina');
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+
+    test('clips a cached MP4 file of the same stream', () async {
+      final fixture = await _Fixture.create(clipMp4ToStreamDuration: true);
+      try {
+        await fixture.service.playRemoteSource(
+          _mp4RemoteSource(
+            'cached',
+            streamDuration: const Duration(seconds: 180),
+            uri: Uri.file('/cache/cached.140.m4a'),
+          ),
+        );
+
+        final source = fixture.backend.sourceLoadCalls.single.sources.single;
+        expect(
+          (source as ClippingAudioSource).end,
+          const Duration(seconds: 180) - const Duration(milliseconds: 300),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('leaves the source untouched without a stream duration', () async {
+      final fixture = await _Fixture.create(clipMp4ToStreamDuration: true);
+      try {
+        await fixture.service.playRemoteSource(_mp4RemoteSource('unknown'));
+
+        expect(
+          fixture.backend.sourceLoadCalls.single.sources.single,
+          isA<UriAudioSource>(),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('leaves non-MP4 containers untouched', () async {
+      final fixture = await _Fixture.create(clipMp4ToStreamDuration: true);
+      try {
+        await fixture.service.playRemoteSource(
+          _mp4RemoteSource(
+            'opus',
+            extension: 'webm',
+            streamDuration: const Duration(minutes: 3),
+          ),
+        );
+
+        expect(
+          fixture.backend.sourceLoadCalls.single.sources.single,
+          isA<UriAudioSource>(),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test(
+      'is disabled where the platform reads MP4 durations correctly',
+      () async {
+        final fixture = await _Fixture.create();
+        try {
+          await fixture.service.playRemoteSource(
+            _mp4RemoteSource(
+              'android',
+              streamDuration: const Duration(minutes: 3),
+            ),
+          );
+
+          expect(
+            fixture.backend.sourceLoadCalls.single.sources.single,
+            isA<UriAudioSource>(),
+          );
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+  });
+
   test(
     'uses the loaded media duration when remote catalog metadata omits it',
     () async {
@@ -598,6 +707,135 @@ void main() {
       }
     },
   );
+
+  group('catalog-less successor duration', () {
+    test(
+      'keeps the native duration when consecutive items are equally long',
+      () async {
+        final fixture = await _Fixture.create();
+        final backend = fixture.backend;
+        try {
+          await fixture.service.playRemoteSource(_remoteSource('equal-a'));
+          await fixture.service.updateRemoteQueue([_remoteSource('equal-b')]);
+          backend.emitNativeDuration(const Duration(minutes: 3, seconds: 16));
+
+          backend.emitNativeAdvance(
+            1,
+            duration: const Duration(minutes: 3, seconds: 16),
+            durationChanged: false,
+          );
+          await _drainEvents();
+
+          expect(fixture.service.currentSnapshot.trackId, 'equal-b');
+          expect(
+            fixture.service.currentSnapshot.duration,
+            const Duration(minutes: 3, seconds: 16),
+          );
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+
+    test(
+      'adopts a different native duration published with the advance',
+      () async {
+        final fixture = await _Fixture.create();
+        final backend = fixture.backend;
+        try {
+          await fixture.service.playRemoteSource(_remoteSource('diff-a'));
+          await fixture.service.updateRemoteQueue([_remoteSource('diff-b')]);
+          backend.emitNativeDuration(const Duration(minutes: 3));
+
+          backend.emitNativeAdvance(
+            1,
+            duration: const Duration(minutes: 4, seconds: 2),
+          );
+          await _drainEvents();
+
+          expect(fixture.service.currentSnapshot.trackId, 'diff-b');
+          expect(
+            fixture.service.currentSnapshot.duration,
+            const Duration(minutes: 4, seconds: 2),
+          );
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+
+    test(
+      'ignores a native duration that still describes the previous item',
+      () async {
+        final fixture = await _Fixture.create();
+        final backend = fixture.backend;
+        try {
+          await fixture.service.playRemoteSource(_remoteSource('stale-a'));
+          await fixture.service.updateRemoteQueue([_remoteSource('stale-b')]);
+          backend.emitNativeDuration(const Duration(minutes: 3));
+
+          // The sequence moves first; the native event is still for index 0.
+          backend.emitSequenceState(currentIndex: 1);
+          await _drainEvents();
+
+          expect(fixture.service.currentSnapshot.trackId, 'stale-b');
+          expect(fixture.service.currentSnapshot.duration, isNull);
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+
+    test(
+      'an explicit load never borrows the previous item native duration',
+      () async {
+        final fixture = await _Fixture.create();
+        final backend = fixture.backend;
+        try {
+          await fixture.service.playRemoteSource(_remoteSource('load-a'));
+          backend.emitNativeDuration(const Duration(minutes: 3));
+
+          final loadBDurations = <Duration?>[];
+          final subscription = fixture.service.snapshotStream.listen((
+            snapshot,
+          ) {
+            if (snapshot.trackId == 'load-b') {
+              loadBDurations.add(snapshot.duration);
+            }
+          });
+          // The previous playback event still describes load-a at index 0.
+          backend.onSourcesApplied = () => backend.emitSequenceState();
+          await fixture.service.playRemoteSource(_remoteSource('load-b'));
+          await _drainEvents();
+          await subscription.cancel();
+
+          expect(fixture.service.currentSnapshot.trackId, 'load-b');
+          expect(loadBDurations, isNotEmpty);
+          expect(loadBDurations, everyElement(isNull));
+
+          // A local queue load is not announced before its sequence arrives.
+          final localDurations = <Duration?>[];
+          final localSubscription = fixture.service.snapshotStream.listen((
+            snapshot,
+          ) {
+            if (snapshot.trackId == 'load-local') {
+              localDurations.add(snapshot.duration);
+            }
+          });
+          backend.emitNativeDuration(const Duration(minutes: 2));
+          await fixture.service.playLocalQueue([_localTrack('load-local')], 0);
+          await _drainEvents();
+          await localSubscription.cancel();
+
+          expect(fixture.service.currentSnapshot.trackId, 'load-local');
+          expect(localDurations, isNotEmpty);
+          expect(localDurations, everyElement(isNull));
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+  });
 
   test(
     'source deadline interrupts the native load before late completion',
@@ -2130,6 +2368,26 @@ void main() {
   });
 }
 
+RemotePlaybackSource _mp4RemoteSource(
+  String id, {
+  Duration? streamDuration,
+  String extension = 'm4a',
+  Uri? uri,
+}) => RemotePlaybackSource(
+  track: TrackInfo(
+    id: id,
+    title: 'Remote $id',
+    artist: 'Remote artist',
+    url: 'https://www.youtube.com/watch?v=$id',
+    streamUrl: 'https://media.example/videoplayback?id=$id',
+    streamExtension: extension,
+    streamDuration: streamDuration,
+  ),
+  uri: uri ?? Uri.parse('https://media.example/videoplayback?id=$id'),
+  queueEntryId: 'remote:$id',
+  httpHeaders: const {'User-Agent': 'test-agent'},
+);
+
 RemotePlaybackSource _remoteSource(String id) => RemotePlaybackSource(
   track: TrackInfo(
     id: id,
@@ -2179,6 +2437,7 @@ class _Fixture {
 
   static Future<_Fixture> create({
     JustAudioOperationDeadline? operationDeadline,
+    bool clipMp4ToStreamDuration = false,
   }) async {
     final directory = await Directory.systemTemp.createTemp(
       'bstream_just_audio_deadline_',
@@ -2191,6 +2450,7 @@ class _Fixture {
       audioPlayer: backend,
       notificationArtworkService: artwork,
       operationDeadline: operationDeadline,
+      clipMp4ToStreamDuration: clipMp4ToStreamDuration,
     );
     return _Fixture(directory, artwork, backend, service);
   }
@@ -2550,6 +2810,7 @@ class _BlockingAudioPlayer extends AudioPlayer {
       }
       _currentIndex = _sources.isEmpty ? null : (call.initialIndex ?? 0);
       _position = call.initialPosition ?? Duration.zero;
+      onSourcesApplied?.call();
       final duration = nextSourceLoadDuration;
       nextSourceLoadDuration = null;
       return duration;
@@ -2588,6 +2849,44 @@ class _BlockingAudioPlayer extends AudioPlayer {
     if (currentIndex != null) {
       _currentIndex = currentIndex;
     }
+    _sequenceStates.add(sequenceState);
+  }
+
+  PlaybackEvent? _playbackEvent;
+
+  /// Runs while a source load is still pending, after the new sequence is in
+  /// place: just_audio broadcasts the sequence before the platform loads it.
+  void Function()? onSourcesApplied;
+
+  @override
+  PlaybackEvent get playbackEvent => _playbackEvent ?? super.playbackEvent;
+
+  /// Publishes the native duration of the current item, as just_audio does
+  /// through one playback event and its durationStream.
+  void emitNativeDuration(Duration duration) {
+    _playbackEvent = PlaybackEvent(
+      processingState: ProcessingState.ready,
+      duration: duration,
+      currentIndex: _currentIndex,
+    );
+    _durations.add(duration);
+  }
+
+  /// Mirrors a native auto-advance: just_audio publishes the successor's index
+  /// and duration in one playback event. With [durationChanged] false the
+  /// distinct durationStream stays silent, as it does for an equal duration.
+  void emitNativeAdvance(
+    int index, {
+    required Duration duration,
+    bool durationChanged = true,
+  }) {
+    _currentIndex = index;
+    _playbackEvent = PlaybackEvent(
+      processingState: ProcessingState.ready,
+      duration: duration,
+      currentIndex: index,
+    );
+    if (durationChanged) _durations.add(duration);
     _sequenceStates.add(sequenceState);
   }
 

@@ -19,6 +19,7 @@ class TrackInfoModel extends TrackInfo {
     super.streamSampleRate,
     super.streamChannels,
     super.streamClientProfileKey,
+    super.streamDuration,
     super.extractor,
     super.album,
     super.albumBrowseId,
@@ -79,6 +80,7 @@ class TrackInfoModel extends TrackInfo {
           _positiveIntValue((selectedFormat ?? json)['audio_channels']) ??
           _positiveIntValue((selectedFormat ?? json)['audioChannels']),
       streamClientProfileKey: _stringValue(json['stream_client_profile_key']),
+      streamDuration: _millisecondsDuration(json['stream_duration_ms']),
       extractor:
           _stringValue(json['extractor']) ??
           _stringValue(json['extractor_key']) ??
@@ -122,6 +124,7 @@ class TrackInfoModel extends TrackInfo {
       'stream_sample_rate': streamSampleRate,
       'stream_channels': streamChannels,
       'stream_client_profile_key': streamClientProfileKey,
+      'stream_duration_ms': streamDuration?.inMilliseconds,
       'extractor': extractor,
       'album': album,
       'album_browse_id': albumBrowseId,
@@ -466,6 +469,11 @@ class TrackInfoModel extends TrackInfo {
       return null;
     }
     return Duration(seconds: seconds);
+  }
+
+  static Duration? _millisecondsDuration(Object? value) {
+    final milliseconds = _positiveIntValue(value);
+    return milliseconds == null ? null : Duration(milliseconds: milliseconds);
   }
 
   static int? _intValue(Object? value) {

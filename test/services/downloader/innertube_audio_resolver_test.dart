@@ -47,6 +47,7 @@ void main() {
     expect(result.sampleRate, 44100);
     expect(result.channels, 2);
     expect(result.clientProfileKey, 'androidSdkless');
+    expect(result.streamDuration, const Duration(milliseconds: 205191));
     expect(result.expiresAt, isNotNull);
     expect(result.expiresAt!.isAfter(DateTime.now()), isTrue);
     expect(transport.clientIds, ['3']);
@@ -211,6 +212,7 @@ final class _Transport implements InnerTubeTransport {
               'audioSampleRate': '44100',
               'audioChannels': 2,
               'contentLength': '2000000',
+              'approxDurationMs': '205191',
             },
           ],
         },

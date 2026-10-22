@@ -99,6 +99,7 @@ class AudioStreamResolution {
     this.channels,
     this.clientProfileKey,
     this.expiresAt,
+    this.streamDuration,
   });
 
   /// Which resolver produced this result.
@@ -140,6 +141,11 @@ class AudioStreamResolution {
   /// Last instant at which the signed URL and any bound token may be reused.
   final DateTime? expiresAt;
 
+  /// Media duration of the selected format, as reported by the extractor
+  /// with millisecond precision. Unlike catalog durations it is not rounded,
+  /// so players can rely on it as the real end of the audio.
+  final Duration? streamDuration;
+
   bool get isUsable {
     final uri = Uri.tryParse(streamUrl);
     return uri != null &&
@@ -161,6 +167,7 @@ class AudioStreamResolution {
       channels: channels,
       clientProfileKey: clientProfileKey,
       expiresAt: expiresAt,
+      streamDuration: streamDuration,
     );
   }
 
@@ -183,6 +190,7 @@ class AudioStreamResolution {
       sampleRate: track.streamSampleRate,
       channels: track.streamChannels,
       clientProfileKey: track.streamClientProfileKey,
+      streamDuration: track.streamDuration,
     );
   }
 
