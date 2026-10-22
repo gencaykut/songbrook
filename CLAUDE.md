@@ -3,7 +3,7 @@
 - Kullanıcıyla **Türkçe** konuşulur.
 - Bu repo, `BryamContreras/BStream-Music` (Flutter, BSD-2) projesinin **ayrılan bir fork'u**. Upstream sürekli takip edilmiyor; yalnızca YouTube motoruna (`lib/services/youtube_music/`) gelen düzeltmeler `upstream` remote'undan cherry-pick ile alınıyor.
 - Repo: `origin` = github.com/gencaykut/yt-music-app (private, geçici ad), `upstream` = BryamContreras/BStream-Music.
-- Fork tabanı: upstream `8dd2a2e`. Upstream değişikliklerini görmek için: `git fetch upstream && git log --oneline main..upstream/main`.
+- Fork tabanı: upstream `8dd2a2e`; upstream `7d54c36`'ya kadar birleştirildi. Upstream değişikliklerini görmek için: `git fetch upstream && git log --oneline main..upstream/main`.
 - Proje açık kaynak olacak. Kullanıcının ücretli Apple Developer hesabı var; bunu sorma, maliyet ya da engel olarak sayma.
 - Dağıtım: App Store yok. Mac için notarize edilmiş dmg/pkg, iOS için AltStore/Sideloadly (AB'de AltStore PAL), Android için APK/F-Droid.
 - Upstream'e PR ya da issue açmak dışa dönük bir iş; önce kullanıcıya sor.
@@ -13,6 +13,7 @@
 
 - Flutter: `~/development/flutter` (`~/.zshrc` içinde PATH'e ekli). CocoaPods, Xcode ve Rust kurulu.
 - iOS simülatörü: iPhone 18 Pro, iOS 27.0, UDID `4164F7C0-8133-419B-AA72-02E6ABC9AA6F`.
+- `ios/Podfile.lock` ve `macos/Podfile.lock` upstream'de olduğu gibi takip edilmiyor.
 - Derleme sırasında Flutter iOS deployment target'ı 15.0'a çıkarıyor ve Podfile'ları güncelliyor. Bu beklenen bir değişiklik.
 
 ## Komutlar
@@ -26,7 +27,7 @@ flutter test integration_test/<dosya> -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 dart run tool/claude_search_probe.dart
 ```
 
-- `flutter test` macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2596 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -55,7 +56,7 @@ dart run tool/claude_search_probe.dart
 
 Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
 
-1. **Upstream'in yeni commit'ini al:** `7d54c36` (şarkı sözleri, widget'lar, masaüstü kısayolları) `main` ile çakışmasız birleşiyor. Fork farkı büyümeden almak en ucuz şimdi. Sonra analyze ve testleri çalıştır.
+1. ~~**Upstream'in yeni commit'ini al:** `7d54c36`~~ Tamamlandı. Analyze temiz, 2596 test geçti, macOS debug derlemesi başarılı.
 2. **Ad, bundle ID ve App Group** (karar kullanıcının). Yalnızca kimlikleri değiştir: `ios/`, `macos/Runner.xcodeproj`, `android/app/build.gradle.kts`, entitlements ve App Group. `com.bstream...` ile başlayan method channel adlarına dokunma; bunlar kullanıcıya görünmüyor ve upstream'le gereksiz fark yaratır.
 3. **İndirilmiş m4a'larda iOS'taki 2 kat süre:** `_localAudioSource` için de kırpma. Önce indirme sırasında `streamDuration`'ın kaydedilip kaydedilmediğine bak. Simülatörde yapılabilir; 2. adımı beklemez.
 4. **Gerçek iPhone testi:** İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu, 1. ve 3. adımdaki düzeltmelerin gerçek AVPlayer'da doğrulanması.
