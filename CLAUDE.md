@@ -25,6 +25,8 @@ flutter run -d macos
 flutter run -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 flutter test integration_test/<dosya> -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 dart run tool/claude_search_probe.dart
+flutter build macos --release
+bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
 - `flutter test`: 2642 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
@@ -40,6 +42,8 @@ dart run tool/claude_search_probe.dart
 - `tool/mp4/`: MP4 kutu analizi (`boxes.py`), `moov` sürelerini sıfırlama (`zero_moov.py`), AVFoundation ile süre ölçümü (`swiftc -O tool/mp4/avdur.swift -o tool/mp4/avdur`).
 
 ## Bilinmesi gerekenler
+
+- **Mac dağıtımı:** `macos/package_dmg.sh` evrensel (arm64 + x86_64) release derlemesini `Songbrook.app` adıyla Developer ID ile imzalar, upstream'in doğrulama betiğiyle iki mimariyi denetler, notarize edip staple eder ve `dist/Songbrook-<sürüm>.dmg` üretir. Notarization için `notarytool` anahtar zinciri profili gerekir (`songbrook-notary`); profil yoksa dmg imzalı ama notarize edilmemiş olur ve başka Mac'lerde Gatekeeper engeller.
 
 - **Türkçe arayüz:** Upstream metinleri `strings.choose('İspanyolca', 'İngilizce')` ile yazıyor. Türkçe çeviriler İngilizce metni anahtar alan `app_strings_turkish.dart` dosyasında (diğer diller `app_strings_translation_catalog.dart` içinde). `ZXQPH<n>X` değişken yer tutucusu; Türkçede sırası değişebilir. Yeni bir `choose` metni eklenirse Türkçesini de bu dosyaya ekle; `app_strings_turkish_test.dart` katalogdaki her anahtarın Türkçesini ve yer tutucuları denetler.
 - **Servis mesajları:** Servisler hata/durum mesajlarını yalnızca İspanyolca üretiyor. Türkçeleri İspanyolca metni anahtar alan `app_strings_turkish_runtime.dart` dosyasında; ekrana yazılan yerde `strings.runtimeMessage(...)` ile çevriliyor (önekleri atar, iç içe mesajları da çevirir). Yeni bir mesaj gösterim noktası eklenirse ona da bağla.
