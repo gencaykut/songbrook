@@ -74,3 +74,4 @@ app.*.map.json
 *.sqlite3
 /tool/mp4/avdur
 /macos/Podfile.lock
+/ios/Podfile.lock
