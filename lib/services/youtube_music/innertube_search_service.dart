@@ -2566,7 +2566,9 @@ class InnerTubeSearchParser {
       return null;
     }
     final normalized = text.trim().toLowerCase();
-    if (normalized == 'ir al artista' || normalized == 'go to artist') {
+    if (normalized == 'ir al artista' ||
+        normalized == 'go to artist' ||
+        normalized == 'sanatçıya git') {
       return null;
     }
     if (normalized.contains('{runs:') ||
@@ -3429,6 +3431,7 @@ class InnerTubeAlbumParser {
     switch (value.trim().toLowerCase()) {
       case 'album':
       case 'álbum':
+      case 'albüm':
       case 'single':
       case 'sencillo':
       case 'ep':
@@ -3444,6 +3447,8 @@ class InnerTubeAlbumParser {
         normalized.contains('canción') ||
         normalized.contains('cancion') ||
         normalized.contains('song') ||
+        normalized.contains('şarkı') ||
+        normalized.contains('parça') ||
         normalized.contains('pista') ||
         normalized.contains('track');
   }
@@ -3809,7 +3814,9 @@ class InnerTubeArtistParser {
 
   bool _isPopularSongsTitle(String title) {
     return title.contains('popular') ||
+        title.contains('popüler') ||
         title.contains('canciones') ||
+        title.contains('şarkılar') ||
         title == 'songs';
   }
 
@@ -3945,7 +3952,7 @@ class InnerTubeArtistParser {
       final label = _textFromRenderer(
         node['text'] ?? node['buttonText'] ?? node['accessibility'],
       ).toLowerCase();
-      if (label.contains('radio')) {
+      if (label.contains('radio') || label.contains('radyo')) {
         final playlistId = _findPlaylistId(node);
         if (playlistId != null) return playlistId;
       }
@@ -4010,7 +4017,7 @@ class InnerTubeArtistParser {
       final label = _textFromRenderer(
         node['text'] ?? node['buttonText'] ?? node['accessibility'],
       ).toLowerCase();
-      if (label.contains('radio')) {
+      if (label.contains('radio') || label.contains('radyo')) {
         final videoId = _songParser._findWatchVideoId(node);
         if (videoId != null) return videoId;
       }

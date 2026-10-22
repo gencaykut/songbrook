@@ -139,7 +139,10 @@ void main() {
         project,
         contains('NowPlayingWidget.appex in Embed App Extensions'),
       );
-      expect(project, contains('io.github.gencaykut.songbrook.NowPlayingWidget'));
+      expect(
+        project,
+        contains('io.github.gencaykut.songbrook.NowPlayingWidget'),
+      );
       for (final path in <String>[
         'ios/Runner/DebugProfile.entitlements',
         'ios/Runner/Release.entitlements',

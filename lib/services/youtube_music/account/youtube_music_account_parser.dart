@@ -934,7 +934,7 @@ List<String> _metadataTexts(Object? renderer) {
 
 int? _itemCount(List<String> metadata) {
   final pattern = RegExp(
-    r'([0-9][0-9., ]*)\s*(?:songs?|canciones?|videos?)',
+    r'([0-9][0-9., ]*)\s*(?:songs?|canciones?|videos?|şarkı|parça|video)',
     caseSensitive: false,
   );
   for (final value in metadata) {
@@ -953,13 +953,19 @@ int? _itemCount(List<String> metadata) {
 
 RemotePlaylistVisibility _visibility(List<String> metadata) {
   final text = metadata.join(' ').toLowerCase();
-  if (text.contains('private') || text.contains('privada')) {
+  if (text.contains('private') ||
+      text.contains('privada') ||
+      text.contains('gizli')) {
     return RemotePlaylistVisibility.private;
   }
-  if (text.contains('unlisted') || text.contains('no listada')) {
+  if (text.contains('unlisted') ||
+      text.contains('no listada') ||
+      text.contains('liste dışı')) {
     return RemotePlaylistVisibility.unlisted;
   }
-  if (text.contains('public') || text.contains('pública')) {
+  if (text.contains('public') ||
+      text.contains('pública') ||
+      text.contains('herkese açık')) {
     return RemotePlaylistVisibility.public;
   }
   return RemotePlaylistVisibility.unknown;

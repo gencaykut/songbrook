@@ -94,6 +94,83 @@ void main() {
     },
   );
 
+  test('artist parser reads a Turkish artist page', () {
+    const parser = InnerTubeArtistParser();
+
+    final profile = parser.parse(<String, Object?>{
+      'header': <String, Object?>{
+        'musicImmersiveHeaderRenderer': <String, Object?>{
+          'title': _text('Sanatçı Bir'),
+          'subscriberCountText': _text('3,09 Mn abone'),
+          'monthlyListenerCount': _text('Aylık kitle: 31,4 Mn'),
+          // No startRadioButton: the radio is found by its label.
+          'menu': <String, Object?>{
+            'buttonRenderer': <String, Object?>{
+              'text': _text('Radyo'),
+              'navigationEndpoint': <String, Object?>{
+                'watchEndpoint': <String, Object?>{
+                  'videoId': 'radioSeedTr',
+                  'playlistId': 'RDEMartistRadioTr',
+                },
+              },
+            },
+          },
+        },
+      },
+      'contents': <Object?>[
+        // An earlier song shelf must not win over the titled popular one.
+        <String, Object?>{
+          'musicShelfRenderer': <String, Object?>{
+            'title': _text('Videolar'),
+            'contents': <Object?>[
+              _song(
+                videoId: 'video000001',
+                title: 'Klip',
+                artist: 'Sanatçı Bir',
+              ),
+            ],
+          },
+        },
+        <String, Object?>{
+          'musicShelfRenderer': <String, Object?>{
+            'title': _text('Popüler şarkılar'),
+            'contents': <Object?>[
+              _song(
+                videoId: 'popularTr01',
+                title: 'Şarkı Bir',
+                artist: 'Sanatçı Bir',
+              ),
+            ],
+          },
+        },
+        _releaseShelf(
+          title: 'Albümler',
+          release: _release(
+            browseId: 'MPREalbumTr1',
+            title: 'Albüm Bir',
+            type: 'Albüm',
+          ),
+        ),
+        _releaseShelf(
+          title: "Single'lar ve EP'ler",
+          release: _release(
+            browseId: 'MPREsingleTr1',
+            title: 'Single Bir',
+            type: 'Single',
+          ),
+        ),
+      ],
+    }, artistBrowseId: 'UCartistTr');
+
+    expect(profile.popularSongs.single.videoId, 'popularTr01');
+    expect(profile.albums.single.title, 'Albüm Bir');
+    expect(profile.singles.single.title, 'Single Bir');
+    expect(profile.radioPlaylistId, 'RDEMartistRadioTr');
+    expect(profile.radioSeedVideoId, 'radioSeedTr');
+    expect(profile.subscriberCount, '3,09 Mn abone');
+    expect(profile.monthlyListenerCount, 'Aylık kitle: 31,4 Mn');
+  });
+
   test('artist metrics prefer a labeled subscriber count when available', () {
     const parser = InnerTubeArtistParser();
 

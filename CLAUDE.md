@@ -27,7 +27,7 @@ flutter test integration_test/<dosya> -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 dart run tool/claude_search_probe.dart
 ```
 
-- `flutter test`: 2639 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2642 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -36,13 +36,14 @@ dart run tool/claude_search_probe.dart
 
 - `integration_test/claude_*.dart`: Canlı YouTube'a giden araştırma testleri. Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
   - `claude_url_test.dart` imzalı stream URL'si yazdırır. Çıktısını hiçbir yere commit'leme ya da paylaşma.
+- `tool/claude_hl_probe.dart`: Ayrıştırıcıların iki `hl` dilinde canlı YouTube Music yanıtından ne çıkardığını karşılaştırır.
 - `tool/mp4/`: MP4 kutu analizi (`boxes.py`), `moov` sürelerini sıfırlama (`zero_moov.py`), AVFoundation ile süre ölçümü (`swiftc -O tool/mp4/avdur.swift -o tool/mp4/avdur`).
 
 ## Bilinmesi gerekenler
 
 - **Türkçe arayüz:** Upstream metinleri `strings.choose('İspanyolca', 'İngilizce')` ile yazıyor. Türkçe çeviriler İngilizce metni anahtar alan `app_strings_turkish.dart` dosyasında (diğer diller `app_strings_translation_catalog.dart` içinde). `ZXQPH<n>X` değişken yer tutucusu; Türkçede sırası değişebilir. Yeni bir `choose` metni eklenirse Türkçesini de bu dosyaya ekle; `app_strings_turkish_test.dart` katalogdaki her anahtarın Türkçesini ve yer tutucuları denetler.
 - **Servis mesajları:** Servisler hata/durum mesajlarını yalnızca İspanyolca üretiyor. Türkçeleri İspanyolca metni anahtar alan `app_strings_turkish_runtime.dart` dosyasında; ekrana yazılan yerde `strings.runtimeMessage(...)` ile çevriliyor (önekleri atar, iç içe mesajları da çevirir). Yeni bir mesaj gösterim noktası eklenirse ona da bağla.
-- **YouTube içerik dili:** `InnerTubeSearchService` uygulama dilinden bağımsız olarak `hl=es-419` istiyor; ana sayfa raf başlıkları ("Playlists del momento…") bu yüzden İspanyolca. Değiştirmeden önce sanatçı/albüm ayrıştırıcılarının İspanyolca/İngilizce kelimelere ("canciones", "sencillo", "álbum") bakan yerlerine Türkçe karşılık ekle ve canlı yanıtla doğrula.
+- **YouTube içerik dili:** Arama/katalog servisi Türkçe arayüzde `hl=tr`, diğer dillerde upstream gibi `hl=es-419` istiyor (`innerTubeCatalogLanguage`, `music_providers.dart`). Ayrıştırıcıların bazı yerleri YouTube'un metnine bakıyor ("Sanatçıya git" süzgeci, "Popüler şarkılar" rafı, "Albüm"/"Single" türü, "Radyo" düğmesi, çalma listesi görünürlüğü ve şarkı sayısı, "Sonra dinlenecek bölümler"); yeni bir dil eklersen bunlara da karşılık ekle ve `dart run tool/claude_hl_probe.dart es-419 <hl>` ile canlı karşılaştır. Oynatma servisi bot/bölge uyarılarını İspanyolca/İngilizce metinden tanıdığı için dili bilerek değiştirilmedi. İndirici, dil değişince yeniden kurulmasın diye kendi katalog örneğini kullanıyor.
 
 - **iOS'ta fragmented MP4 süresi:** AVFoundation, YouTube'un itag 140 m4a dosyalarının süresini 2 kat raporluyor. iOS'ta stream'ler ve indirilmiş dosyalar (dosyanın `moov` süresiyle) `ClippingAudioSource(end: streamDuration − 300 ms)` ile kırpılıyor. 300 ms pay zorunlu; kaldırılırsa AVPlayer sonsuza kadar "buffering"de kalıyor. Katalog süresi kullanılamaz (saniyeye yuvarlı). Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **iOS'ta webm yok:** AVPlayer webm açamıyor. iOS `isAvFoundationCompatibleInnerTubeAudio` filtresiyle yalnızca AAC/MP4 seçiyor; testlerde de bu filtreyi kullan.

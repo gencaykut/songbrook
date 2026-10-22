@@ -2735,7 +2735,9 @@ void main() {
         ),
       ];
 
-      for (final example in examples) {
+      for (final (index, example) in examples.indexed) {
+        // Turkish pages label the same nested action "Sanatçıya git".
+        final nestedText = index.isEven ? 'Ir al artista' : 'Sanatçıya git';
         final songs = const InnerTubeAlbumParser().parseSongs(
           _albumDetailPayload(
             title: example.title,
@@ -2745,7 +2747,7 @@ void main() {
                 _legacyNestedArtistSongRenderer(
                   videoId: 'legacy-${example.title}-$index',
                   title: example.tracks[index],
-                  nestedText: 'Ir al artista',
+                  nestedText: nestedText,
                 ),
             ],
           ),
@@ -2761,7 +2763,8 @@ void main() {
           songs.every(
             (song) =>
                 !song.artist.contains('{runs') &&
-                !song.artist.contains('Ir al artista'),
+                !song.artist.contains('Ir al artista') &&
+                !song.artist.contains('Sanatçıya git'),
           ),
           isTrue,
           reason: example.title,

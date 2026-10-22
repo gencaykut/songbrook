@@ -2,6 +2,8 @@ import 'package:bstream_music/features/music/presentation/providers/app_strings.
 import 'package:bstream_music/features/music/presentation/providers/app_strings_translation_catalog.dart';
 import 'package:bstream_music/features/music/presentation/providers/app_strings_turkish.dart';
 import 'package:bstream_music/features/music/presentation/providers/app_strings_turkish_runtime.dart';
+import 'package:bstream_music/features/music/presentation/providers/music_providers.dart'
+    show innerTubeCatalogLanguage;
 import 'package:flutter_test/flutter_test.dart';
 
 final _marker = RegExp(r'ZXQPH\d+X');
@@ -70,6 +72,15 @@ void main() {
       expect(AppLanguage.turkish.code, 'tr');
       expect(AppLanguageLabel.fromCode('tr'), AppLanguage.turkish);
     });
+  });
+
+  test('a Turkish interface asks YouTube Music for Turkish content', () {
+    expect(innerTubeCatalogLanguage(AppLanguage.turkish), 'tr');
+    for (final language in AppLanguage.values) {
+      if (language == AppLanguage.turkish) continue;
+      // Other languages keep upstream's catalog language.
+      expect(innerTubeCatalogLanguage(language), 'es-419');
+    }
   });
 
   group('Turkish runtime messages', () {

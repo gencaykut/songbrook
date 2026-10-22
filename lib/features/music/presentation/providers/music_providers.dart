@@ -294,10 +294,22 @@ final innerTubePlaybackServiceProvider = Provider<InnerTubePlaybackService>((
   return service;
 });
 
+/// Downloads only read track metadata, which YouTube does not localize, so
+/// they keep their own catalog: following [youtubeMusicSearchProvider] would
+/// rebuild the downloader, and drop its active downloads, on a language change.
+final _downloadCatalogProvider = Provider<YouTubeMusicSearch>((ref) {
+  final service = InnerTubeSearchService(
+    visitorDataStore: const SharedPreferencesInnerTubeVisitorDataStore(),
+    region: _innerTubeDeviceRegion(),
+  );
+  ref.onDispose(service.dispose);
+  return service;
+});
+
 final downloaderServiceProvider = Provider<DownloaderService>((ref) {
   final service = InnerTubeDownloadService(
     playback: ref.watch(innerTubePlaybackServiceProvider),
-    catalog: ref.watch(youtubeMusicSearchProvider),
+    catalog: ref.watch(_downloadCatalogProvider),
   );
   ref.onDispose(() => unawaited(service.dispose()));
   return service;
@@ -757,9 +769,21 @@ final libraryOperationCoordinatorProvider =
       return coordinator;
     });
 
+/// YouTube Music's own titles (Home shelves, categories, artist stats) follow
+/// this language. Upstream always asks for Spanish; the catalog parsers also
+/// recognize Turkish, so a Turkish interface gets Turkish content.
+String innerTubeCatalogLanguage(AppLanguage language) =>
+    language == AppLanguage.turkish ? 'tr' : 'es-419';
+
 final youtubeMusicSearchProvider = Provider<YouTubeMusicSearch>((ref) {
+  final language = ref.watch(
+    settingsControllerProvider.select(
+      (settings) => settings.value?.language ?? AppLanguage.spanish,
+    ),
+  );
   final service = InnerTubeSearchService(
     visitorDataStore: const SharedPreferencesInnerTubeVisitorDataStore(),
+    language: innerTubeCatalogLanguage(language),
     region: _innerTubeDeviceRegion(),
   );
   ref.onDispose(service.dispose);

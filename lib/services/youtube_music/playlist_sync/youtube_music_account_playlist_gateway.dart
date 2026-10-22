@@ -957,7 +957,7 @@ bool _isLikedMusicPlaylistId(String value) =>
 bool _isEpisodesForLaterPlaylist(account.RemotePlaylistSummary playlist) {
   final title = playlist.title
       .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9áéíóúüñ]+', caseSensitive: false), ' ')
+      .replaceAll(RegExp(r'[^a-z0-9áéíóúüñçğıöş]+', caseSensitive: false), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
   if (title == 'episodes for later' ||
@@ -965,11 +965,15 @@ bool _isEpisodesForLaterPlaylist(account.RemotePlaylistSummary playlist) {
       title == 'episodios para después') {
     return true;
   }
-  final hasEpisode = title.contains('episode') || title.contains('episodio');
+  final hasEpisode =
+      title.contains('episode') ||
+      title.contains('episodio') ||
+      title.contains('bölüm');
   final hasLater =
       title.contains('later') ||
       title.contains('despues') ||
       title.contains('después') ||
+      title.contains('sonra') ||
       title.contains('after');
   return hasEpisode && hasLater;
 }
