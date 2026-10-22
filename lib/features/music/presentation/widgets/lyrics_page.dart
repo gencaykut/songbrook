@@ -1673,6 +1673,15 @@ class _LyricsHeader extends ConsumerWidget {
                 const SizedBox(width: 4),
               ],
               if (mobileLayout) ...[
+                // iOS has no system Back; the artwork alone is not an obvious
+                // way out of Lyrics.
+                IconButton(
+                  key: const ValueKey('lyrics-collapse-button'),
+                  tooltip: strings.back,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32),
+                  color: Colors.white,
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
                 _LyricsHeaderArtwork(
                   source: playback.thumbnailUrl,
                   onTap: () => Navigator.of(context).maybePop(),

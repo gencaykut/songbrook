@@ -1735,6 +1735,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('mobile lyrics offer a visible way back on iOS', (tester) async {
+    tester.view
+      ..physicalSize = const Size(402, 874)
+      ..devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view
+        ..resetPhysicalSize()
+        ..resetDevicePixelRatio();
+    });
+    await _pumpLyricsPage(
+      tester,
+      player: _FakePlayerService(lookupSnapshot),
+      lyrics: _FakeLyricsService(syncedDocument),
+      platform: TargetPlatform.iOS,
+      pushOverOrigin: true,
+    );
+
+    final collapse = find.byKey(const ValueKey('lyrics-collapse-button'));
+    expect(collapse, findsOneWidget);
+    expect(
+      tester.getRect(collapse).right,
+      lessThanOrEqualTo(
+        tester
+            .getRect(find.byKey(const ValueKey('lyrics-header-artwork')))
+            .left,
+      ),
+    );
+
+    await tester.tap(collapse);
+    await _settleLyricsAnimations(tester);
+
+    expect(find.byType(LyricsPage), findsNothing);
+    expect(find.byKey(const ValueKey('lyrics-test-origin')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('mobile lyrics move playback and artwork into the header', (
     tester,
   ) async {
@@ -4458,6 +4494,7 @@ Future<ProviderContainer> _pumpLyricsPage(
       const LyricsPresentationChrome(),
   bool disableAnimations = false,
   TargetPlatform? platform,
+  bool pushOverOrigin = false,
   double textScale = 1,
   SurfaceBackgroundMode backgroundMode = SurfaceBackgroundMode.accent,
   bool deriveAppStringsFromSettings = false,
@@ -4507,10 +4544,16 @@ Future<ProviderContainer> _pumpLyricsPage(
     await player.close();
   });
 
+  final navigatorKey = GlobalKey<NavigatorState>();
+  final page = LyricsPage(
+    presentationChrome: presentationChrome,
+    monotonicClock: monotonicClock,
+  );
   await tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         theme: ThemeData(
           platform: platform,
           extensions: [AppSurfaceTheme(backgroundMode: backgroundMode)],
@@ -4522,13 +4565,19 @@ Future<ProviderContainer> _pumpLyricsPage(
           ),
           child: child!,
         ),
-        home: LyricsPage(
-          presentationChrome: presentationChrome,
-          monotonicClock: monotonicClock,
-        ),
+        home: pushOverOrigin
+            ? const Scaffold(key: ValueKey('lyrics-test-origin'))
+            : page,
       ),
     ),
   );
+  if (pushOverOrigin) {
+    unawaited(
+      navigatorKey.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => page),
+      ),
+    );
+  }
   await _settleLyricsAnimations(tester);
   return container;
 }
