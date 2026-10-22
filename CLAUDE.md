@@ -62,23 +62,36 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - Ana sayfa içeriği her oturumda değişiyor. Tekrarlanabilir doğrulama için gerçek `JustAudioPlayerService` ile entegrasyon testi yaz.
 - Simülatörde arama kutusuna metin girilemiyor (iOS yapıştırma izni engelliyor); uygulama hatası olduğu kanıtlanmadı.
 
+## Son durum (22 Ekim 2026)
+
+- Yerel `main` GitHub'dan önde, **push edilmedi** (kullanıcı topluca push istiyor; sayı için `git status -sb`).
+- iPhone'da (UDID `00008140-0018303E2128401C`, iPhone17,2) Türkçe sürüm kurulu; son iki değişiklik (cihaz dili varsayılanı, `hl=en`) henüz telefonda ve dmg'de yok.
+- Mac: `dist/Songbrook-1.2.9.dmg` notarize edilmiş ve staple'lı (cihaz dili değişikliğinden önceki sürüm). `songbrook-notary` profili anahtar zincirinde kayıtlı.
+- Uygulama sürümü hâlâ upstream'in `1.2.9+129` numarası (`pubspec.yaml`).
+
+### Kullanıcıdan bekleyen kararlar
+
+- **GitHub Actions:** `Nightly native smoke` her gün kalıyor (GitHub'ın Android emülatörü açılmıyor; upstream'de de aynı, kodla ilgisiz). Öneri: günlük zamanlamayı kapat, elle çalıştırılabilir kalsın; `Release installers` yalnızca `v*` etiketlerinde ve elle çalışsın (private repo, Actions dakika kotası). Kullanıcı henüz cevap vermedi.
+- **Android:** Bu Mac'te APK derlenemiyor: Java yok, Android `cmdline-tools` yok (SDK'nın bir kısmı `~/Library/Android/sdk` altında). Öneri: Homebrew ile JDK 17 ve Android komut satırı araçları, repo dışında (`~/.songbrook/`) kalıcı bir imza anahtarı (parolayı kullanıcı terminalde girer), `android/key.properties` ile release APK. Google Play geliştirici hesabı gerekmiyor (Play Store'a çıkılmayacak). Kullanıcıya Google'ın Play dışı kurulumlar için geliştirici doğrulaması planı anlatıldı (2026 sonbaharında birkaç ülkede, 2027'den itibaren dünya geneli; ADB kurulumu muaf); ayrıntılar değişmiş olabilir.
+
 ## İş sırası
 
-Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
-
-1. ~~**Upstream'in yeni commit'ini al:** `7d54c36`~~ Tamamlandı. Analyze temiz, 2596 test geçti, macOS debug derlemesi başarılı.
-2. ~~**Ad, bundle ID ve App Group**~~ Tamamlandı. Ad **Songbrook**. Bundle ID `io.github.gencaykut.songbrook` (iOS, macOS, Android `applicationId`), widget `io.github.gencaykut.songbrook.NowPlayingWidget`, App Group `group.io.github.gencaykut.songbrook`. Görünen ad, izin metinleri ve widget adı değişti.
-   - Bilerek değiştirilmeyenler (upstream'le farkı küçük tutmak için): Dart paket adı `bstream_music`, Android `namespace` ve Kotlin paketleri, method channel ve DispatchQueue adları, `bstreammusic://` URL şeması.
+1. ~~Upstream `7d54c36`'yı al~~ Tamamlandı.
+2. ~~Ad, bundle ID ve App Group~~ Tamamlandı. Ad **Songbrook**; bundle ID `io.github.gencaykut.songbrook` (iOS, macOS, Android `applicationId`), widget `…songbrook.NowPlayingWidget`, App Group `group.io.github.gencaykut.songbrook`.
+   - Bilerek değiştirilmeyenler (upstream farkını küçük tutmak için): Dart paket adı `bstream_music`, Android `namespace` ve Kotlin paketleri, method channel ve DispatchQueue adları, `bstreammusic://` URL şeması, macOS `PRODUCT_NAME` (`bstream_music.app`; dmg içinde `Songbrook.app` olarak adlandırılıyor).
    - `AppConstants.appName` hâlâ "BStream Music": yedek dosyaları bu adla doğrulanıyor (`backup_service.dart`). Değiştirirken eski yedekleri de kabul et.
-   - Uygulama içi metinler, Windows/Linux kimlikleri ve macOS `PRODUCT_NAME` (`bstream_music.app`) 6. adımda.
-3. ~~**İndirilmiş m4a'larda iOS'taki 2 kat süre**~~ Tamamlandı: yerel dosyalar `moov` süresine göre kırpılıyor (bkz. docs/ios-duration-fix.md §3).
-4. ~~**Gerçek iPhone testi**~~ Tamamlandı (iPhone17,2). Team `9K8FGUA9A3` projede; Xcode bundle ID'yi ve App Group'u portala kaydetti.
-   - Cihazda doğrulananlar: stream ve indirilmiş dosya kırpması (completed 204,891 sn), arama, kilit ekranı kartı, otomatik geçiş, widget.
-   - Bulunan ve düzeltilen: varsayılan "BStream Music" oynatıcı stilinde iOS'ta oynatıcıdan çıkış yoktu (gezinme çubuğu gizli, sistem geri tuşu yok). Başlığa küçültme oku eklendi; içerik en üstteyken aşağı çekince/fırlatınca da kapanıyor (`_PullDownToCollapse`, parmak hareketinden ölçülüyor). Şarkı sözlerinin telefon düzeninde de görünür bir geri oku yoktu; eklendi.
-   - Cihazda çalıştırılamayan: `claude_advance_duration_test.dart` (debug başlatma Xcode'da takıldı); elle otomatik geçiş kontrolü geçti.
-   - Cihaza kurulum: `flutter build ios --profile` sonra `xcrun devicectl device install app --device <UDID> build/ios/Profile-iphoneos/Runner.app`. Debug derleme ana ekrandan açılmaz.
-   - Gözlem (6. adım): oynatıcının sağ üstündeki menü simgesi koyu arka planda neredeyse görünmüyor.
-4a. **"Sıradakiler" paneli (YouTube Music benzeri):** Kullanıcı isteği. Oynatıcının altında yukarı kaydırılınca açılan, çalma kuyruğunu ve benzer parçaları gösteren panel. Var olanlar: `_PlaybackQueuePanel` (şu an ayrı bir sayfa), `related_radio_queue_extender.dart` (YouTube radio ile kuyruğu uzatma). Yok olanlar: otomatik oynatma açma/kapama ayarı, `next` yanıtındaki filtre çipleri (Tümü/Bilinen/Popüler/Keşif) — `innertube_search_service.dart` çipleri ayrıştırmıyor.
-5. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
-6. **Markalama:** ~~Türkçe arayüz~~ (tamamlandı, varsayılan dil henüz İspanyolca; ilk açılışta cihaz diline göre seçilebilir). README'yi güncelle (yanlış "iOS 13" bilgisi dahil). Uygulama içi "BStream Music" yazıları (`AppConstants.appName` yedek doğrulamasında kullanılıyor, dikkat). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat. Oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor.
-7. **Dağıtım ve paylaşım:** macOS notarize dmg, iOS ipa (AltStore/Sideloadly), toplu `git push`, repoyu public yapma kararı, upstream'e PR. Repoyu public yapmak ve PR açmak için önce kullanıcıya sor.
+3. ~~İndirilmiş m4a'larda iOS'taki 2 kat süre~~ Tamamlandı (docs/ios-duration-fix.md §3).
+4. ~~Gerçek iPhone testi~~ Tamamlandı. Team `9K8FGUA9A3` projede.
+   - Doğrulananlar: süre kırpması, arama, kilit ekranı kartı, otomatik geçiş, widget.
+   - Düzeltilenler: varsayılan oynatıcı stilinde ve şarkı sözlerinde iOS'ta geri dönüş yoktu → küçültme oku ve içerik en üstteyken aşağı çekerek kapatma (`_PullDownToCollapse`).
+   - Cihaza kurulum: `flutter build ios --profile` sonra `xcrun devicectl device install app --device <UDID> build/ios/iphoneos/Runner.app` (yoksa `build/ios/Profile-iphoneos/Runner.app`). Debug derleme ana ekrandan açılmaz.
+5. **"Sıradakiler" paneli (YouTube Music benzeri, kullanıcı isteği):** Oynatıcının altında yukarı çekilen panel.
+   - Aşama 1: mevcut `_PlaybackQueuePanel` (şu an ayrı sayfa) oynatıcının altına çekilen panel olarak.
+   - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
+   - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
+6. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
+7. **Markalama:** ~~Türkçe arayüz~~, ~~cihaz dili varsayılanı~~ tamamlandı. Kalanlar: uygulama içi "BStream Music" yazıları (başlık, mini oynatıcı; `AppConstants.appName` dikkat), "Yeni sürüm var" kontrolü upstream sürümlerine bakıyor, README (yanlış "iOS 13" dahil), TikTok LIVE'ı arayüzden gizle (13 dosyaya ve `player_controller.dart`'a yayılmış; silme), oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor, kendi sürüm numaralandırması.
+8. **Dağıtım ve paylaşım:**
+   - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
+   - Android APK (yukarıdaki karara bağlı), iOS ipa (AltStore/Sideloadly).
+   - Toplu `git push`, repoyu public yapma kararı, upstream'e PR. Public yapmak ve PR açmak için önce kullanıcıya sor.
