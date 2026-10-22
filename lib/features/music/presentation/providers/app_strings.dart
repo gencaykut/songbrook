@@ -54,8 +54,13 @@ extension AppLanguageLabel on AppLanguage {
     AppLanguage.turkish => 'tr',
   };
 
-  static AppLanguage fromCode(String? code) {
+  static AppLanguage fromCode(String? code) =>
+      tryFromCode(code) ?? AppLanguage.spanish;
+
+  /// The supported language for [code], or null when the app has none.
+  static AppLanguage? tryFromCode(String? code) {
     return switch (code) {
+      'es' => AppLanguage.spanish,
       'en' => AppLanguage.english,
       'pt' => AppLanguage.portuguese,
       'fr' => AppLanguage.french,
@@ -63,9 +68,19 @@ extension AppLanguageLabel on AppLanguage {
       'zh' => AppLanguage.chinese,
       'ja' => AppLanguage.japanese,
       'tr' => AppLanguage.turkish,
-      _ => AppLanguage.spanish,
+      _ => null,
     };
   }
+}
+
+/// The interface language before the user picks one: the first of the
+/// device's preferred languages that the app supports, otherwise English.
+AppLanguage appLanguageForLocales(Iterable<String> languageCodes) {
+  for (final code in languageCodes) {
+    final language = AppLanguageLabel.tryFromCode(code.trim().toLowerCase());
+    if (language != null) return language;
+  }
+  return AppLanguage.english;
 }
 
 class AppStrings {

@@ -187,7 +187,7 @@ final homeScreenWidgetSyncProvider = Provider<void>((ref) {
         ref.read(settingsControllerProvider).value?.accent ?? AppAccent.white;
     final language =
         ref.read(settingsControllerProvider).value?.language ??
-        AppLanguage.spanish;
+        systemAppLanguage();
     final hasTrack =
         snapshot?.trackId != null || (snapshot?.title?.isNotEmpty ?? false);
     final currentTrackId = snapshot?.trackId;
@@ -467,7 +467,7 @@ final currentLyricsTranslationProvider =
         settingsControllerProvider.select(
           (settings) => (
             enabled: settings.value?.lyricsTranslationEnabled == true,
-            language: settings.value?.language ?? AppLanguage.spanish,
+            language: settings.value?.language ?? systemAppLanguage(),
           ),
         ),
       );
@@ -770,15 +770,19 @@ final libraryOperationCoordinatorProvider =
     });
 
 /// YouTube Music's own titles (Home shelves, categories, artist stats) follow
-/// this language. Upstream always asks for Spanish; the catalog parsers also
-/// recognize Turkish, so a Turkish interface gets Turkish content.
-String innerTubeCatalogLanguage(AppLanguage language) =>
-    language == AppLanguage.turkish ? 'tr' : 'es-419';
+/// this language. Upstream always asks for Spanish. The catalog parsers also
+/// recognize English and Turkish wording, so those interfaces get matching
+/// content; the others keep upstream's Spanish.
+String innerTubeCatalogLanguage(AppLanguage language) => switch (language) {
+  AppLanguage.english => 'en',
+  AppLanguage.turkish => 'tr',
+  _ => 'es-419',
+};
 
 final youtubeMusicSearchProvider = Provider<YouTubeMusicSearch>((ref) {
   final language = ref.watch(
     settingsControllerProvider.select(
-      (settings) => settings.value?.language ?? AppLanguage.spanish,
+      (settings) => settings.value?.language ?? systemAppLanguage(),
     ),
   );
   final service = InnerTubeSearchService(

@@ -1,5 +1,13 @@
 part of 'music_providers.dart';
 
+/// The interface language used until the user picks one in Settings.
+///
+/// Tests replace it (see test/flutter_test_config.dart) so upstream's
+/// expectations of a Spanish default keep holding.
+AppLanguage Function() systemAppLanguage = () => appLanguageForLocales(
+  PlatformDispatcher.instance.locales.map((locale) => locale.languageCode),
+);
+
 final settingsControllerProvider =
     AsyncNotifierProvider<SettingsController, SettingsState>(
       SettingsController.new,
@@ -289,7 +297,12 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   Future<SettingsState> build() async {
     final prefs = await SharedPreferences.getInstance();
     final defaultDirectory = await _defaultDownloadDirectory();
-    final language = AppLanguageLabel.fromCode(prefs.getString(_languageKey));
+    final storedLanguage = prefs.getString(_languageKey);
+    // Until the user picks a language it follows the device, so it is not
+    // saved here.
+    final language = storedLanguage == null
+        ? systemAppLanguage()
+        : AppLanguageLabel.fromCode(storedLanguage);
     final themeMode = AppThemeMode.fromCode(prefs.getString(_themeModeKey));
     final storedAccentCode = prefs.getString(_accentKey);
     final accent = AppAccent.fromCode(storedAccentCode);

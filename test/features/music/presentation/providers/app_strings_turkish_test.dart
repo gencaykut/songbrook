@@ -74,10 +74,13 @@ void main() {
     });
   });
 
-  test('a Turkish interface asks YouTube Music for Turkish content', () {
+  test('Turkish and English interfaces get matching YouTube content', () {
     expect(innerTubeCatalogLanguage(AppLanguage.turkish), 'tr');
+    expect(innerTubeCatalogLanguage(AppLanguage.english), 'en');
     for (final language in AppLanguage.values) {
-      if (language == AppLanguage.turkish) continue;
+      if (language == AppLanguage.turkish || language == AppLanguage.english) {
+        continue;
+      }
       // Other languages keep upstream's catalog language.
       expect(innerTubeCatalogLanguage(language), 'es-419');
     }

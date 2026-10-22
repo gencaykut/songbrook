@@ -207,7 +207,7 @@ class BStreamMusicApp extends ConsumerWidget {
       settingsControllerProvider.select((settings) {
         final value = settings.value;
         return (
-          language: value?.language ?? AppLanguage.spanish,
+          language: value?.language ?? systemAppLanguage(),
           accent: value?.accent ?? AppAccent.white,
           surfaceBackgroundMode:
               value?.surfaceBackgroundMode ?? SurfaceBackgroundMode.accent,

@@ -24,6 +24,26 @@ void main() {
     });
   });
 
+  group('appLanguageForLocales', () {
+    test('picks the first supported device language', () {
+      expect(appLanguageForLocales(['tr']), AppLanguage.turkish);
+      expect(appLanguageForLocales(['de', 'fr', 'en']), AppLanguage.french);
+      expect(appLanguageForLocales(['ES']), AppLanguage.spanish);
+      expect(appLanguageForLocales(['zh', 'ja']), AppLanguage.chinese);
+    });
+
+    test('falls back to English', () {
+      expect(appLanguageForLocales(['de', 'ru']), AppLanguage.english);
+      expect(appLanguageForLocales(const []), AppLanguage.english);
+    });
+
+    test('tryFromCode only knows supported languages', () {
+      expect(AppLanguageLabel.tryFromCode('tr'), AppLanguage.turkish);
+      expect(AppLanguageLabel.tryFromCode('de'), isNull);
+      expect(AppLanguageLabel.tryFromCode(null), isNull);
+    });
+  });
+
   test('static and interpolated strings use each selected translation', () {
     for (final language in <AppLanguage>[
       AppLanguage.portuguese,

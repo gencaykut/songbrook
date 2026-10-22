@@ -286,6 +286,37 @@ void main() {
     },
   );
 
+  group('interface language before the user picks one', () {
+    late AppLanguage Function() previous;
+    setUp(() => previous = systemAppLanguage);
+    tearDown(() => systemAppLanguage = previous);
+
+    test('follows the device without saving it', () async {
+      systemAppLanguage = () => AppLanguage.turkish;
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final settings = await container.read(settingsControllerProvider.future);
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(settings.language, AppLanguage.turkish);
+      expect(container.read(appStringsProvider).search, 'Ara');
+      expect(prefs.getString('settings.language'), isNull);
+    });
+
+    test('a saved choice wins over the device language', () async {
+      systemAppLanguage = () => AppLanguage.turkish;
+      SharedPreferences.setMockInitialValues({'settings.language': 'fr'});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final settings = await container.read(settingsControllerProvider.future);
+
+      expect(settings.language, AppLanguage.french);
+    });
+  });
+
   test('startup restores the persisted capsule mini player mode', () async {
     SharedPreferences.setMockInitialValues({
       'settings.surfaceBackgroundMode': 'transparent',
