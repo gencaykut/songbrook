@@ -619,6 +619,161 @@ void main() {
         }
       },
     );
+
+    test(
+      'ends a downloaded fragmented m4a just before its moov duration',
+      () async {
+        final reads = <String>[];
+        final fixture = await _Fixture.create(
+          clipMp4ToStreamDuration: true,
+          fragmentedMp4DurationReader: (path) {
+            reads.add(path);
+            return const Duration(milliseconds: 205192);
+          },
+        );
+        try {
+          await fixture.service.playLocal(
+            _localTrack('makina', filePath: '/music/makina.m4a'),
+          );
+
+          expect(reads, ['/music/makina.m4a']);
+          final source = fixture.backend.sourceLoadCalls.single.sources.single;
+          expect(source, isA<ClippingAudioSource>());
+          final clipping = source as ClippingAudioSource;
+          expect(clipping.start, isNull);
+          expect(clipping.end, const Duration(milliseconds: 204892));
+          expect(clipping.child.uri, Uri.file('/music/makina.m4a'));
+          expect((clipping.tag as MediaItem).title, 'Track makina');
+          expect(clipping.child.tag, isNull);
+        } finally {
+          await fixture.dispose();
+        }
+      },
+    );
+
+    test('reads a file URI library track from its file path', () async {
+      final reads = <String>[];
+      final fixture = await _Fixture.create(
+        clipMp4ToStreamDuration: true,
+        fragmentedMp4DurationReader: (path) {
+          reads.add(path);
+          return const Duration(seconds: 180);
+        },
+      );
+      try {
+        final uri = Uri.file('/music/uri track.m4a');
+        await fixture.service.playLocal(
+          _localTrack('uri', filePath: uri.toString()),
+        );
+
+        expect(reads, ['/music/uri track.m4a']);
+        final clipping =
+            fixture.backend.sourceLoadCalls.single.sources.single
+                as ClippingAudioSource;
+        expect(clipping.child.uri, uri);
+        expect(
+          clipping.end,
+          const Duration(seconds: 180) - const Duration(milliseconds: 300),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('leaves a non-fragmented library MP4 untouched', () async {
+      final fixture = await _Fixture.create(
+        clipMp4ToStreamDuration: true,
+        fragmentedMp4DurationReader: (_) => null,
+      );
+      try {
+        await fixture.service.playLocal(
+          _localTrack('ripped', filePath: '/music/ripped.m4a'),
+        );
+
+        final source = fixture.backend.sourceLoadCalls.single.sources.single;
+        expect(source, isA<UriAudioSource>());
+        expect((source as UriAudioSource).uri, Uri.file('/music/ripped.m4a'));
+        expect((source.tag as MediaItem).title, 'Track ripped');
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('does not open library files that cannot be MP4', () async {
+      final reads = <String>[];
+      final fixture = await _Fixture.create(
+        clipMp4ToStreamDuration: true,
+        fragmentedMp4DurationReader: (path) {
+          reads.add(path);
+          return const Duration(minutes: 3);
+        },
+      );
+      try {
+        await fixture.service.playLocalQueue([
+          _localTrack('mp3', filePath: '/music/a.mp3'),
+          _localTrack('opus', filePath: '/music/b.webm'),
+          _localTrack('ipod', filePath: 'ipod-library://item/item.m4a?id=1'),
+        ], 0);
+
+        expect(reads, isEmpty);
+        expect(
+          fixture.backend.sourceLoadCalls.single.sources,
+          everyElement(isA<UriAudioSource>()),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('reads each library file once across queue rebuilds', () async {
+      final reads = <String>[];
+      final fixture = await _Fixture.create(
+        clipMp4ToStreamDuration: true,
+        fragmentedMp4DurationReader: (path) {
+          reads.add(path);
+          return const Duration(minutes: 3);
+        },
+      );
+      try {
+        final tracks = [
+          _localTrack('a', filePath: '/music/a.m4a'),
+          _localTrack('b', filePath: '/music/b.m4a'),
+        ];
+        await fixture.service.playLocalQueue(tracks, 0);
+        await fixture.service.playLocalQueue(tracks.reversed.toList(), 0);
+
+        expect(reads, ['/music/a.m4a', '/music/b.m4a']);
+        expect(
+          fixture.backend.sourceLoadCalls.last.sources,
+          everyElement(isA<ClippingAudioSource>()),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('does not read library files where clipping is disabled', () async {
+      final reads = <String>[];
+      final fixture = await _Fixture.create(
+        fragmentedMp4DurationReader: (path) {
+          reads.add(path);
+          return const Duration(minutes: 3);
+        },
+      );
+      try {
+        await fixture.service.playLocal(
+          _localTrack('mac', filePath: '/music/mac.m4a'),
+        );
+
+        expect(reads, isEmpty);
+        expect(
+          fixture.backend.sourceLoadCalls.single.sources.single,
+          isA<UriAudioSource>(),
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
   });
 
   test(
@@ -2438,6 +2593,7 @@ class _Fixture {
   static Future<_Fixture> create({
     JustAudioOperationDeadline? operationDeadline,
     bool clipMp4ToStreamDuration = false,
+    FragmentedMp4DurationReader? fragmentedMp4DurationReader,
   }) async {
     final directory = await Directory.systemTemp.createTemp(
       'bstream_just_audio_deadline_',
@@ -2451,6 +2607,7 @@ class _Fixture {
       notificationArtworkService: artwork,
       operationDeadline: operationDeadline,
       clipMp4ToStreamDuration: clipMp4ToStreamDuration,
+      fragmentedMp4DurationReader: fragmentedMp4DurationReader,
     );
     return _Fixture(directory, artwork, backend, service);
   }

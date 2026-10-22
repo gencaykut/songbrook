@@ -1,6 +1,6 @@
 # iOS süre düzeltmeleri
 
-Fork'un ilk commit'indeki iki düzeltmenin analizi. Doğrulama iOS 27.0 simülatöründe (iPhone 18 Pro) yapıldı.
+Fork'taki iOS süre düzeltmelerinin analizi. Doğrulama iOS 27.0 simülatöründe (iPhone 18 Pro) yapıldı.
 
 ## 1. iOS'ta şarkı sonu yaklaşık bir şarkı süresi kadar geç algılanıyordu
 
@@ -39,9 +39,26 @@ Kırpmadan bağımsız, önceden var olan bir hata.
 - 4 yeni birim testi var ve mutasyonla doğrulandı.
 - iOS simülatöründe süre artık null değil (3:46.779).
 
-## Bilinen kapsam dışı
+## 3. İndirilmiş m4a dosyaları iOS'ta da geç bitiyordu
 
-- İndirilen m4a dosyaları da aynı fragmented MP4 yapısında. iOS'ta yerel kütüphaneden çalınırken (`_localAudioSource`) 2 kat süre sorunu muhtemelen sürüyor. Düzeltilmedi.
+### Kök neden
+
+- İndirme servisi stream'in ham baytlarını dosyaya yazıyor, yani indirilen dosya aynı fragmented MP4. AVFoundation bu dosyada da 2 kat süre raporluyor (205,19 sn'lik dosyaya 410,37 sn).
+- Kütüphaneden çalınan dosyalar (`_localAudioSource`) kırpılmıyordu. Simülatörde konum 206 sn'yi geçip 238 sn'ye kadar ilerledi ve "completed" olayı gelmedi.
+- Kütüphanedeki süre (`duration_seconds`) saniyeye yuvarlı olduğu için kırpma noktası olarak kullanılamaz.
+
+### Düzeltme
+
+- `lib/services/player/fragmented_mp4_duration.dart`, dosyanın `moov/mvhd` süresini okuyor (`mvhd` 0 ise `mvex/mehd`). Yalnızca `mvex` kutusu olan, yani fragmented dosyalarda bir değer döndürüyor. Fragmented olmayan dosyaları AVFoundation doğru ölçüyor, onlar kırpılmıyor.
+- `JustAudioPlayerService._localAudioSource`, iOS'ta `.m4a`/`.mp4` uzantılı yerel dosyaları `ClippingAudioSource(end: moovSüresi − 300 ms)` ile sarıyor. `content://` ve `ipod-library://` kaynakları açılmıyor.
+- Okuma sonucu servis ömrü boyunca dosya yoluna göre önbellekte tutuluyor; kuyruk yeniden kurulduğunda dosya tekrar açılmıyor.
+- Veritabanı değişikliği yok; eski indirmeler de düzeliyor.
+- Doğrulama: gerçek dosyada okuyucu 205,191836 sn buldu (`mvhd` ile aynı). Simülatörde `claude_local_completion_test.dart` ile kırpma kapalıyken şarkı bitmedi; açıkken "completed" 204,891 sn'de geldi.
+- 17 yeni birim testi var (11 okuyucu, 6 servis). Kırpma devre dışı bırakılınca servis testleri kalıyor.
+
+### Bilinen küçük fark
+
+- Arayüzdeki süre kütüphanedeki yuvarlı değerden geliyor (3:26). Gerçek süre 3:25,19. Çalmayı etkilemiyor.
 
 ## Araştırma testleri (`integration_test/claude_*.dart`)
 
@@ -51,4 +68,5 @@ Canlı YouTube'a gider; `flutter test integration_test/<dosya> -d <UDID>` ile ç
 - `claude_advance_duration_test.dart`: 3 öğelik native geçiş, eşit native süre reprodüksiyonu ve snapshot izi.
 - `claude_kralin_test.dart`: Uygulamanın iOS format filtresiyle çözümleme ve kırpma A/B karşılaştırması.
 - `claude_duration_ab_test.dart`, `claude_duration_test.dart`, `claude_search_play_test.dart`, `claude_webm_test.dart`: Yardımcı ölçümler.
+- `claude_local_completion_test.dart`: Uygulamanın indirme yoluyla şarkı indirip kütüphane parçası olarak çalar; kırpma kapalı/açık bitiş zamanını karşılaştırır.
 - `claude_url_test.dart`: İmzalı stream URL'sini yazdırır. Yalnızca yerel inceleme için; çıktısını paylaşma.

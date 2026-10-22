@@ -11,6 +11,7 @@ import '../../core/utils/image_source.dart';
 import '../../features/music/domain/entities/local_track.dart';
 import '../../features/music/domain/entities/track_info.dart';
 import 'crossfade_transition.dart';
+import 'fragmented_mp4_duration.dart';
 import 'notification_artwork_service.dart';
 import 'player_service.dart';
 
@@ -18,6 +19,7 @@ typedef JustAudioOperationDeadline = Future<void> Function(Duration duration);
 typedef JustAudioPlayerFactory = AudioPlayer Function();
 typedef JustAudioRemoteDiagnosticProbe =
     Future<String?> Function(TrackInfo track);
+typedef FragmentedMp4DurationReader = Duration? Function(String path);
 
 enum _SkipSilenceWriteResult { applied, failed, timedOut }
 
@@ -63,6 +65,7 @@ class JustAudioPlayerService
     JustAudioPlayerFactory? crossfadePlayerFactory,
     bool? supportsSkipSilence,
     bool? clipMp4ToStreamDuration,
+    FragmentedMp4DurationReader? fragmentedMp4DurationReader,
     Duration skipSilenceWriteTimeout = const Duration(seconds: 2),
     Duration operationTimeout = const Duration(seconds: 45),
     JustAudioOperationDeadline? operationDeadline,
@@ -75,6 +78,8 @@ class JustAudioPlayerService
            crossfadePlayerFactory ?? _createCrossfadeAudioPlayer,
        _supportsSkipSilence = supportsSkipSilence ?? Platform.isAndroid,
        _clipMp4ToStreamDuration = clipMp4ToStreamDuration ?? Platform.isIOS,
+       _fragmentedMp4DurationReader =
+           fragmentedMp4DurationReader ?? readFragmentedMp4Duration,
        _skipSilenceWriteTimeout = skipSilenceWriteTimeout,
        _operationTimeout = operationTimeout,
        // Public injection names are intentional; stored hooks stay private.
@@ -438,6 +443,11 @@ class JustAudioPlayerService
   /// reports twice the real duration and only completes after a phantom
   /// second half, delaying every queue advance by a whole song.
   final bool _clipMp4ToStreamDuration;
+  final FragmentedMp4DurationReader _fragmentedMp4DurationReader;
+
+  /// Library files are immutable once downloaded; queues rebuild their sources
+  /// often, so each file's `moov` is read at most once per service.
+  final Map<String, Duration?> _localMp4Durations = <String, Duration?>{};
   final Duration _skipSilenceWriteTimeout;
   AudioPlayer? _crossfadePlayer;
   bool _injectedCrossfadePlayerUsed = false;
@@ -2665,14 +2675,45 @@ class JustAudioPlayerService
   }
 
   AudioSource _localAudioSource(LocalTrack track) {
+    final tag = _localMediaItem(track);
     final source = Uri.tryParse(track.filePath.trim());
-    if (source != null &&
+    final isUri =
+        source != null &&
         (source.scheme == 'content' ||
             source.scheme == 'file' ||
-            source.scheme == 'ipod-library')) {
-      return AudioSource.uri(source, tag: _localMediaItem(track));
+            source.scheme == 'ipod-library');
+    final path = !isUri
+        ? track.filePath
+        : source.scheme == 'file'
+        ? source.toFilePath()
+        : null;
+    final end = path == null ? null : _clippedLocalMp4End(path);
+    if (end == null) {
+      return isUri
+          ? AudioSource.uri(source, tag: tag)
+          : AudioSource.file(track.filePath, tag: tag);
     }
-    return AudioSource.file(track.filePath, tag: _localMediaItem(track));
+    // As in _remoteAudioSource, the clipping source owns the tag.
+    return ClippingAudioSource(
+      child: isUri ? AudioSource.uri(source) : AudioSource.file(track.filePath),
+      end: end,
+      tag: tag,
+    );
+  }
+
+  /// Downloaded YouTube m4a files carry the same doubled duration as streams,
+  /// but the library only stores whole seconds, which can overshoot the real
+  /// end. The file's own `moov` duration is exact.
+  Duration? _clippedLocalMp4End(String path) {
+    if (!_clipMp4ToStreamDuration) return null;
+    final dot = path.lastIndexOf('.');
+    final extension = dot < 0 ? null : path.substring(dot + 1).toLowerCase();
+    if (extension != 'm4a' && extension != 'mp4') return null;
+    final duration = _localMp4Durations.putIfAbsent(
+      path,
+      () => _fragmentedMp4DurationReader(path),
+    );
+    return _guardedMp4End(duration);
   }
 
   AudioSource _remoteAudioSource(RemotePlaybackSource source) {
@@ -2693,12 +2734,15 @@ class JustAudioPlayerService
 
   Duration? _clippedMp4End(RemotePlaybackSource source, Uri uri) {
     if (!_clipMp4ToStreamDuration) return null;
-    final duration = source.streamDuration;
+    final extension = _uriExtension(uri);
+    if (extension != 'm4a' && extension != 'mp4') return null;
+    return _guardedMp4End(source.streamDuration);
+  }
+
+  Duration? _guardedMp4End(Duration? duration) {
     if (duration == null || duration <= _fragmentedMp4EndGuard * 2) {
       return null;
     }
-    final extension = _uriExtension(uri);
-    if (extension != 'm4a' && extension != 'mp4') return null;
     return duration - _fragmentedMp4EndGuard;
   }
 
