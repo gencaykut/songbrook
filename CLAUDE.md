@@ -52,8 +52,9 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 - **iOS'ta fragmented MP4 süresi:** AVFoundation, YouTube'un itag 140 m4a dosyalarının süresini 2 kat raporluyor. iOS'ta stream'ler ve indirilmiş dosyalar (dosyanın `moov` süresiyle) `ClippingAudioSource(end: streamDuration − 300 ms)` ile kırpılıyor. 300 ms pay zorunlu; kaldırılırsa AVPlayer sonsuza kadar "buffering"de kalıyor. Katalog süresi kullanılamaz (saniyeye yuvarlı). Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **iOS'ta webm yok:** AVPlayer webm açamıyor. iOS `isAvFoundationCompatibleInnerTubeAudio` filtresiyle yalnızca AAC/MP4 seçiyor; testlerde de bu filtreyi kullan.
-- **Stream çözümleme kırılgan:** Token gerektirmeyen "visionOS" istemci profiline dayanıyor. YouTube bunu kapatırsa BotGuard/PO token yedek yollarına düşülür; o yollar canlı test edilmedi.
+- **Stream çözümleme kırılgan:** Token gerektirmeyen "visionOS" istemci profiline dayanıyor. Yedek sıra: `androidSdkless` ve `visionOS01` (ikisi de tokensiz), `webEmbedded` (EJS), sonra `mweb` ve `webMusic` (EJS + BotGuard PO token). EJS/PO yolları bu fork'ta canlı test edilmedi. Ayrıntılar: [docs/innertube_playback.md](docs/innertube_playback.md).
 - `developer.log` çıktıları `flutter run` loguna düşmüyor.
+- **Dokümanlar:** `README.md` Songbrook'un kendi README'si (İngilizce); upstream README'si referans olarak `docs/upstream-readme.md`'de. Fork değişiklikleri `CHANGELOG.md`'nin başındaki "Unreleased (Songbrook)" bölümünde. `test/core/constants/app_metadata_test.dart`, README'deki `Current version: **x+y**` satırını ve CHANGELOG'daki ilk `## x.y.z+n` başlığını `pubspec.yaml` ile karşılaştırıyor; sürüm değişince üçünü birlikte güncelle.
 
 ## Simülatör notları
 
@@ -90,7 +91,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
    - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
    - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
 6. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
-7. **Markalama:** ~~Türkçe arayüz~~, ~~cihaz dili varsayılanı~~ tamamlandı. Kalanlar: uygulama içi "BStream Music" yazıları (başlık, mini oynatıcı; `AppConstants.appName` dikkat), "Yeni sürüm var" kontrolü upstream sürümlerine bakıyor, README (yanlış "iOS 13" dahil), TikTok LIVE'ı arayüzden gizle (13 dosyaya ve `player_controller.dart`'a yayılmış; silme), oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor, kendi sürüm numaralandırması.
+7. **Markalama:** ~~Türkçe arayüz~~, ~~cihaz dili varsayılanı~~ tamamlandı. Kalanlar: uygulama içi "BStream Music" yazıları (başlık, mini oynatıcı; `AppConstants.appName` dikkat), "Yeni sürüm var" kontrolü upstream sürümlerine bakıyor, ~~README~~, TikTok LIVE'ı arayüzden gizle (13 dosyaya ve `player_controller.dart`'a yayılmış; silme), oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor, kendi sürüm numaralandırması.
 8. **Dağıtım ve paylaşım:**
    - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
    - Android APK (yukarıdaki karara bağlı), iOS ipa (AltStore/Sideloadly).

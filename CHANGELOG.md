@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased (Songbrook)
+
+Changes in the Songbrook fork since BStream Music 1.2.9+129 (upstream
+`7d54c36`).
+
+### Added
+
+- Added Turkish as an interface language. A Turkish interface requests
+  search and catalog results from YouTube Music in Turkish.
+- Added a collapse control to the default player header and a back control to
+  the mobile lyrics header. The player can be pulled down to close it when its
+  content is scrolled to the top.
+- Added a script that packages a Developer ID signed, notarized universal
+  macOS DMG (`macos/package_dmg.sh`).
+
+### Changed
+
+- Renamed the app to Songbrook with the bundle ID
+  `io.github.gencaykut.songbrook` and the App Group
+  `group.io.github.gencaykut.songbrook`.
+- Until a language is chosen in Settings, the interface follows the device's
+  preferred supported language and falls back to English. An English interface
+  requests YouTube Music content in English.
+- Raised the iOS minimum to 15.0.
+
+### Fixed
+
+- Fixed songs ending minutes late on iOS. AVFoundation reports twice the real
+  duration of YouTube's fragmented M4A audio; streams and downloaded files are
+  now clipped to their real duration.
+- Fixed the duration showing `--:--` on iOS after an automatic transition to a
+  song without a catalog duration.
+
 ## 1.2.9+129 — 2026-10-12
 
 ### Added
