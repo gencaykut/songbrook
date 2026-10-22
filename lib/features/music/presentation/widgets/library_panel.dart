@@ -1295,15 +1295,18 @@ class _LiveQueueTile extends ConsumerWidget {
       return strings.nowPlaying;
     }
     return switch (item.status) {
-      LiveQueueItemStatus.resolving => item.message ?? strings.search,
-      LiveQueueItemStatus.downloading => item.message ?? strings.downloading,
+      LiveQueueItemStatus.resolving =>
+        strings.runtimeMessageOrNull(item.message) ?? strings.search,
+      LiveQueueItemStatus.downloading =>
+        strings.runtimeMessageOrNull(item.message) ?? strings.downloading,
       LiveQueueItemStatus.ready =>
         item.localTrack == null
             ? strings.readyForRemotePlayback
             : item.reusedExisting
             ? strings.reusedDownload
             : strings.completed,
-      LiveQueueItemStatus.failed => item.message ?? strings.error,
+      LiveQueueItemStatus.failed =>
+        strings.runtimeMessageOrNull(item.message) ?? strings.error,
     };
   }
 
@@ -1635,9 +1638,11 @@ class _CatalogTrackListView extends ConsumerWidget {
                             );
                           } catch (error) {
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text('$error')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(strings.runtimeMessage('$error')),
+                              ),
+                            );
                           }
                         },
                         itemBuilder: (context, index) {
@@ -2177,9 +2182,11 @@ class _TrackListView extends ConsumerWidget {
                             );
                           } catch (error) {
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text('$error')));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(strings.runtimeMessage('$error')),
+                              ),
+                            );
                           }
                         },
                         itemBuilder: (context, index) => _buildTrackRow(

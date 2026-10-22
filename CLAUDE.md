@@ -27,7 +27,7 @@ flutter test integration_test/<dosya> -d 4164F7C0-8133-419B-AA72-02E6ABC9AA6F
 dart run tool/claude_search_probe.dart
 ```
 
-- `flutter test`: 2622 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2639 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -39,6 +39,10 @@ dart run tool/claude_search_probe.dart
 - `tool/mp4/`: MP4 kutu analizi (`boxes.py`), `moov` sürelerini sıfırlama (`zero_moov.py`), AVFoundation ile süre ölçümü (`swiftc -O tool/mp4/avdur.swift -o tool/mp4/avdur`).
 
 ## Bilinmesi gerekenler
+
+- **Türkçe arayüz:** Upstream metinleri `strings.choose('İspanyolca', 'İngilizce')` ile yazıyor. Türkçe çeviriler İngilizce metni anahtar alan `app_strings_turkish.dart` dosyasında (diğer diller `app_strings_translation_catalog.dart` içinde). `ZXQPH<n>X` değişken yer tutucusu; Türkçede sırası değişebilir. Yeni bir `choose` metni eklenirse Türkçesini de bu dosyaya ekle; `app_strings_turkish_test.dart` katalogdaki her anahtarın Türkçesini ve yer tutucuları denetler.
+- **Servis mesajları:** Servisler hata/durum mesajlarını yalnızca İspanyolca üretiyor. Türkçeleri İspanyolca metni anahtar alan `app_strings_turkish_runtime.dart` dosyasında; ekrana yazılan yerde `strings.runtimeMessage(...)` ile çevriliyor (önekleri atar, iç içe mesajları da çevirir). Yeni bir mesaj gösterim noktası eklenirse ona da bağla.
+- **YouTube içerik dili:** `InnerTubeSearchService` uygulama dilinden bağımsız olarak `hl=es-419` istiyor; ana sayfa raf başlıkları ("Playlists del momento…") bu yüzden İspanyolca. Değiştirmeden önce sanatçı/albüm ayrıştırıcılarının İspanyolca/İngilizce kelimelere ("canciones", "sencillo", "álbum") bakan yerlerine Türkçe karşılık ekle ve canlı yanıtla doğrula.
 
 - **iOS'ta fragmented MP4 süresi:** AVFoundation, YouTube'un itag 140 m4a dosyalarının süresini 2 kat raporluyor. iOS'ta stream'ler ve indirilmiş dosyalar (dosyanın `moov` süresiyle) `ClippingAudioSource(end: streamDuration − 300 ms)` ile kırpılıyor. 300 ms pay zorunlu; kaldırılırsa AVPlayer sonsuza kadar "buffering"de kalıyor. Katalog süresi kullanılamaz (saniyeye yuvarlı). Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **iOS'ta webm yok:** AVPlayer webm açamıyor. iOS `isAvFoundationCompatibleInnerTubeAudio` filtresiyle yalnızca AAC/MP4 seçiyor; testlerde de bu filtreyi kullan.
@@ -70,5 +74,5 @@ Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
    - Gözlem (6. adım): oynatıcının sağ üstündeki menü simgesi koyu arka planda neredeyse görünmüyor.
 4a. **"Sıradakiler" paneli (YouTube Music benzeri):** Kullanıcı isteği. Oynatıcının altında yukarı kaydırılınca açılan, çalma kuyruğunu ve benzer parçaları gösteren panel. Var olanlar: `_PlaybackQueuePanel` (şu an ayrı bir sayfa), `related_radio_queue_extender.dart` (YouTube radio ile kuyruğu uzatma). Yok olanlar: otomatik oynatma açma/kapama ayarı, `next` yanıtındaki filtre çipleri (Tümü/Bilinen/Popüler/Keşif) — `innertube_search_service.dart` çipleri ayrıştırmıyor.
 5. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
-6. **Markalama:** Varsayılan dili değiştir ve README'yi güncelle (yanlış "iOS 13" bilgisi dahil). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat.
+6. **Markalama:** ~~Türkçe arayüz~~ (tamamlandı, varsayılan dil henüz İspanyolca; ilk açılışta cihaz diline göre seçilebilir). README'yi güncelle (yanlış "iOS 13" bilgisi dahil). Uygulama içi "BStream Music" yazıları (`AppConstants.appName` yedek doğrulamasında kullanılıyor, dikkat). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat. Oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor.
 7. **Dağıtım ve paylaşım:** macOS notarize dmg, iOS ipa (AltStore/Sideloadly), toplu `git push`, repoyu public yapma kararı, upstream'e PR. Repoyu public yapmak ve PR açmak için önce kullanıcıya sor.

@@ -17,6 +17,32 @@ struct NowPlayingEntry: TimelineEntry {
   let coverIdentity: String
 }
 
+private func idleTitle(_ language: String?) -> String {
+  switch language {
+  case "en": return "Not playing"
+  case "tr": return "Çalan bir şey yok"
+  default: return "Sin reproducción"
+  }
+}
+
+private func idleSubtitle(_ language: String?) -> String {
+  switch language {
+  case "en": return "Tap to open"
+  case "tr": return "Açmak için dokun"
+  default: return "Toca para abrir"
+  }
+}
+
+/// The widget gallery is shown before the app shares its language, so it
+/// follows the system language.
+private var galleryDescription: String {
+  switch Locale.preferredLanguages.first?.prefix(2) {
+  case "en": return "Your current song with artwork and controls."
+  case "tr": return "Çalan şarkın; kapak görseli ve kontrollerle."
+  default: return "Tu canción actual con portada y controles."
+  }
+}
+
 struct NowPlayingProvider: TimelineProvider {
   func placeholder(in context: Context) -> NowPlayingEntry {
     NowPlayingEntry(date: Date(), title: "Sin reproducción", artist: "Toca para abrir",
@@ -35,7 +61,7 @@ struct NowPlayingProvider: TimelineProvider {
 
   private func readEntry() -> NowPlayingEntry {
     let defaults = UserDefaults(suiteName: groupId)
-    let english = defaults?.string(forKey: "language") == "en"
+    let language = defaults?.string(forKey: "language")
     let raw = UInt32(truncatingIfNeeded: defaults?.integer(forKey: "accent") ?? 0xFFF5F7F5)
     let accent = Color(
       red: Double((raw >> 16) & 0xFF) / 255,
@@ -52,8 +78,8 @@ struct NowPlayingProvider: TimelineProvider {
     }
     let title = defaults?.string(forKey: "title") ?? ""
     return NowPlayingEntry(
-      date: Date(), title: title.isEmpty ? (english ? "Not playing" : "Sin reproducción") : title,
-      artist: title.isEmpty ? (english ? "Tap to open" : "Toca para abrir") : (defaults?.string(forKey: "artist") ?? ""),
+      date: Date(), title: title.isEmpty ? idleTitle(language) : title,
+      artist: title.isEmpty ? idleSubtitle(language) : (defaults?.string(forKey: "artist") ?? ""),
       isPlaying: defaults?.bool(forKey: "playing") ?? false,
       isFavorite: defaults?.bool(forKey: "favorite") ?? false,
       repeatMode: defaults?.string(forKey: "repeatMode") ?? "off",
@@ -287,7 +313,7 @@ struct BStreamNowPlayingWidget: Widget {
       NowPlayingWidgetView(entry: entry)
     }
     .configurationDisplayName("Songbrook")
-    .description("Tu canción actual con portada y controles.")
+    .description(galleryDescription)
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

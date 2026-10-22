@@ -191,7 +191,8 @@ class MiniPlayer extends ConsumerWidget {
         presentation.status != PlayerStatus.stopped &&
         presentation.status != PlayerStatus.failed;
     final compactErrorText = compactMobile && presentation.hasError
-        ? presentation.errorText ?? strings.playbackError
+        ? strings.runtimeMessageOrNull(presentation.errorText) ??
+              strings.playbackError
         : null;
     final visualIdentity = playbackVisualIdentity(
       trackId: presentation.trackId,
@@ -615,7 +616,10 @@ class MiniPlayer extends ConsumerWidget {
                                               if (presentation.hasError)
                                                 Flexible(
                                                   child: Text(
-                                                    presentation.errorText ??
+                                                    strings.runtimeMessageOrNull(
+                                                          presentation
+                                                              .errorText,
+                                                        ) ??
                                                         strings.playbackError,
                                                     maxLines: 1,
                                                     overflow:
@@ -668,7 +672,9 @@ class MiniPlayer extends ConsumerWidget {
                                     if (presentation.hasError)
                                       Flexible(
                                         child: Text(
-                                          presentation.errorText ??
+                                          strings.runtimeMessageOrNull(
+                                                presentation.errorText,
+                                              ) ??
                                               strings.playbackError,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,

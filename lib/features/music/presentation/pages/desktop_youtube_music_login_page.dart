@@ -8,6 +8,7 @@ import '../../../../services/youtube_music/auth/cdp_youtube_music_web_auth_port.
 import '../../../../services/youtube_music/auth/youtube_music_navigation_policy.dart';
 import '../../../../services/youtube_music/auth/youtube_music_web_auth_port.dart';
 import '../providers/youtube_music_auth_controller.dart';
+import '../widgets/youtube_music_auth_strings.dart';
 import '../widgets/youtube_music_channel_picker_dialog.dart';
 
 typedef DesktopYouTubeMusicWebAuthPortFactory =
@@ -203,6 +204,7 @@ class _DesktopYouTubeMusicLoginPageState
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(youtubeMusicAuthControllerProvider);
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return PopScope<Object?>(
       canPop: _allowPop,
       onPopInvokedWithResult: (didPop, result) {
@@ -213,7 +215,7 @@ class _DesktopYouTubeMusicLoginPageState
         appBar: AppBar(
           leading: IconButton(
             key: const Key('youtube-music-desktop-login-close'),
-            tooltip: 'Cerrar',
+            tooltip: strings.runtimeMessage('Cerrar'),
             onPressed: _busy || _tearingDown ? null : _close,
             icon: const Icon(Icons.close),
           ),
@@ -221,7 +223,7 @@ class _DesktopYouTubeMusicLoginPageState
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text('Iniciar sesión', maxLines: 1),
+              Text(strings.runtimeMessage('Iniciar sesión'), maxLines: 1),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -596,6 +598,8 @@ class _DesktopLoginStatusView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pages pass upstream's Spanish copy and service errors alike.
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
@@ -606,7 +610,10 @@ class _DesktopLoginStatusView extends StatelessWidget {
             children: <Widget>[
               Icon(icon, size: 52),
               const SizedBox(height: 20),
-              Text(message, textAlign: TextAlign.center),
+              Text(
+                strings.runtimeMessage(message),
+                textAlign: TextAlign.center,
+              ),
               if (showProgress) ...<Widget>[
                 const SizedBox(height: 24),
                 const CircularProgressIndicator(),
@@ -617,7 +624,7 @@ class _DesktopLoginStatusView extends StatelessWidget {
                   key: const Key('youtube-music-desktop-login-primary-action'),
                   onPressed: onPrimaryAction,
                   icon: const Icon(Icons.open_in_browser_outlined),
-                  label: Text(primaryActionLabel!),
+                  label: Text(strings.runtimeMessage(primaryActionLabel!)),
                 ),
               ],
               if (secondaryActionLabel != null &&
@@ -628,7 +635,7 @@ class _DesktopLoginStatusView extends StatelessWidget {
                     'youtube-music-desktop-login-secondary-action',
                   ),
                   onPressed: onSecondaryAction,
-                  child: Text(secondaryActionLabel!),
+                  child: Text(strings.runtimeMessage(secondaryActionLabel!)),
                 ),
               ],
             ],

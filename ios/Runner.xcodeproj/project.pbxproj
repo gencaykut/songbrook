@@ -19,6 +19,7 @@
 		B57E00042F10000100B57E00 /* IOSLocalMediaPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57E00032F10000100B57E00 /* IOSLocalMediaPlugin.swift */; };
 		B57E00062F10000100B57E00 /* IOSFileExportPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57E00052F10000100B57E00 /* IOSFileExportPlugin.swift */; };
 		B57E00072F10000100B57E00 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B57E000A2F10000100B57E00 /* InfoPlist.strings */; };
+		B57E000C2F10000100B57E00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B57E000E2F10000100B57E00 /* Localizable.strings */; };
 		B57E10012F10000100B57E00 /* NowPlayingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57E10022F10000100B57E00 /* NowPlayingWidget.swift */; };
 		B57E10032F10000100B57E00 /* NowPlayingWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B57E10042F10000100B57E00 /* NowPlayingWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, CodeSignOnCopy, ); }; };
 		B57E20012F10000100B57E00 /* BStreamAudioOutputPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57E20022F10000100B57E00 /* BStreamAudioOutputPlugin.swift */; };
@@ -99,6 +100,8 @@
 		B57E00052F10000100B57E00 /* IOSFileExportPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSFileExportPlugin.swift; sourceTree = "<group>"; };
 		B57E00082F10000100B57E00 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		B57E00092F10000100B57E00 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		B57E000B2F10000100B57E00 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		B57E000D2F10000100B57E00 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B57E10022F10000100B57E00 /* NowPlayingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingWidget.swift; sourceTree = "<group>"; };
 		B57E10042F10000100B57E00 /* NowPlayingWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NowPlayingWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B57E10072F10000100B57E00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -208,6 +211,7 @@
 				B57E20042F10000100B57E00 /* BStreamCastPlugin.swift */,
 				B57E30022F10000100B57E00 /* IOSLocalAudioQualityPlugin.swift */,
 				B57E000A2F10000100B57E00 /* InfoPlist.strings */,
+				B57E000E2F10000100B57E00 /* Localizable.strings */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -335,6 +339,7 @@
 			knownRegions = (
 				en,
 				es,
+				tr,
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
@@ -369,6 +374,7 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				B57E00072F10000100B57E00 /* InfoPlist.strings in Resources */,
+				B57E000C2F10000100B57E00 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -562,8 +568,17 @@
 			children = (
 				B57E00082F10000100B57E00 /* en */,
 				B57E00092F10000100B57E00 /* es */,
+				B57E000B2F10000100B57E00 /* tr */,
 			);
 			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		B57E000E2F10000100B57E00 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B57E000D2F10000100B57E00 /* tr */,
+			);
+			name = Localizable.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

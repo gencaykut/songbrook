@@ -72,7 +72,7 @@ class _YouTubeMusicPlaylistConflictsDialogState
                       if (conflict.message?.trim().isNotEmpty == true) ...[
                         const SizedBox(height: 4),
                         Text(
-                          conflict.message!,
+                          widget.strings.runtimeMessage(conflict.message!),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall,

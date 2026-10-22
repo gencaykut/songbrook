@@ -1,3 +1,5 @@
+import 'app_strings_turkish.dart';
+
 // Static UI translations generated for the app's supported languages.
 // The application performs no translation network requests at runtime.
 const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
@@ -3071,6 +3073,10 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
   ],
 };
 
+/// The English keys with catalog translations, so tests can check that every
+/// one also has a Turkish translation.
+Iterable<String> get appStringTranslationKeys => _appStringTranslations.keys;
+
 const Map<String, int> _appStringLanguageIndex = <String, int>{
   'pt': 0,
   'fr': 1,
@@ -3088,6 +3094,7 @@ final List<_AppStringTranslationTemplate> _dynamicAppStringTranslations = () {
 }();
 
 String? translateAppString(String english, String languageCode) {
+  if (languageCode == 'tr') return translateTurkishAppString(english);
   final index = _appStringLanguageIndex[languageCode];
   if (index == null) return null;
   final exact = _appStringTranslations[english];

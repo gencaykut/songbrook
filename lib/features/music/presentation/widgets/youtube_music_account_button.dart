@@ -245,7 +245,9 @@ class _YouTubeMusicAccountButtonState
     AppStrings strings,
     YouTubeMusicPlaylistSyncState syncState,
   ) {
-    final message = syncState.message ?? strings.playlistsSynchronized;
+    final message =
+        strings.runtimeMessageOrNull(syncState.message) ??
+        strings.playlistsSynchronized;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));

@@ -10,6 +10,7 @@ import 'player_artwork_style.dart';
 import 'player_style.dart';
 import 'player_font.dart';
 import 'app_strings_translation_catalog.dart';
+import 'app_strings_turkish_runtime.dart';
 
 enum AppLanguage {
   spanish,
@@ -19,6 +20,7 @@ enum AppLanguage {
   korean,
   chinese,
   japanese,
+  turkish,
 }
 
 String systemFontNameForPlatform(AppPlatformType platform) =>
@@ -38,6 +40,7 @@ extension AppLanguageLabel on AppLanguage {
     AppLanguage.korean => '한국어',
     AppLanguage.chinese => '简体中文',
     AppLanguage.japanese => '日本語',
+    AppLanguage.turkish => 'Türkçe',
   };
 
   String get code => switch (this) {
@@ -48,6 +51,7 @@ extension AppLanguageLabel on AppLanguage {
     AppLanguage.korean => 'ko',
     AppLanguage.chinese => 'zh',
     AppLanguage.japanese => 'ja',
+    AppLanguage.turkish => 'tr',
   };
 
   static AppLanguage fromCode(String? code) {
@@ -58,6 +62,7 @@ extension AppLanguageLabel on AppLanguage {
       'ko' => AppLanguage.korean,
       'zh' => AppLanguage.chinese,
       'ja' => AppLanguage.japanese,
+      'tr' => AppLanguage.turkish,
       _ => AppLanguage.spanish,
     };
   }
@@ -75,6 +80,15 @@ class AppStrings {
     if (isEnglish) return en;
     return translateAppString(en, appLanguage.code) ?? en;
   }
+
+  /// Services and some pages raise their messages in Spanish only. Turkish
+  /// translates the known ones; other languages keep upstream's text.
+  String runtimeMessage(String message) => appLanguage == AppLanguage.turkish
+      ? localizeTurkishRuntimeMessage(message)
+      : message;
+
+  String? runtimeMessageOrNull(String? message) =>
+      message == null ? null : runtimeMessage(message);
 
   String get audioOutput => choose('Salida Multimedia', 'Media output');
   String get thisPhone => choose('Este teléfono', 'This phone');
@@ -958,7 +972,8 @@ class AppStrings {
   String get surfaceBackgroundAccent => choose('Acento', 'Accent');
   String get surfaceBackgroundTransparent =>
       choose('Transparente', 'Transparent');
-  String get surfaceBackgroundLiquidGlass => 'Liquid Glass Style';
+  String get surfaceBackgroundLiquidGlass =>
+      choose('Liquid Glass Style', 'Liquid Glass Style');
   String get playerFont => choose('Fuente de la app', 'App font');
   String get playerFontCurrent =>
       AppPlatform.current == AppPlatformType.unsupported
@@ -988,7 +1003,8 @@ class AppStrings {
   String audioQualityChannels(int channels) =>
       choose('$channels canales', '$channels channels');
   String get playerStyleBStreamMusic => 'BStream Music';
-  String get playerStyleAppleMusic => 'Apple Music Style';
+  String get playerStyleAppleMusic =>
+      choose('Apple Music Style', 'Apple Music Style');
   String get playerStyleClassicVinyl =>
       choose('Vinilo Clásico', 'Classic Vinyl');
   String get animatedArtwork =>
@@ -1001,7 +1017,8 @@ class AppStrings {
       choose('Estilo de las portadas', 'Artwork style');
   String get playerArtworkStyleClassic => choose('Clásico', 'Classic');
   String get playerArtworkStyleExpanded => choose('Expandido', 'Expanded');
-  String get appleAnimatedArtwork => 'Animated Artwork';
+  String get appleAnimatedArtwork =>
+      choose('Animated Artwork', 'Animated Artwork');
   String get appleAnimatedArtworkDescription =>
       'Apple Music (m8tec · boidu.dev)';
   String get spotifyCanvas => 'Spotify Canvas';
@@ -1020,7 +1037,8 @@ class AppStrings {
   String get miniPlayerBackgroundArtwork => choose('Portada', 'Artwork');
   String get miniPlayerBackgroundTransparent =>
       choose('Transparente', 'Transparent');
-  String get miniPlayerBackgroundLiquidGlass => 'Liquid Glass Style';
+  String get miniPlayerBackgroundLiquidGlass =>
+      choose('Liquid Glass Style', 'Liquid Glass Style');
   String accentLabel(AppAccent accent) => switch (accent) {
     AppAccent.white => choose('Blanco', 'White'),
     AppAccent.green => choose('Verde', 'Green'),
@@ -1139,7 +1157,7 @@ class AppStrings {
   String get automaticShutdown =>
       choose('Apagado automático', 'Automatic shutdown');
   String get sleepTimerOff => choose('Desactivado', 'Off');
-  String get crossfade => 'Crossfade';
+  String get crossfade => choose('Crossfade', 'Crossfade');
   String get crossfadeSummary => choose(
     'Superpone suavemente el final de una canción con el inicio de la siguiente.',
     'Smoothly overlaps the end of one song with the start of the next.',
@@ -1151,7 +1169,7 @@ class AppStrings {
     'Acorta automáticamente los silencios detectados para que las canciones comiencen y enlacen sin esperas.',
     'Automatically shortens detected silence so songs start and transition without waiting.',
   );
-  String secondsShort(int seconds) => '$seconds s';
+  String secondsShort(int seconds) => choose('$seconds s', '$seconds s');
   String get customDuration => choose('Personalizar', 'Custom');
   String get apply => choose('Aplicar', 'Apply');
   String get timerDuration =>

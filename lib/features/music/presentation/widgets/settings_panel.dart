@@ -365,7 +365,9 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       },
       loading: () =>
           routeFrame(const Center(child: CircularProgressIndicator())),
-      error: (error, _) => routeFrame(Center(child: Text(error.toString()))),
+      error: (error, _) => routeFrame(
+        Center(child: Text(strings.runtimeMessage(error.toString()))),
+      ),
     );
   }
 
@@ -541,7 +543,8 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                           .setCommandPermission(audience, command, enabled),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => Text(error.toString()),
+                error: (error, _) =>
+                    Text(strings.runtimeMessage(error.toString())),
               ),
       _SettingsRoute.about => _AboutApplicationSettings(
         strings: strings,
@@ -754,7 +757,9 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                           icon: Icons.live_tv_rounded,
                           title: strings.liveConnection,
                           subtitle:
-                              liveState?.message ??
+                              strings.runtimeMessageOrNull(
+                                liveState?.message,
+                              ) ??
                               strings.liveConnectionSummary,
                           status: switch (liveState?.status) {
                             TikTokLiveStatus.connected => true,
@@ -1080,7 +1085,10 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       if (!mounted) {
         return;
       }
-      _showSnackBar('${ref.read(appStringsProvider).backupFailed} $error');
+      final strings = ref.read(appStringsProvider);
+      _showSnackBar(
+        '${strings.backupFailed} ${strings.runtimeMessage('$error')}',
+      );
     } finally {
       try {
         if (backupFile != null && await backupFile.exists()) {
@@ -1149,7 +1157,10 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
       if (!mounted) {
         return;
       }
-      _showSnackBar('${ref.read(appStringsProvider).backupFailed} $error');
+      final strings = ref.read(appStringsProvider);
+      _showSnackBar(
+        '${strings.backupFailed} ${strings.runtimeMessage('$error')}',
+      );
     } finally {
       if (mounted) {
         setState(() => _backupBusy = false);

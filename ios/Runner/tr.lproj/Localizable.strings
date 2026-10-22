@@ -1,0 +1,6 @@
+/* System audio output picker */
+"Audio output" = "Ses çıkışı";
+/* Tap the AirPlay route picker */
+"Choose an audio device" = "Bir ses cihazı seç";
+/* Close audio output picker */
+"Done" = "Tamam";

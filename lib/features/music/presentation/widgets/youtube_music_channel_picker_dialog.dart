@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_dialog.dart';
 import '../../../../services/youtube_music/auth/youtube_music_auth_models.dart';
 import 'youtube_music_account_avatar.dart';
+import 'youtube_music_auth_strings.dart';
 
 class YouTubeMusicChannelPickerDialog extends StatelessWidget {
   const YouTubeMusicChannelPickerDialog({super.key, required this.channels});
@@ -22,9 +23,10 @@ class YouTubeMusicChannelPickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return AppAlertDialog(
       key: const Key('youtube-music-channel-picker'),
-      title: const Text('Elige un canal'),
+      title: Text(strings.runtimeMessage('Elige un canal')),
       content: SizedBox(
         width: 420,
         height: math.min(420, math.max(72, channels.length * 72)).toDouble(),
@@ -63,7 +65,7 @@ class YouTubeMusicChannelPickerDialog extends StatelessWidget {
         TextButton(
           key: const Key('youtube-music-channel-cancel'),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(strings.runtimeMessage('Cancelar')),
         ),
       ],
     );

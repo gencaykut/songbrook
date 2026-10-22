@@ -566,7 +566,9 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                             isFavorite: isFavorite,
                             savedTrackId: savedTrackId,
                             hasError: presentation.hasError,
-                            errorText: presentation.errorText,
+                            errorText: strings.runtimeMessageOrNull(
+                              presentation.errorText,
+                            ),
                             queueVisible: showSideQueue,
                             onToggleQueue: toggleQueue,
                             onCollapse: widget.onCollapse,
@@ -596,7 +598,9 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                             isFavorite: isFavorite,
                             savedTrackId: savedTrackId,
                             hasError: presentation.hasError,
-                            errorText: presentation.errorText,
+                            errorText: strings.runtimeMessageOrNull(
+                              presentation.errorText,
+                            ),
                             queueVisible: showSideQueue,
                             onToggleQueue: toggleQueue,
                             onCollapse: widget.onCollapse,
@@ -924,7 +928,10 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                             isFavorite: isFavorite,
                                             savedTrackId: savedTrackId,
                                             hasError: presentation.hasError,
-                                            errorText: presentation.errorText,
+                                            errorText: strings
+                                                .runtimeMessageOrNull(
+                                                  presentation.errorText,
+                                                ),
                                             compact:
                                                 mobileLandscape ||
                                                 !wide ||
@@ -5983,7 +5990,13 @@ class _PlayerMenu extends ConsumerWidget {
         }
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(error.toString())));
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                ref.read(appStringsProvider).runtimeMessage(error.toString()),
+              ),
+            ),
+          );
         return;
       }
       if (!context.mounted) {
@@ -6234,7 +6247,13 @@ Future<void> _toggleFavoriteForSnapshot({
       }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(error.toString())));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              ref.read(appStringsProvider).runtimeMessage(error.toString()),
+            ),
+          ),
+        );
       return;
     }
   }

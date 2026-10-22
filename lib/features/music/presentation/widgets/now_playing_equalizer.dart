@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../../core/animation/frame_rate_ticker_provider.dart';
+import 'youtube_music_auth_strings.dart';
 
 /// Compact segmented equalizer shared by artwork cards and playback queues.
 class NowPlayingEqualizer extends StatefulWidget {
@@ -174,8 +175,11 @@ class _NowPlayingEqualizerState extends State<NowPlayingEqualizer>
   @override
   Widget build(BuildContext context) {
     final indicatorColor = Theme.of(context).colorScheme.primary;
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return Semantics(
-      label: widget.isPlaying ? 'Reproduciendo' : 'Reproducción pausada',
+      label: strings.runtimeMessage(
+        widget.isPlaying ? 'Reproduciendo' : 'Reproducción pausada',
+      ),
       child: SizedBox(
         width: widget.width,
         height: widget.height,

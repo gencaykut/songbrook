@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_description">Songbrook: çalan şarkı ve kontroller</string>
+    <string name="widget_artwork_description">Şarkının kapağı</string>
+    <string name="widget_previous">Önceki</string>
+    <string name="widget_play_pause">Çal veya duraklat</string>
+    <string name="widget_next">Sonraki</string>
+    <string name="widget_repeat">Tekrarla</string>
+    <string name="widget_repeat_all">Sırayı tekrarla</string>
+    <string name="widget_repeat_one">Bu şarkıyı tekrarla</string>
+    <string name="widget_favorite">Favoriler</string>
+    <string name="widget_queue_title">Çalma sırası</string>
+    <string name="widget_queue_empty">Sırada şarkı yok</string>
+</resources>

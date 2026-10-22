@@ -10,7 +10,5 @@ AppStrings resolveYouTubeMusicAppStrings(
 ) {
   if (explicit != null) return explicit;
   final languageCode = Localizations.maybeLocaleOf(context)?.languageCode;
-  return AppStrings(
-    languageCode == 'en' ? AppLanguage.english : AppLanguage.spanish,
-  );
+  return AppStrings(AppLanguageLabel.fromCode(languageCode));
 }

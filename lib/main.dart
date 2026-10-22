@@ -237,6 +237,7 @@ class BStreamMusicApp extends ConsumerWidget {
         Locale('ko'),
         Locale('zh'),
         Locale('ja'),
+        Locale('tr'),
       ],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

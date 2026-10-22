@@ -12,6 +12,7 @@ void main() {
         AppLanguage.korean: ('ko', '한국어'),
         AppLanguage.chinese: ('zh', '简体中文'),
         AppLanguage.japanese: ('ja', '日本語'),
+        AppLanguage.turkish: ('tr', 'Türkçe'),
       };
 
       for (final entry in expected.entries) {
@@ -30,6 +31,7 @@ void main() {
       AppLanguage.korean,
       AppLanguage.chinese,
       AppLanguage.japanese,
+      AppLanguage.turkish,
     ]) {
       final strings = AppStrings(language);
 

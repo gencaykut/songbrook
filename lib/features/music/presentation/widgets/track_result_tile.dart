@@ -474,7 +474,13 @@ class _TrackResultMenu extends ConsumerWidget {
       }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(error.toString())));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              ref.read(appStringsProvider).runtimeMessage(error.toString()),
+            ),
+          ),
+        );
     }
   }
 }

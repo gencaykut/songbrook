@@ -581,7 +581,7 @@ class _SearchResultsSliver extends StatelessWidget {
         child: _SearchEmptyState(
           icon: Icons.error_outline_rounded,
           title: strings.searchErrorTitle,
-          subtitle: error.toString(),
+          subtitle: strings.runtimeMessage(error.toString()),
         ),
       ),
     );

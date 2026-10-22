@@ -12,6 +12,7 @@ import '../../../../services/youtube_music/auth/inappwebview_youtube_music_web_a
 import '../../../../services/youtube_music/auth/youtube_music_navigation_policy.dart';
 import '../../../../services/youtube_music/auth/youtube_music_web_auth_port.dart';
 import '../providers/youtube_music_auth_controller.dart';
+import '../widgets/youtube_music_auth_strings.dart';
 import '../widgets/youtube_music_channel_picker_dialog.dart';
 
 enum YouTubeMusicLoginMechanism { embeddedWebView, desktopBrowser, unsupported }
@@ -233,6 +234,7 @@ class _YouTubeMusicLoginPageState extends ConsumerState<YouTubeMusicLoginPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(youtubeMusicAuthControllerProvider);
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return PopScope<Object?>(
       canPop: _allowPop,
       onPopInvokedWithResult: (didPop, result) {
@@ -242,7 +244,7 @@ class _YouTubeMusicLoginPageState extends ConsumerState<YouTubeMusicLoginPage> {
         appBar: AppBar(
           leading: IconButton(
             key: const Key('youtube-music-login-close'),
-            tooltip: 'Cerrar',
+            tooltip: strings.runtimeMessage('Cerrar'),
             onPressed: _busy || _tearingDown ? null : _close,
             icon: const Icon(Icons.close),
           ),
@@ -250,7 +252,7 @@ class _YouTubeMusicLoginPageState extends ConsumerState<YouTubeMusicLoginPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text('Iniciar sesión', maxLines: 1),
+              Text(strings.runtimeMessage('Iniciar sesión'), maxLines: 1),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -732,6 +734,8 @@ class _LoginStatusView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pages pass upstream's Spanish copy and service errors alike.
+    final strings = resolveYouTubeMusicAppStrings(context, null);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
@@ -742,14 +746,20 @@ class _LoginStatusView extends StatelessWidget {
             children: <Widget>[
               Icon(icon, size: 44),
               const SizedBox(height: 16),
-              Text(message, textAlign: TextAlign.center),
+              Text(
+                strings.runtimeMessage(message),
+                textAlign: TextAlign.center,
+              ),
               if (showProgress) ...<Widget>[
                 const SizedBox(height: 20),
                 const CircularProgressIndicator(),
               ],
               if (actionLabel != null && onAction != null) ...<Widget>[
                 const SizedBox(height: 20),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+                FilledButton(
+                  onPressed: onAction,
+                  child: Text(strings.runtimeMessage(actionLabel!)),
+                ),
               ],
             ],
           ),

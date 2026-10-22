@@ -3630,7 +3630,8 @@ class _HomeRecentSection extends StatelessWidget {
           );
         },
         loading: () => const _HomeLoadingShelf(),
-        error: (error, _) => _HomeEmptyText(error.toString()),
+        error: (error, _) =>
+            _HomeEmptyText(strings.runtimeMessage(error.toString())),
       ),
     );
   }
