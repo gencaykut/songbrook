@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart' show VelocityTracker;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -1111,7 +1112,14 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                                                   ),
                                                 ),
                                               );
-                                          return contentScroll;
+                                          final collapse = widget.onCollapse;
+                                          if (!mobile || collapse == null) {
+                                            return contentScroll;
+                                          }
+                                          return _PullDownToCollapse(
+                                            onCollapse: collapse,
+                                            child: contentScroll,
+                                          );
                                         },
                                       ),
                                     ),
@@ -2673,6 +2681,99 @@ class _PlayerHeader extends StatelessWidget {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Collapses the player when its content is pulled down from the top, like
+/// the system sheets and YouTube Music.
+///
+/// The pull is measured from the pointer rather than from scroll
+/// notifications: when the content fits, the scroll view does not scroll at
+/// all, and when it bounces it hands the drag to its bounce-back without an
+/// end notification. Scroll notifications only report whether the content is
+/// at its top, so a pull that first scrolls the content is ignored.
+class _PullDownToCollapse extends StatefulWidget {
+  const _PullDownToCollapse({required this.onCollapse, required this.child});
+
+  final VoidCallback onCollapse;
+  final Widget child;
+
+  @override
+  State<_PullDownToCollapse> createState() => _PullDownToCollapseState();
+}
+
+class _PullDownToCollapseState extends State<_PullDownToCollapse> {
+  static const _distanceThreshold = 96.0;
+  static const _flingDistanceThreshold = 24.0;
+  static const _flingVelocityThreshold = 700.0;
+
+  bool _atTop = true;
+  int? _pointer;
+  Offset _start = Offset.zero;
+  VelocityTracker? _velocity;
+  bool _eligible = false;
+
+  bool _handleScroll(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    final metrics = notification.metrics;
+    if (metrics.axis != Axis.vertical) return false;
+    _atTop = metrics.pixels <= metrics.minScrollExtent + 0.5;
+    if (!_atTop) _eligible = false;
+    return false;
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_pointer != null) {
+      // A second finger is a pinch or a mistake, not a pull.
+      _eligible = false;
+      return;
+    }
+    _pointer = event.pointer;
+    _start = event.position;
+    _velocity = VelocityTracker.withKind(event.kind)
+      ..addPosition(event.timeStamp, event.position);
+    _eligible = _atTop;
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
+    _velocity?.addPosition(event.timeStamp, event.position);
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (event.pointer != _pointer) return;
+    final delta = event.position - _start;
+    final velocity = _velocity?.getVelocity().pixelsPerSecond.dy ?? 0;
+    final vertical = delta.dy > delta.dx.abs() * 1.5;
+    final collapse =
+        _eligible &&
+        vertical &&
+        (delta.dy >= _distanceThreshold ||
+            (delta.dy >= _flingDistanceThreshold &&
+                velocity >= _flingVelocityThreshold));
+    _reset();
+    if (collapse) widget.onCollapse();
+  }
+
+  void _reset([PointerEvent? event]) {
+    if (event != null && event.pointer != _pointer) return;
+    _pointer = null;
+    _velocity = null;
+    _eligible = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: _handlePointerDown,
+      onPointerMove: _handlePointerMove,
+      onPointerUp: _handlePointerUp,
+      onPointerCancel: _reset,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _handleScroll,
+        child: widget.child,
       ),
     );
   }

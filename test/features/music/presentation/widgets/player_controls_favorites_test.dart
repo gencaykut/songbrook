@@ -2130,6 +2130,70 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  group('BStream pull down to collapse', () {
+    Future<int Function()> pumpPlayer(WidgetTester tester) async {
+      _configureView(tester, const Size(402, 874));
+      var collapses = 0;
+      await tester.pumpWidget(
+        _playerHarness(
+          platform: TargetPlatform.iOS,
+          snapshot: snapshot,
+          localTrack: localTrack,
+          playlists: _TestPlaylistsController(),
+          onCollapse: () => collapses++,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      return () => collapses;
+    }
+
+    final scroll = find.byKey(const ValueKey('player-content-scroll'));
+
+    testWidgets('a long pull from the top collapses', (tester) async {
+      final collapses = await pumpPlayer(tester);
+      await tester.timedDrag(
+        scroll,
+        const Offset(0, 260),
+        const Duration(milliseconds: 900),
+      );
+      await tester.pumpAndSettle();
+      expect(collapses(), 1);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('a short fast flick collapses', (tester) async {
+      final collapses = await pumpPlayer(tester);
+      await tester.fling(scroll, const Offset(0, 90), 1500);
+      await tester.pumpAndSettle();
+      expect(collapses(), 1);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('a short slow pull does not collapse', (tester) async {
+      final collapses = await pumpPlayer(tester);
+      await tester.timedDrag(
+        scroll,
+        const Offset(0, 50),
+        const Duration(milliseconds: 900),
+      );
+      await tester.pumpAndSettle();
+      expect(collapses(), 0);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('a sideways swipe does not collapse', (tester) async {
+      final collapses = await pumpPlayer(tester);
+      await tester.fling(scroll, const Offset(220, 110), 1500);
+      await tester.pumpAndSettle();
+      expect(collapses(), 0);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+    testWidgets('an upward drag does not collapse', (tester) async {
+      final collapses = await pumpPlayer(tester);
+      await tester.fling(scroll, const Offset(0, -260), 1500);
+      await tester.pumpAndSettle();
+      expect(collapses(), 0);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+  });
+
   testWidgets('BStream header has no collapse without a handler', (
     tester,
   ) async {
