@@ -51,11 +51,14 @@ dart run tool/claude_search_probe.dart
 - Ana sayfa içeriği her oturumda değişiyor. Tekrarlanabilir doğrulama için gerçek `JustAudioPlayerService` ile entegrasyon testi yaz.
 - Simülatörde arama kutusuna metin girilemiyor (iOS yapıştırma izni engelliyor); uygulama hatası olduğu kanıtlanmadı.
 
-## Açık işler
+## İş sırası
 
-1. **Fork adı ve bundle ID.** Şu anki `com.bstream.bstreamMusic` ve App Group `group.com.bstream.bstreamMusic` kullanıcının Developer Team'inde değil. Gerçek cihaz testinden önce yeni ad seçilmeli.
-2. **Gerçek iPhone testi:** İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu.
-3. **İndirilmiş m4a dosyaları:** iOS'ta yerel kütüphaneden çalınırken (`_localAudioSource`) muhtemelen aynı 2 kat süre sorunu var. Düzeltilmedi.
-4. **Markalama:** TikTok LIVE modülünü (`third_party/piratetok_live`) çıkar, varsayılan dili İspanyolca yerine değiştir, README'deki "iOS 13" bilgisini düzelt, macOS imzalama ve notarization.
+Sırayla yapılır. Push yalnızca 7. adımda, tek seferde.
+
+1. **Upstream'in yeni commit'ini al:** `7d54c36` (şarkı sözleri, widget'lar, masaüstü kısayolları) `main` ile çakışmasız birleşiyor. Fork farkı büyümeden almak en ucuz şimdi. Sonra analyze ve testleri çalıştır.
+2. **Ad, bundle ID ve App Group** (karar kullanıcının). Yalnızca kimlikleri değiştir: `ios/`, `macos/Runner.xcodeproj`, `android/app/build.gradle.kts`, entitlements ve App Group. `com.bstream...` ile başlayan method channel adlarına dokunma; bunlar kullanıcıya görünmüyor ve upstream'le gereksiz fark yaratır.
+3. **İndirilmiş m4a'larda iOS'taki 2 kat süre:** `_localAudioSource` için de kırpma. Önce indirme sırasında `streamDuration`'ın kaydedilip kaydedilmediğine bak. Simülatörde yapılabilir; 2. adımı beklemez.
+4. **Gerçek iPhone testi:** İmzalama, App Group'un hem Runner'a hem `NowPlayingWidget` uzantısına eklenmesi, kilit ekranı "Şimdi Çalıyor" kartı (simülatörde hiç görünmedi), arama kutusu, 1. ve 3. adımdaki düzeltmelerin gerçek AVPlayer'da doğrulanması.
 5. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
-6. **Upstream'e PR:** iOS süre düzeltmeleri BStream'e gönderilebilir. Önce kullanıcıya sor.
+6. **Markalama:** Varsayılan dili değiştir ve README'yi güncelle (yanlış "iOS 13" bilgisi dahil). TikTok LIVE 13 dosyaya, bu arada çakışma sıcak noktası `player_controller.dart`'a yayılmış; silmek yerine arayüzden gizle ya da kapat.
+7. **Dağıtım ve paylaşım:** macOS notarize dmg, iOS ipa (AltStore/Sideloadly), toplu `git push`, repoyu public yapma kararı, upstream'e PR. Repoyu public yapmak ve PR açmak için önce kullanıcıya sor.
