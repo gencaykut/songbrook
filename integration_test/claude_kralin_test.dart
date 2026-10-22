@@ -22,8 +22,10 @@ void main() {
       audioFormatPredicate: isAvFoundationCompatibleInnerTubeAudio,
     );
     try {
-      final song = (await search.searchSongs('Ahiyan Kralın Kızı', limit: 1))
-          .first;
+      final song = (await search.searchSongs(
+        'Ahiyan Kralın Kızı',
+        limit: 1,
+      )).first;
       for (final clip in [false, true]) {
         final resolved = await playback.resolve(song.videoId);
         // ignore: avoid_print

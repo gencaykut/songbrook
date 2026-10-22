@@ -67,7 +67,8 @@ void main() {
       final loaded = await player.setAudioSource(
         ClippingAudioSource(
           child: AudioSource.uri(uri, headers: result.headers),
-          end: result.format.approxDuration! - const Duration(milliseconds: 300),
+          end:
+              result.format.approxDuration! - const Duration(milliseconds: 300),
         ),
         preload: true,
       );

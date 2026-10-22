@@ -28,9 +28,11 @@ void main() {
       required bool catalogDuration,
     }) async {
       var resolved = await playback.resolve(id);
-      for (var attempt = 0;
-          attempt < 4 && !resolved.format.mimeType.startsWith('audio/mp4');
-          attempt++) {
+      for (
+        var attempt = 0;
+        attempt < 4 && !resolved.format.mimeType.startsWith('audio/mp4');
+        attempt++
+      ) {
         // AVPlayer cannot open WebM; the app relies on an MP4 format here.
         resolved = await playback.resolve(id);
       }
@@ -96,11 +98,7 @@ void main() {
         }
         final a = await source(ids[0], 'q:$clip:0', catalogDuration: false);
         final b = await source(ids[1], 'q:$clip:1', catalogDuration: false);
-        final c = await source(
-          ids[1],
-          'q:$clip:2',
-          catalogDuration: false,
-        );
+        final c = await source(ids[1], 'q:$clip:2', catalogDuration: false);
         final service = JustAudioPlayerService(clipMp4ToStreamDuration: clip);
         String? lastEntry;
         Duration? lastDuration;
