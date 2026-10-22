@@ -2,6 +2,7 @@
 
 - Kullanıcıyla **Türkçe** konuşulur.
 - Bu repo, `BryamContreras/BStream-Music` (Flutter, BSD-2) projesinin **ayrılan bir fork'u**. Upstream sürekli takip edilmiyor; yalnızca YouTube motoruna (`lib/services/youtube_music/`) gelen düzeltmeler `upstream` remote'undan cherry-pick ile alınıyor.
+- Repo: `origin` = github.com/gencaykut/yt-music-app (private, geçici ad), `upstream` = BryamContreras/BStream-Music.
 - Fork tabanı: upstream `8dd2a2e`. Upstream değişikliklerini görmek için: `git fetch upstream && git log --oneline main..upstream/main`.
 - Proje açık kaynak olacak. Kullanıcının ücretli Apple Developer hesabı var; bunu sorma, maliyet ya da engel olarak sayma.
 - Dağıtım: App Store yok. Mac için notarize edilmiş dmg/pkg, iOS için AltStore/Sideloadly (AB'de AltStore PAL), Android için APK/F-Droid.
