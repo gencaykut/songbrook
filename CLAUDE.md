@@ -96,3 +96,15 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
    - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
    - Android APK (yukarıdaki karara bağlı), iOS ipa (AltStore/Sideloadly).
    - Toplu `git push`, repoyu public yapma kararı, upstream'e PR. Public yapmak ve PR açmak için önce kullanıcıya sor.
+
+### Yeni özellikler (24 Ekim 2026 değerlendirmesi, öncelik sırasıyla)
+
+BStream çekirdek olarak kalıyor; başka bir oynatıcı reposuna geçilmiyor. 9 ve 10 küçük işler, 5'ten önce de yapılabilir. 11, 5'ten sonra gelmeli (kuyruk modeline dayanıyor). Kullanıcının verdiği referanslar (Ariami Connect, YouPipe Music, PlayerVF) bulunamadı; bağlantıları gelmeden lisans ve mimari varsayma.
+
+9. **Ses seviyesi dengeleme:** YouTube'un player yanıtındaki `loudnessDb`'yi oku (şu an okunmuyor), `setVolume` ile yalnızca kısarak uygula. iOS'ta AVPlayer 1.0'ın üstüne çıkmadığı için yükseltme yok. DSP gerekmez, her platformda çalışır.
+10. **Arama sayfalaması:** Arama 20 sonuçla sınırlı (`InnerTubeSearchService.maxResults`). Continuation altyapısı ana sayfa ve tür/ruh hali sayfalarında var; aramaya bağla, Playlists filtresini ekle (`searchArtists` zaten var). Kod upstream'den cherry-pick alınan `lib/services/youtube_music/` içinde; çakışmayı azaltmak için upstream'e PR düşünülebilir (önce kullanıcıya sor). RustyPipe (GPL) kodu alınmaz.
+11. **Songbrook Connect:** Cihazlar arasında yalnızca `videoId`, kuyruk, konum, shuffle/repeat senkronize edilir; hedef cihaz stream'i kendi resolver'ıyla çözer. Yerel ağda Bonjour/mDNS keşfi + WebSocket (iOS'ta yerel ağ izni yeterli, multicast entitlement gerekmez). Ağlar arası devretme sunucu ister; kapsam dışı. iOS çalmıyorken askıya alındığı için alıcı olamaz, kumanda olarak çalışır.
+12. **Şarkı/video eşleştirme + SponsorBlock:** Müzik videosu çalınınca YouTube Music'in şarkı (ATV) karşılığına geçmek asıl kazanç. SponsorBlock `music_offtopic` kategorisi tamamlayıcı; veri CC BY-NC-SA 4.0 (atıf gerekli), gizlilik için hash önekli sorgu kullan. Sessizlik atlama yalnızca Android'de var.
+13. **Android Auto:** `audio_service`'in MediaBrowserService'i manifestte var ama göz atma ağacı (`getChildren`) ve `automotive_app_desc` yok. Play dışı kurulumda Auto, kullanıcı geliştirici ayarlarında "Bilinmeyen kaynaklar"ı açmadıkça uygulamayı göstermiyor. Chromecast/DLNA zaten var (`lib/services/casting/`, docs/audio-routing.md); yeni kod değil, gerçek alıcıyla test gerekiyor.
+14. **EQ / DSP:** Android'de vendored just_audio'nun `AndroidEqualizer`/`AndroidLoudnessEnhancer`'ı, Mac'te media_kit/libmpv `af` filtreleri ile kolay. iOS'ta AVPlayer'da EQ yok; `MTAudioProcessingTap` gerekir ve süre kırpmasıyla etkileşir.
+    - Şimdilik önerilmeyenler: MusicBrainz (uygulama dosyalara etiket yazmıyor), pitch/reverb, kelime düzeyinde karaoke (LRCLIB yalnızca satır zamanlaması veriyor).
