@@ -166,6 +166,47 @@ class InnerTubeAlbum {
   );
 }
 
+/// One page of a filtered YouTube Music search.
+class InnerTubeSearchResultPage<T> {
+  InnerTubeSearchResultPage({required List<T> items, this.continuation})
+    : items = List.unmodifiable(items);
+
+  final List<T> items;
+
+  /// Opaque token for the next page, or `null` when the results end.
+  final String? continuation;
+}
+
+/// A public playlist from search, opened through its `VL` browse ID.
+class InnerTubePlaylist {
+  const InnerTubePlaylist({
+    required this.browseId,
+    required this.title,
+    this.subtitle,
+    this.thumbnailUrl,
+  });
+
+  final String browseId;
+  final String title;
+
+  /// YouTube's own owner and count line, already localized.
+  final String? subtitle;
+  final String? thumbnailUrl;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is InnerTubePlaylist &&
+            browseId == other.browseId &&
+            title == other.title &&
+            subtitle == other.subtitle &&
+            thumbnailUrl == other.thumbnailUrl;
+  }
+
+  @override
+  int get hashCode => Object.hash(browseId, title, subtitle, thumbnailUrl);
+}
+
 class InnerTubeArtist {
   const InnerTubeArtist({
     required this.browseId,

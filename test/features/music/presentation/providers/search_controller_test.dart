@@ -93,7 +93,12 @@ void main() {
     expect(catalog.videoQueries, ['Artist']);
     expect(catalog.albumQueries, ['Artist']);
     expect(catalog.artistQueries, ['Artist']);
-    expect(search.pages.keys.toSet(), SearchCategory.values.toSet());
+    expect(search.pages.keys.toSet(), {
+      SearchCategory.songs,
+      SearchCategory.videos,
+      SearchCategory.albums,
+      SearchCategory.artists,
+    });
     expect(search.selectedCategory, SearchCategory.videos);
     expect(search.selectedTracks.single.title, 'Video');
     expect(search.fallbackOnly, isFalse);
@@ -304,6 +309,164 @@ void main() {
     expect(catalog.albumBrowseIds, ['MPREalbum001']);
     expect(catalog.lastAlbumLimit, innerTubeDetailResultLimit);
   });
+
+  group('paged results', () {
+    InnerTubeSong song(String id) =>
+        InnerTubeSong(videoId: id, title: 'Song $id', artists: const ['A']);
+
+    ProviderContainer pagedContainer(_PagedCatalog catalog) {
+      final container = ProviderContainer(
+        overrides: [
+          remoteMusicDataSourceProvider.overrideWithValue(
+            RemoteMusicDataSource(
+              _FakeDownloaderService(),
+              youtubeMusicSearch: catalog,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    test('loadMore appends the next page and skips repeats', () async {
+      final catalog = _PagedCatalog(
+        songs: {
+          null: [
+            InnerTubeSearchResultPage(
+              items: [song('a0000000001'), song('b0000000001')],
+              continuation: 'page-2',
+            ),
+          ],
+          'page-2': [
+            InnerTubeSearchResultPage(
+              items: [song('b0000000001'), song('c0000000001')],
+            ),
+          ],
+        },
+      );
+      final container = pagedContainer(catalog);
+      await container.read(searchControllerProvider.future);
+      final controller = container.read(searchControllerProvider.notifier);
+
+      await controller.submit('artist');
+      expect(
+        container.read(searchControllerProvider).value!.selectedPage!.hasMore,
+        isTrue,
+      );
+      await controller.loadMore();
+
+      final search = container.read(searchControllerProvider).value!;
+      expect(search.selectedTracks.map((track) => track.id), [
+        'a0000000001',
+        'b0000000001',
+        'c0000000001',
+      ]);
+      expect(search.selectedPage!.hasMore, isFalse);
+      expect(search.isSelectedCategoryLoadingMore, isFalse);
+      expect(catalog.songContinuations, [null, 'page-2']);
+
+      await controller.loadMore();
+      expect(catalog.songContinuations, hasLength(2));
+    });
+
+    test('a failed page keeps the results and can be retried', () async {
+      final catalog = _PagedCatalog(
+        songs: {
+          null: [
+            InnerTubeSearchResultPage(
+              items: [song('a0000000001')],
+              continuation: 'page-2',
+            ),
+          ],
+          'page-2': [
+            StateError('offline'),
+            InnerTubeSearchResultPage(items: [song('b0000000001')]),
+          ],
+        },
+      );
+      final container = pagedContainer(catalog);
+      await container.read(searchControllerProvider.future);
+      final controller = container.read(searchControllerProvider.notifier);
+
+      await controller.submit('artist');
+      await controller.loadMore();
+      var search = container.read(searchControllerProvider).value!;
+      expect(search.selectedLoadMoreFailed, isTrue);
+      expect(search.selectedTracks.single.id, 'a0000000001');
+      expect(search.fallbackOnly, isFalse);
+
+      await controller.loadMore();
+      search = container.read(searchControllerProvider).value!;
+      expect(search.selectedLoadMoreFailed, isFalse);
+      expect(search.selectedTracks.map((track) => track.id), [
+        'a0000000001',
+        'b0000000001',
+      ]);
+    });
+
+    test('a new search discards a page that arrives late', () async {
+      final late = Completer<InnerTubeSearchResultPage<InnerTubeSong>>();
+      final catalog = _PagedCatalog(
+        songs: {
+          null: [
+            InnerTubeSearchResultPage(
+              items: [song('a0000000001')],
+              continuation: 'page-2',
+            ),
+          ],
+          'page-2': [late.future],
+        },
+      );
+      final container = pagedContainer(catalog);
+      await container.read(searchControllerProvider.future);
+      final controller = container.read(searchControllerProvider.notifier);
+
+      await controller.submit('first');
+      final pending = controller.loadMore();
+      await controller.submit('second');
+      late.complete(InnerTubeSearchResultPage(items: [song('z0000000001')]));
+      await pending;
+
+      final search = container.read(searchControllerProvider).value!;
+      expect(search.query, 'second');
+      expect(search.selectedTracks.map((track) => track.id), ['a0000000001']);
+      expect(search.loadingMoreCategory, isNull);
+    });
+
+    test('the Playlists tab loads community playlists', () async {
+      final catalog = _PagedCatalog(
+        songs: {
+          null: [
+            InnerTubeSearchResultPage(items: [song('a0000000001')]),
+          ],
+        },
+        playlists: {
+          null: [
+            InnerTubeSearchResultPage(
+              items: const [
+                InnerTubePlaylist(
+                  browseId: 'VLPLbest0001',
+                  title: 'Best of',
+                  subtitle: 'Curator • 20K views',
+                ),
+              ],
+            ),
+          ],
+        },
+      );
+      final container = pagedContainer(catalog);
+      await container.read(searchControllerProvider.future);
+      final controller = container.read(searchControllerProvider.notifier);
+
+      await controller.submit('best of');
+      await controller.selectCategory(SearchCategory.playlists);
+
+      final search = container.read(searchControllerProvider).value!;
+      expect(search.selectedPlaylists.single.browseId, 'VLPLbest0001');
+      expect(search.selectedPlaylists.single.subtitle, 'Curator • 20K views');
+    });
+  });
 }
 
 ProviderContainer _container(
@@ -445,4 +608,73 @@ class _FakeDownloaderService implements DownloaderService {
   Future<DownloadResult> downloadAudio(String url, DownloadOptions options) {
     throw UnimplementedError();
   }
+}
+
+/// Serves scripted pages per continuation token; a missing token's last
+/// outcome repeats. An outcome is a page, a future of one, or an error.
+class _PagedCatalog implements YouTubeMusicSearch, YouTubeMusicPagedSearch {
+  _PagedCatalog({
+    Map<String?, List<Object>> songs = const {},
+    Map<String?, List<Object>> playlists = const {},
+  }) : _songs = {
+         for (final e in songs.entries) e.key: [...e.value],
+       },
+       _playlists = {
+         for (final e in playlists.entries) e.key: [...e.value],
+       };
+
+  final Map<String?, List<Object>> _songs;
+  final Map<String?, List<Object>> _playlists;
+  final List<String?> songContinuations = [];
+
+  Future<InnerTubeSearchResultPage<T>> _serve<T>(
+    Map<String?, List<Object>> pages,
+    String? continuation,
+  ) async {
+    final outcomes = pages[continuation];
+    if (outcomes == null || outcomes.isEmpty) {
+      return InnerTubeSearchResultPage<T>(items: const []);
+    }
+    final outcome = outcomes.length > 1 ? outcomes.removeAt(0) : outcomes.first;
+    if (outcome is Future<InnerTubeSearchResultPage<T>>) return outcome;
+    if (outcome is InnerTubeSearchResultPage<T>) return outcome;
+    throw outcome;
+  }
+
+  @override
+  Future<List<InnerTubeSong>> searchSongs(String query, {int limit = 20}) =>
+      throw UnsupportedError('The paged API is used instead.');
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchSongsPage(
+    String query, {
+    String? continuation,
+  }) {
+    songContinuations.add(continuation);
+    return _serve(_songs, continuation);
+  }
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchVideosPage(
+    String query, {
+    String? continuation,
+  }) => _serve(const {}, continuation);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeAlbum>> searchAlbumsPage(
+    String query, {
+    String? continuation,
+  }) => _serve(const {}, continuation);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeArtist>> searchArtistsPage(
+    String query, {
+    String? continuation,
+  }) => _serve(const {}, continuation);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubePlaylist>> searchPlaylistsPage(
+    String query, {
+    String? continuation,
+  }) => _serve(_playlists, continuation);
 }

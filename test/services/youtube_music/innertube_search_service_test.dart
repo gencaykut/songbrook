@@ -2518,6 +2518,183 @@ void main() {
         );
       },
     );
+
+    group('paged search', () {
+      Map<String, Object> withContinuation(
+        Map<String, Object> payload,
+        String token,
+      ) {
+        final shelf =
+            ((((((payload['contents']! as Map)['tabbedSearchResultsRenderer']
+                                    as Map)['tabs']
+                                as List)
+                            .first
+                        as Map)['tabRenderer']
+                    as Map)['content']
+                as Map)['sectionListRenderer'];
+        final musicShelf =
+            (((shelf as Map)['contents'] as List).first
+                as Map)['musicShelfRenderer'];
+        (musicShelf as Map)['continuations'] = [
+          {
+            'nextContinuationData': {'continuation': token},
+          },
+        ];
+        return payload;
+      }
+
+      Map<String, Object> continuationPayload(
+        List<Map<String, Object>> items, {
+        String? token,
+      }) => {
+        'continuationContents': {
+          'musicShelfContinuation': {
+            'contents': items,
+            if (token != null)
+              'continuations': [
+                {
+                  'nextContinuationData': {'continuation': token},
+                },
+              ],
+          },
+        },
+      };
+
+      test(
+        'follows the continuation token with a continuation-only body',
+        () async {
+          transport.responses.addAll([
+            InnerTubeHttpResponse(
+              statusCode: HttpStatus.ok,
+              body: jsonEncode(
+                withContinuation(
+                  _searchPayload([
+                    _songRenderer(
+                      videoId: 'song0000001',
+                      title: 'First',
+                      artists: const ['Artist'],
+                    ),
+                  ]),
+                  'token-2',
+                ),
+              ),
+            ),
+            InnerTubeHttpResponse(
+              statusCode: HttpStatus.ok,
+              body: jsonEncode(
+                continuationPayload([
+                  _songRenderer(
+                    videoId: 'song0000002',
+                    title: 'Second',
+                    artists: const ['Artist'],
+                  ),
+                ]),
+              ),
+            ),
+          ]);
+          final service = createService();
+
+          final first = await service.searchSongsPage('  Artist  ');
+          expect(first.items.single.videoId, 'song0000001');
+          expect(first.continuation, 'token-2');
+
+          final second = await service.searchSongsPage(
+            'Artist',
+            continuation: first.continuation,
+          );
+          expect(second.items.single.videoId, 'song0000002');
+          expect(second.continuation, isNull);
+
+          expect(transport.requests[0].body['query'], 'Artist');
+          expect(
+            transport.requests[0].body['params'],
+            InnerTubeSearchService.songsFilter,
+          );
+          expect(transport.requests[1].body['continuation'], 'token-2');
+          expect(transport.requests[1].body.containsKey('query'), isFalse);
+          expect(transport.requests[1].body.containsKey('params'), isFalse);
+        },
+      );
+
+      test('an empty query without a continuation sends nothing', () async {
+        final service = createService();
+        final page = await service.searchAlbumsPage('  ');
+        expect(page.items, isEmpty);
+        expect(page.continuation, isNull);
+        expect(transport.requests, isEmpty);
+      });
+
+      test('searches community playlists by their VL browse ID', () async {
+        transport.response = InnerTubeHttpResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode(
+            _searchPayload([
+              _responsivePlaylistRenderer(
+                browseId: 'VLPLplaylist0001',
+                title: 'Best of',
+                subtitleRuns: const ['Curator', ' • ', '20K views'],
+              ),
+              _responsivePlaylistRenderer(
+                browseId: 'MPREb_notAPlaylist',
+                title: 'Album',
+                pageType: 'MUSIC_PAGE_TYPE_ALBUM',
+              ),
+              _responsivePlaylistRenderer(
+                browseId: 'VLPLplaylist0001',
+                title: 'Duplicate',
+              ),
+            ]),
+          ),
+        );
+        final service = createService();
+
+        final page = await service.searchPlaylistsPage('best of');
+
+        expect(page.items, [
+          const InnerTubePlaylist(
+            browseId: 'VLPLplaylist0001',
+            title: 'Best of',
+            subtitle: 'Curator • 20K views',
+          ),
+        ]);
+        expect(
+          transport.requests.single.body['params'],
+          InnerTubeSearchService.playlistsFilter,
+        );
+      });
+    });
+
+    test('innerTubeSearchContinuation reads both continuation shapes', () {
+      expect(
+        innerTubeSearchContinuation({
+          'continuationContents': {
+            'musicShelfContinuation': {
+              'continuations': [
+                {
+                  'nextContinuationData': {'continuation': ' legacy '},
+                },
+              ],
+            },
+          },
+        }),
+        'legacy',
+      );
+      expect(
+        innerTubeSearchContinuation({
+          'onResponseReceivedActions': [
+            {
+              'continuationItemRenderer': {
+                'continuationEndpoint': {
+                  'continuationCommand': {'token': 'modern'},
+                },
+              },
+            },
+          ],
+        }),
+        'modern',
+      );
+      expect(innerTubeSearchContinuation(_searchPayload(const [])), isNull);
+    });
   });
 
   group('InnerTubeSearchParser', () {
@@ -4482,4 +4659,44 @@ class _RecordedRequest {
   final Map<String, String> headers;
   final Map<String, Object> body;
   final Duration? timeout;
+}
+
+Map<String, Object> _responsivePlaylistRenderer({
+  required String browseId,
+  required String title,
+  String pageType = 'MUSIC_PAGE_TYPE_PLAYLIST',
+  List<String> subtitleRuns = const [],
+}) {
+  return {
+    'musicResponsiveListItemRenderer': {
+      'flexColumns': [
+        {
+          'musicResponsiveListItemFlexColumnRenderer': {
+            'text': {
+              'runs': [
+                {'text': title},
+              ],
+            },
+          },
+        },
+        {
+          'musicResponsiveListItemFlexColumnRenderer': {
+            'text': {
+              'runs': [
+                for (final text in subtitleRuns) {'text': text},
+              ],
+            },
+          },
+        },
+      ],
+      'navigationEndpoint': {
+        'browseEndpoint': {
+          'browseId': browseId,
+          'browseEndpointContextSupportedConfigs': {
+            'browseEndpointContextMusicConfig': {'pageType': pageType},
+          },
+        },
+      },
+    },
+  };
 }

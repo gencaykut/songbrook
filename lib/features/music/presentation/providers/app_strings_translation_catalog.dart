@@ -656,6 +656,21 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '没有与此搜索匹配的专辑。',
     'この検索に一致するアルバムはありません。',
   ],
+  'Playlists': <String>['Playlists', 'Playlists', '재생목록', '播放列表', 'プレイリスト'],
+  'No playlists matched this search.': <String>[
+    'Nenhuma playlist corresponde a esta pesquisa.',
+    'Aucune playlist ne correspond à cette recherche.',
+    '이 검색과 일치하는 재생목록이 없습니다.',
+    '没有与此搜索匹配的播放列表。',
+    'この検索に一致するプレイリストはありません。',
+  ],
+  'More results could not be loaded.': <String>[
+    'Não foi possível carregar mais resultados.',
+    'Impossible de charger plus de résultats.',
+    '결과를 더 불러오지 못했습니다.',
+    '无法加载更多结果。',
+    'これ以上の結果を読み込めませんでした。',
+  ],
   'No artists matched this search.': <String>[
     'Nenhum artista corresponde a esta pesquisa.',
     'Aucun artiste ne correspond à cette recherche.',

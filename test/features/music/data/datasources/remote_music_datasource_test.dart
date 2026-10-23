@@ -128,7 +128,7 @@ void main() {
     );
 
     test('keeps successful empty InnerTube pages without fallback', () async {
-      final catalog = _FakeYouTubeMusicSearch();
+      final catalog = _FakePagedYouTubeMusicSearch();
       final downloader = _FakeDownloaderService(
         searchResults: const [
           TrackInfo(
@@ -163,11 +163,12 @@ void main() {
       );
       for (final category in SearchCategory.values) {
         final failure = InnerTubeException('${category.name} unavailable');
-        final catalog = _FakeYouTubeMusicSearch(
+        final catalog = _FakePagedYouTubeMusicSearch(
           error: category == SearchCategory.songs ? failure : null,
           videoError: category == SearchCategory.videos ? failure : null,
           albumError: category == SearchCategory.albums ? failure : null,
           artistError: category == SearchCategory.artists ? failure : null,
+          playlistError: category == SearchCategory.playlists ? failure : null,
         );
         final downloader = _FakeDownloaderService(
           searchResults: const [fallback],
@@ -187,6 +188,52 @@ void main() {
         expect(page.artists, isEmpty);
         expect(page.primaryError, same(failure));
       }
+    });
+
+    test('pages carry the continuation and the next page uses it', () async {
+      final catalog = _FakePagedYouTubeMusicSearch(
+        playlistResults: const [
+          InnerTubePlaylist(browseId: 'VLPLbest0001', title: 'Best of'),
+        ],
+        continuation: 'page-2',
+      );
+      final dataSource = RemoteMusicDataSource(
+        _FakeDownloaderService(searchResults: const []),
+        youtubeMusicSearch: catalog,
+      );
+
+      final first = await dataSource.searchCategory(
+        ' best of ',
+        SearchCategory.playlists,
+      );
+      expect(first.playlists.single.browseId, 'VLPLbest0001');
+      expect(first.continuation, 'page-2');
+
+      await dataSource.searchCategoryContinuation(
+        'best of',
+        SearchCategory.playlists,
+        'page-2',
+      );
+      expect(catalog.continuations, [null, 'page-2']);
+    });
+
+    test('a failed next page propagates instead of falling back', () async {
+      final failure = InnerTubeException('offline');
+      final downloader = _FakeDownloaderService(searchResults: const []);
+      final dataSource = RemoteMusicDataSource(
+        downloader,
+        youtubeMusicSearch: _FakePagedYouTubeMusicSearch(error: failure),
+      );
+
+      await expectLater(
+        dataSource.searchCategoryContinuation(
+          'query',
+          SearchCategory.songs,
+          'page-2',
+        ),
+        throwsA(same(failure)),
+      );
+      expect(downloader.searchQueries, isEmpty);
     });
 
     test(
@@ -712,4 +759,69 @@ class _FakeDownloaderService implements DownloaderService {
   Future<DownloadResult> downloadAudio(String url, DownloadOptions options) {
     throw UnimplementedError();
   }
+}
+
+/// Serves the legacy fake's results through the paged API, as the real
+/// InnerTube service does.
+class _FakePagedYouTubeMusicSearch extends _FakeYouTubeMusicSearch
+    implements YouTubeMusicPagedSearch {
+  _FakePagedYouTubeMusicSearch({
+    super.error,
+    super.videoError,
+    super.albumError,
+    super.artistError,
+    this.playlistResults = const [],
+    this.playlistError,
+    this.continuation,
+  });
+
+  final List<InnerTubePlaylist> playlistResults;
+  final Object? playlistError;
+  final String? continuation;
+  final List<String?> continuations = [];
+
+  Future<InnerTubeSearchResultPage<T>> _page<T>(
+    String? token,
+    Future<List<T>> Function() load,
+  ) async {
+    continuations.add(token);
+    return InnerTubeSearchResultPage<T>(
+      items: await load(),
+      continuation: continuation,
+    );
+  }
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchSongsPage(
+    String query, {
+    String? continuation,
+  }) => _page(continuation, () => searchSongs(query));
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchVideosPage(
+    String query, {
+    String? continuation,
+  }) => _page(continuation, () => searchVideos(query));
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeAlbum>> searchAlbumsPage(
+    String query, {
+    String? continuation,
+  }) => _page(continuation, () => searchAlbums(query));
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeArtist>> searchArtistsPage(
+    String query, {
+    String? continuation,
+  }) => _page(continuation, () => searchArtists(query));
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubePlaylist>> searchPlaylistsPage(
+    String query, {
+    String? continuation,
+  }) => _page(continuation, () async {
+    final failure = playlistError;
+    if (failure != null) throw failure;
+    return playlistResults;
+  });
 }

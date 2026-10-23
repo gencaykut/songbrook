@@ -10,6 +10,8 @@ class SearchState {
     Map<SearchCategory, SearchPage> pages = const {},
     this.fallbackOnly = false,
     this.loadingCategory,
+    this.loadingMoreCategory,
+    this.loadMoreFailedCategory,
   }) : assert(
          !fallbackOnly || selectedCategory == SearchCategory.videos,
          'A fallback-only search must select Videos.',
@@ -28,6 +30,16 @@ class SearchState {
   final bool fallbackOnly;
   final SearchCategory? loadingCategory;
 
+  /// Category whose next page is being appended below its results.
+  final SearchCategory? loadingMoreCategory;
+
+  /// Category whose last next-page request failed; its results stay shown.
+  final SearchCategory? loadMoreFailedCategory;
+
+  bool get isSelectedCategoryLoadingMore =>
+      loadingMoreCategory == selectedCategory;
+  bool get selectedLoadMoreFailed => loadMoreFailedCategory == selectedCategory;
+
   bool get hasQuery => query.isNotEmpty;
   bool get isLoading => loadingCategory != null;
   bool get isSelectedCategoryLoading => loadingCategory == selectedCategory;
@@ -41,6 +53,8 @@ class SearchState {
       selectedPage?.albums ?? const <SearchAlbum>[];
   List<SearchArtist> get selectedArtists =>
       selectedPage?.artists ?? const <SearchArtist>[];
+  List<SearchPlaylist> get selectedPlaylists =>
+      selectedPage?.playlists ?? const <SearchPlaylist>[];
   List<SearchCategory> get availableCategories => fallbackOnly
       ? const <SearchCategory>[SearchCategory.videos]
       : SearchCategory.values;
@@ -53,6 +67,8 @@ class SearchState {
     Map<SearchCategory, SearchPage>? pages,
     bool? fallbackOnly,
     Object? loadingCategory = _searchStateUnset,
+    Object? loadingMoreCategory = _searchStateUnset,
+    Object? loadMoreFailedCategory = _searchStateUnset,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -62,6 +78,13 @@ class SearchState {
       loadingCategory: identical(loadingCategory, _searchStateUnset)
           ? this.loadingCategory
           : loadingCategory as SearchCategory?,
+      loadingMoreCategory: identical(loadingMoreCategory, _searchStateUnset)
+          ? this.loadingMoreCategory
+          : loadingMoreCategory as SearchCategory?,
+      loadMoreFailedCategory:
+          identical(loadMoreFailedCategory, _searchStateUnset)
+          ? this.loadMoreFailedCategory
+          : loadMoreFailedCategory as SearchCategory?,
     );
   }
 }
@@ -69,6 +92,10 @@ class SearchState {
 const _searchStateUnset = Object();
 
 class SearchController extends AsyncNotifier<SearchState> {
+  /// Upper bound per category. Results render in one mounted column, and
+  /// YouTube's later pages rarely stay relevant.
+  static const maxResultsPerCategory = 200;
+
   int _searchGeneration = 0;
 
   @override
@@ -123,6 +150,66 @@ class SearchController extends AsyncNotifier<SearchState> {
     );
     state = AsyncData(loadingState);
     await _loadCategory(loadingState, category, generation);
+  }
+
+  /// Appends the next page of the selected category, when YouTube has one.
+  ///
+  /// A failure keeps the shown results and marks the category for a retry.
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null || !current.hasQuery || current.isLoading) {
+      return;
+    }
+    final category = current.selectedCategory;
+    final page = current.pageFor(category);
+    final continuation = page?.continuation;
+    if (page == null ||
+        continuation == null ||
+        current.loadingMoreCategory != null ||
+        page.itemCount >= maxResultsPerCategory) {
+      return;
+    }
+
+    final generation = _searchGeneration;
+    state = AsyncData(
+      current.copyWith(
+        loadingMoreCategory: category,
+        loadMoreFailedCategory: null,
+      ),
+    );
+    try {
+      final next = await ref
+          .read(remoteMusicDataSourceProvider)
+          .searchCategoryContinuation(current.query, category, continuation);
+      final latest = state.value;
+      if (generation != _searchGeneration || latest == null) {
+        return;
+      }
+      final merged = page.appending(next, continuation: next.continuation);
+      final complete =
+          next.isEmpty || merged.itemCount >= maxResultsPerCategory;
+      state = AsyncData(
+        latest.copyWith(
+          pages: <SearchCategory, SearchPage>{
+            ...latest.pages,
+            category: complete ? page.appending(next) : merged,
+          },
+          loadingMoreCategory: null,
+        ),
+      );
+    } catch (error, stackTrace) {
+      final latest = state.value;
+      if (generation != _searchGeneration || latest == null) {
+        return;
+      }
+      debugPrint('Search page load failed: $error\n$stackTrace');
+      state = AsyncData(
+        latest.copyWith(
+          loadingMoreCategory: null,
+          loadMoreFailedCategory: category,
+        ),
+      );
+    }
   }
 
   void clear() {

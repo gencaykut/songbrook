@@ -587,18 +587,15 @@ class _SearchResultsSliver extends StatelessWidget {
     );
   }
 
-  static IconData _emptyIcon(SearchCategory category) => switch (category) {
-    SearchCategory.songs => Icons.music_note_rounded,
-    SearchCategory.videos => Icons.smart_display_rounded,
-    SearchCategory.albums => Icons.album_rounded,
-    SearchCategory.artists => Icons.person_rounded,
-  };
+  static IconData _emptyIcon(SearchCategory category) =>
+      _categoryIcon(category);
 
   static String _emptyMessage(AppStrings strings, SearchCategory category) =>
       switch (category) {
         SearchCategory.songs => strings.searchSongsEmpty,
         SearchCategory.videos => strings.searchVideosEmpty,
         SearchCategory.albums => strings.searchAlbumsEmpty,
+        SearchCategory.playlists => strings.searchPlaylistsEmpty,
         SearchCategory.artists => strings.searchArtistsEmpty,
       };
 }
@@ -1716,6 +1713,12 @@ class _SearchCategoryResultsBody extends ConsumerWidget {
       );
     }
 
+    final footer = _SearchLoadMoreFooter(
+      key: ValueKey('search-load-more-${state.selectedCategory.name}'),
+      state: state,
+      strings: strings,
+    );
+
     if (state.selectedCategory == SearchCategory.albums) {
       return Column(
         children: [
@@ -1729,15 +1732,41 @@ class _SearchCategoryResultsBody extends ConsumerWidget {
             ),
             if (index < page.albums.length - 1) const SizedBox(height: 6),
           ],
+          footer,
+        ],
+      );
+    }
+
+    if (state.selectedCategory == SearchCategory.playlists) {
+      return Column(
+        children: [
+          for (var index = 0; index < page.playlists.length; index++) ...[
+            _PlaylistResultTile(
+              key: ValueKey(
+                'search-playlist-${page.playlists[index].browseId}',
+              ),
+              playlist: page.playlists[index],
+              strings: strings,
+              onOpenPlayer: onOpenPlayer,
+              onAddToPlaylist: onAddToPlaylist,
+            ),
+            if (index < page.playlists.length - 1) const SizedBox(height: 6),
+          ],
+          footer,
         ],
       );
     }
 
     if (state.selectedCategory == SearchCategory.artists) {
-      return _ArtistResultsGrid(
-        artists: page.artists,
-        strings: strings,
-        onOpenPlayer: onOpenPlayer,
+      return Column(
+        children: [
+          _ArtistResultsGrid(
+            artists: page.artists,
+            strings: strings,
+            onOpenPlayer: onOpenPlayer,
+          ),
+          footer,
+        ],
       );
     }
 
@@ -1760,6 +1789,7 @@ class _SearchCategoryResultsBody extends ConsumerWidget {
           ),
           if (index < tracks.length - 1) const SizedBox(height: 6),
         ],
+        footer,
       ],
     );
   }
@@ -2203,7 +2233,7 @@ class _FallbackNotice extends StatelessWidget {
   }
 }
 
-class _AlbumResultTile extends StatefulWidget {
+class _AlbumResultTile extends StatelessWidget {
   const _AlbumResultTile({
     required this.album,
     required this.strings,
@@ -2218,15 +2248,234 @@ class _AlbumResultTile extends StatefulWidget {
   final AddRemoteTracksToPlaylist? onAddToPlaylist;
 
   @override
-  State<_AlbumResultTile> createState() => _AlbumResultTileState();
+  Widget build(BuildContext context) {
+    final details = [
+      album.type?.trim(),
+      album.year?.trim(),
+    ].whereType<String>().where((value) => value.isNotEmpty).join(' • ');
+    final artist = album.artist.trim().isEmpty
+        ? strings.unknownArtist
+        : album.artist.trim();
+    return _CollectionResultTile(
+      openKey: ValueKey('search-album-open-${album.browseId}'),
+      semanticLabel: strings.openAlbum(album.title),
+      title: album.title,
+      subtitle: artist,
+      details: details,
+      thumbnailUrl: album.thumbnailUrl,
+      fallbackIcon: Icons.album_rounded,
+      onTap: () => _openAlbum(context),
+    );
+  }
+
+  void _openAlbum(BuildContext context) {
+    final artist = album.artist.trim().isEmpty
+        ? strings.unknownArtist
+        : album.artist.trim();
+    final metadata = [album.type?.trim() ?? '', album.year?.trim() ?? ''];
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => RemoteCollectionDetailPage(
+          title: album.title,
+          subtitle: artist,
+          artworkSource: album.thumbnailUrl,
+          metadata: metadata,
+          fallbackIcon: Icons.album_rounded,
+          useCollectionArtworkForTrackFallback: true,
+          queueSourceId: 'album:${album.browseId}',
+          tracksProvider: searchAlbumTracksProvider(album.browseId),
+          emptyMessage: strings.albumWithoutSongs,
+          errorMessage: strings.albumLoadError,
+          onOpenPlayer: onOpenPlayer,
+          onAddToPlaylist: onAddToPlaylist,
+        ),
+      ),
+    );
+  }
 }
 
-class _AlbumResultTileState extends State<_AlbumResultTile> {
+class _PlaylistResultTile extends StatelessWidget {
+  const _PlaylistResultTile({
+    required this.playlist,
+    required this.strings,
+    required this.onOpenPlayer,
+    this.onAddToPlaylist,
+    super.key,
+  });
+
+  final SearchPlaylist playlist;
+  final AppStrings strings;
+  final VoidCallback onOpenPlayer;
+  final AddRemoteTracksToPlaylist? onAddToPlaylist;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CollectionResultTile(
+      openKey: ValueKey('search-playlist-open-${playlist.browseId}'),
+      semanticLabel: strings.openCollection(playlist.title),
+      title: playlist.title,
+      subtitle: playlist.subtitle ?? strings.youtubeMusic,
+      details: '',
+      thumbnailUrl: playlist.thumbnailUrl,
+      fallbackIcon: Icons.queue_music_rounded,
+      onTap: () => Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => RemoteCollectionDetailPage(
+            title: playlist.title,
+            subtitle: playlist.subtitle ?? strings.youtubeMusic,
+            artworkSource: playlist.thumbnailUrl,
+            fallbackIcon: Icons.queue_music_rounded,
+            queueSourceId: 'search-playlist:${playlist.browseId}',
+            tracksProvider: homeCollectionTracksProvider(playlist.browseId),
+            detailsProvider: homeCollectionDetailProvider(playlist.browseId),
+            emptyMessage: strings.homeCollectionEmpty,
+            errorMessage: strings.homeCollectionLoadError,
+            onOpenPlayer: onOpenPlayer,
+            onAddToPlaylist: onAddToPlaylist,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Appends the next result page once the list nears its end.
+///
+/// It listens to the enclosing scroll position itself because the results
+/// are a single mounted column: a sentinel row would always be "built".
+class _SearchLoadMoreFooter extends ConsumerStatefulWidget {
+  const _SearchLoadMoreFooter({
+    required this.state,
+    required this.strings,
+    super.key,
+  });
+
+  /// Distance from the end at which the next page is requested.
+  static const double prefetchExtent = 900;
+
+  final SearchState state;
+  final AppStrings strings;
+
+  @override
+  ConsumerState<_SearchLoadMoreFooter> createState() =>
+      _SearchLoadMoreFooterState();
+}
+
+class _SearchLoadMoreFooterState extends ConsumerState<_SearchLoadMoreFooter> {
+  ScrollPosition? _position;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (!identical(position, _position)) {
+      _position?.removeListener(_checkNearEnd);
+      _position = position?..addListener(_checkNearEnd);
+    }
+    _scheduleCheck();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SearchLoadMoreFooter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scheduleCheck();
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_checkNearEnd);
+    super.dispose();
+  }
+
+  // A short first page may not fill the viewport, so no scroll would ever
+  // request the next one.
+  void _scheduleCheck() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkNearEnd());
+  }
+
+  void _checkNearEnd() {
+    final position = _position;
+    final state = widget.state;
+    if (!mounted ||
+        position == null ||
+        !position.hasContentDimensions ||
+        !(state.selectedPage?.hasMore ?? false) ||
+        state.isSelectedCategoryLoadingMore ||
+        state.selectedLoadMoreFailed ||
+        position.extentAfter > _SearchLoadMoreFooter.prefetchExtent) {
+      return;
+    }
+    unawaited(ref.read(searchControllerProvider.notifier).loadMore());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    if (state.isSelectedCategoryLoadingMore) {
+      return const Padding(
+        key: ValueKey('search-load-more-progress'),
+        padding: EdgeInsets.symmetric(vertical: 18),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (state.selectedLoadMoreFailed) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(
+              widget.strings.searchLoadMoreFailed,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.contentSubtitleFor(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextButton.icon(
+              key: const ValueKey('search-load-more-retry'),
+              onPressed: () =>
+                  ref.read(searchControllerProvider.notifier).loadMore(),
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(widget.strings.retry),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+class _CollectionResultTile extends StatefulWidget {
+  const _CollectionResultTile({
+    required this.openKey,
+    required this.semanticLabel,
+    required this.title,
+    required this.subtitle,
+    required this.details,
+    required this.thumbnailUrl,
+    required this.fallbackIcon,
+    required this.onTap,
+  });
+
+  final Key openKey;
+  final String semanticLabel;
+  final String title;
+  final String subtitle;
+  final String details;
+  final String? thumbnailUrl;
+  final IconData fallbackIcon;
+  final VoidCallback onTap;
+
+  @override
+  State<_CollectionResultTile> createState() => _CollectionResultTileState();
+}
+
+class _CollectionResultTileState extends State<_CollectionResultTile> {
   bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final album = widget.album;
     final colors = Theme.of(context).colorScheme;
     final radius = BorderRadius.circular(appCardRadius);
     final surface = _hovered
@@ -2235,17 +2484,11 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
             AppColors.cardSurfaceFor(context),
           )
         : AppColors.cardSurfaceFor(context);
-    final details = [
-      album.type?.trim(),
-      album.year?.trim(),
-    ].whereType<String>().where((value) => value.isNotEmpty).join(' • ');
-    final artist = album.artist.trim().isEmpty
-        ? widget.strings.unknownArtist
-        : album.artist.trim();
+    final details = widget.details;
 
     return Semantics(
       button: true,
-      label: widget.strings.openAlbum(album.title),
+      label: widget.semanticLabel,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
@@ -2269,9 +2512,9 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                key: ValueKey('search-album-open-${album.browseId}'),
+                key: widget.openKey,
                 borderRadius: radius,
-                onTap: _openAlbum,
+                onTap: widget.onTap,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -2287,11 +2530,11 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
                           child: SizedBox.square(
                             dimension: 62,
                             child: ProportionalArtwork(
-                              source: album.thumbnailUrl,
+                              source: widget.thumbnailUrl,
                               cacheWidth: 256,
-                              fallback: const ColoredBox(
-                                color: Color(0xFF202520),
-                                child: Icon(Icons.album_rounded),
+                              fallback: ColoredBox(
+                                color: const Color(0xFF202520),
+                                child: Icon(widget.fallbackIcon),
                               ),
                             ),
                           ),
@@ -2304,7 +2547,7 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             MarqueeText(
-                              album.title,
+                              widget.title,
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
                                     color: AppColors.contentTitleFor(context),
@@ -2313,7 +2556,7 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              artist,
+                              widget.subtitle,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: AppColors.contentSubtitleFor(
@@ -2356,32 +2599,6 @@ class _AlbumResultTileState extends State<_AlbumResultTile> {
       ),
     );
   }
-
-  void _openAlbum() {
-    final album = widget.album;
-    final artist = album.artist.trim().isEmpty
-        ? widget.strings.unknownArtist
-        : album.artist.trim();
-    final metadata = [album.type?.trim() ?? '', album.year?.trim() ?? ''];
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => RemoteCollectionDetailPage(
-          title: album.title,
-          subtitle: artist,
-          artworkSource: album.thumbnailUrl,
-          metadata: metadata,
-          fallbackIcon: Icons.album_rounded,
-          useCollectionArtworkForTrackFallback: true,
-          queueSourceId: 'album:${album.browseId}',
-          tracksProvider: searchAlbumTracksProvider(album.browseId),
-          emptyMessage: widget.strings.albumWithoutSongs,
-          errorMessage: widget.strings.albumLoadError,
-          onOpenPlayer: widget.onOpenPlayer,
-          onAddToPlaylist: widget.onAddToPlaylist,
-        ),
-      ),
-    );
-  }
 }
 
 String _categoryLabel(AppStrings strings, SearchCategory category) =>
@@ -2389,6 +2606,7 @@ String _categoryLabel(AppStrings strings, SearchCategory category) =>
       SearchCategory.songs => strings.searchSongs,
       SearchCategory.videos => strings.searchVideos,
       SearchCategory.albums => strings.searchAlbums,
+      SearchCategory.playlists => strings.searchPlaylists,
       SearchCategory.artists => strings.searchArtists,
     };
 
@@ -2396,6 +2614,7 @@ IconData _categoryIcon(SearchCategory category) => switch (category) {
   SearchCategory.songs => Icons.music_note_rounded,
   SearchCategory.videos => Icons.smart_display_rounded,
   SearchCategory.albums => Icons.album_rounded,
+  SearchCategory.playlists => Icons.queue_music_rounded,
   SearchCategory.artists => Icons.person_rounded,
 };
 

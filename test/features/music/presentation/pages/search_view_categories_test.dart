@@ -27,6 +27,8 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('paged results', _pagedSearchTests);
+
   testWidgets('browse cards retain one grid repaint boundary for static art', (
     tester,
   ) async {
@@ -1533,6 +1535,7 @@ void main() {
         SearchCategory.songs: 'Canciones',
         SearchCategory.videos: 'Videos',
         SearchCategory.albums: 'Álbumes',
+        SearchCategory.playlists: 'Listas',
         SearchCategory.artists: 'Artistas',
       }.entries) {
         final label = entry.value;
@@ -2530,6 +2533,164 @@ void main() {
   });
 }
 
+void _pagedSearchTests() {
+  List<TrackInfo> songs(int count) => [
+    for (var index = 0; index < count; index++)
+      TrackInfo(
+        id: 'song-$index',
+        title: 'Song $index',
+        artist: 'Artist',
+        url: 'https://music.youtube.com/watch?v=song-$index',
+      ),
+  ];
+
+  SearchState songsState({
+    required int count,
+    String? continuation,
+    SearchCategory? loadMoreFailedCategory,
+    SearchCategory? loadingMoreCategory,
+  }) => SearchState(
+    query: 'artist',
+    pages: <SearchCategory, SearchPage>{
+      SearchCategory.songs: SearchPage(
+        category: SearchCategory.songs,
+        backend: SearchBackend.innerTube,
+        tracks: songs(count),
+        continuation: continuation,
+      ),
+    },
+    loadMoreFailedCategory: loadMoreFailedCategory,
+    loadingMoreCategory: loadingMoreCategory,
+  );
+
+  testWidgets('reaching the end of the results requests the next page', (
+    tester,
+  ) async {
+    final controller = _RecordingSearchController(
+      songsState(count: 30, continuation: 'page-2'),
+    );
+    await tester.pumpWidget(_searchApp(controller: controller));
+    await tester.pumpAndSettle();
+    expect(
+      controller.loadMoreCalls,
+      0,
+      reason: 'The first page fills the viewport, so nothing loads yet.',
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Song 29'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(controller.loadMoreCalls, greaterThan(0));
+
+    controller.replaceState(
+      songsState(
+        count: 30,
+        continuation: 'page-2',
+        loadingMoreCategory: SearchCategory.songs,
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('search-load-more-progress')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the last page never requests another one', (tester) async {
+    final controller = _RecordingSearchController(songsState(count: 3));
+    await tester.pumpWidget(_searchApp(controller: controller));
+    await tester.pumpAndSettle();
+
+    expect(controller.loadMoreCalls, 0);
+    expect(
+      find.byKey(const ValueKey('search-load-more-progress')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('a failed page offers a retry below the shown results', (
+    tester,
+  ) async {
+    final controller = _RecordingSearchController(
+      songsState(
+        count: 3,
+        continuation: 'page-2',
+        loadMoreFailedCategory: SearchCategory.songs,
+      ),
+    );
+    await tester.pumpWidget(_searchApp(controller: controller));
+    await tester.pumpAndSettle();
+
+    expect(controller.loadMoreCalls, 0, reason: 'A failure waits for a tap.');
+    expect(find.text('Song 2'), findsOneWidget);
+    final retry = find.byKey(const ValueKey('search-load-more-retry'));
+    await tester.ensureVisible(retry);
+    await tester.pumpAndSettle();
+    await tester.tap(retry);
+    await tester.pump();
+    expect(controller.loadMoreCalls, 1);
+  });
+
+  testWidgets('playlist results open the YouTube Music playlist', (
+    tester,
+  ) async {
+    final controller = _RecordingSearchController(
+      SearchState(
+        query: 'best of',
+        selectedCategory: SearchCategory.playlists,
+        pages: <SearchCategory, SearchPage>{
+          SearchCategory.playlists: SearchPage(
+            category: SearchCategory.playlists,
+            backend: SearchBackend.innerTube,
+            playlists: const [
+              SearchPlaylist(
+                browseId: 'VLPLbest0001',
+                title: 'Best of',
+                subtitle: 'Curator • 20K views',
+              ),
+            ],
+          ),
+        },
+      ),
+    );
+    final loads = <String>[];
+    const playlistTrack = TrackInfo(
+      id: 'track-1',
+      title: 'Playlist track',
+      artist: 'Artist',
+      url: 'https://music.youtube.com/watch?v=track-1',
+    );
+    await tester.pumpWidget(
+      _searchApp(
+        controller: controller,
+        extraOverrides: [
+          homeCollectionTracksProvider.overrideWith((ref, browseId) async {
+            loads.add(browseId);
+            return [playlistTrack];
+          }),
+          homeCollectionDetailProvider.overrideWith((ref, browseId) async {
+            loads.add(browseId);
+            return RemoteCollectionData(tracks: [playlistTrack]);
+          }),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Curator • 20K views'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey('search-playlist-open-VLPLbest0001')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(loads.toSet(), {'VLPLbest0001'});
+    expect(find.text('Playlist track'), findsOneWidget);
+  });
+}
+
 Widget _searchApp({
   required _RecordingSearchController controller,
   YouTubeMusicSearchSuggestions? suggestionsService,
@@ -2751,6 +2912,12 @@ class _RecordingSearchController extends SearchController {
   final List<SearchCategory> selectedCategories = [];
   final List<String> submittedQueries = [];
   int clearCalls = 0;
+  int loadMoreCalls = 0;
+
+  @override
+  Future<void> loadMore() async {
+    loadMoreCalls++;
+  }
 
   @override
   Future<SearchState> build() async => initialState;

@@ -38,6 +38,15 @@ SearchAlbum searchAlbumFromInnerTubeAlbum(InnerTubeAlbum album) {
   );
 }
 
+SearchPlaylist searchPlaylistFromInnerTubePlaylist(InnerTubePlaylist playlist) {
+  return SearchPlaylist(
+    browseId: playlist.browseId,
+    title: playlist.title,
+    subtitle: playlist.subtitle,
+    thumbnailUrl: playlist.thumbnailUrl,
+  );
+}
+
 SearchArtist searchArtistFromInnerTubeArtist(InnerTubeArtist artist) {
   return SearchArtist(
     browseId: artist.browseId,
@@ -109,6 +118,9 @@ class RemoteMusicDataSource {
       if (musicSearch == null) {
         throw UnsupportedError('YouTube Music search is unavailable.');
       }
+      if (musicSearch case final YouTubeMusicPagedSearch paged) {
+        return await _searchPagedCategory(paged, normalizedQuery, category);
+      }
       return switch (category) {
         SearchCategory.songs => SearchPage(
           category: category,
@@ -138,6 +150,9 @@ class RemoteMusicDataSource {
             normalizedQuery,
           )).map(searchArtistFromInnerTubeArtist).toList(growable: false),
         ),
+        SearchCategory.playlists => throw UnsupportedError(
+          'The configured YouTube Music service cannot search playlists.',
+        ),
       };
     } catch (error) {
       if (!_isExpectedInnerTubeFailure(error)) {
@@ -148,6 +163,79 @@ class RemoteMusicDataSource {
         primaryError: error,
       );
     }
+  }
+
+  /// Loads the page that follows a [continuation] of the same search.
+  ///
+  /// Unlike [searchCategory] a failure propagates instead of switching to the
+  /// video fallback, so the results already shown stay and can be retried.
+  Future<SearchPage> searchCategoryContinuation(
+    String query,
+    SearchCategory category,
+    String continuation,
+  ) {
+    final musicSearch = youtubeMusicSearch;
+    if (musicSearch case final YouTubeMusicPagedSearch paged) {
+      return _searchPagedCategory(
+        paged,
+        query.trim(),
+        category,
+        continuation: continuation,
+      );
+    }
+    throw UnsupportedError(
+      'The configured YouTube Music service cannot page search results.',
+    );
+  }
+
+  Future<SearchPage> _searchPagedCategory(
+    YouTubeMusicPagedSearch search,
+    String query,
+    SearchCategory category, {
+    String? continuation,
+  }) async {
+    SearchPage page<T>(
+      InnerTubeSearchResultPage<T> result, {
+      List<TrackInfo> Function(List<T>)? tracks,
+      List<SearchAlbum> Function(List<T>)? albums,
+      List<SearchPlaylist> Function(List<T>)? playlists,
+      List<SearchArtist> Function(List<T>)? artists,
+    }) => SearchPage(
+      category: category,
+      backend: SearchBackend.innerTube,
+      tracks: tracks?.call(result.items) ?? const [],
+      albums: albums?.call(result.items) ?? const [],
+      playlists: playlists?.call(result.items) ?? const [],
+      artists: artists?.call(result.items) ?? const [],
+      continuation: result.continuation,
+    );
+
+    List<R> mapped<T, R>(List<T> items, R Function(T) convert) =>
+        items.map(convert).toList(growable: false);
+
+    return switch (category) {
+      SearchCategory.songs => page(
+        await search.searchSongsPage(query, continuation: continuation),
+        tracks: (items) => mapped(items, trackInfoFromInnerTubeSong),
+      ),
+      SearchCategory.videos => page(
+        await search.searchVideosPage(query, continuation: continuation),
+        tracks: (items) => mapped(items, trackInfoFromInnerTubeSong),
+      ),
+      SearchCategory.albums => page(
+        await search.searchAlbumsPage(query, continuation: continuation),
+        albums: (items) => mapped(items, searchAlbumFromInnerTubeAlbum),
+      ),
+      SearchCategory.playlists => page(
+        await search.searchPlaylistsPage(query, continuation: continuation),
+        playlists: (items) =>
+            mapped(items, searchPlaylistFromInnerTubePlaylist),
+      ),
+      SearchCategory.artists => page(
+        await search.searchArtistsPage(query, continuation: continuation),
+        artists: (items) => mapped(items, searchArtistFromInnerTubeArtist),
+      ),
+    };
   }
 
   Future<List<TrackInfo>> getAlbumTracks(String browseId) async {

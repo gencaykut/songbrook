@@ -364,6 +364,7 @@ class AppStrings {
   String get searchSongs => choose('Canciones', 'Songs');
   String get searchVideos => choose('Videos', 'Videos');
   String get searchAlbums => choose('Álbumes', 'Albums');
+  String get searchPlaylists => choose('Listas', 'Playlists');
   String get searchArtists => choose('Artistas', 'Artists');
   String get searchSongsEmpty => choose(
     'No encontramos canciones para esta búsqueda.',
@@ -376,6 +377,14 @@ class AppStrings {
   String get searchAlbumsEmpty => choose(
     'No encontramos álbumes para esta búsqueda.',
     'No albums matched this search.',
+  );
+  String get searchPlaylistsEmpty => choose(
+    'No encontramos listas para esta búsqueda.',
+    'No playlists matched this search.',
+  );
+  String get searchLoadMoreFailed => choose(
+    'No se pudieron cargar más resultados.',
+    'More results could not be loaded.',
   );
   String get searchArtistsEmpty => choose(
     'No encontramos artistas para esta búsqueda.',

@@ -136,6 +136,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'No songs matched this search.': 'Bu aramayla eşleşen şarkı yok.',
   'No videos matched this search.': 'Bu aramayla eşleşen video yok.',
   'No albums matched this search.': 'Bu aramayla eşleşen albüm yok.',
+  'Playlists': 'Çalma listeleri',
+  'No playlists matched this search.': 'Bu aramayla eşleşen çalma listesi yok.',
+  'More results could not be loaded.': 'Daha fazla sonuç yüklenemedi.',
   'No artists matched this search.': 'Bu aramayla eşleşen sanatçı yok.',
   'The YouTube Music catalog did not respond. The InnerTube video fallback was used.':
       'YouTube Music kataloğu yanıt vermedi; bunun yerine InnerTube video araması kullanıldı.',

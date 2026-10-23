@@ -58,6 +58,36 @@ abstract interface class YouTubeMusicArtistSearch {
   Future<List<InnerTubeArtist>> searchArtists(String query, {int limit = 20});
 }
 
+/// Filtered search pages that continue with YouTube's continuation token.
+///
+/// A [continuation] from a previous page replaces [query] in the request.
+abstract interface class YouTubeMusicPagedSearch {
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchSongsPage(
+    String query, {
+    String? continuation,
+  });
+
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchVideosPage(
+    String query, {
+    String? continuation,
+  });
+
+  Future<InnerTubeSearchResultPage<InnerTubeAlbum>> searchAlbumsPage(
+    String query, {
+    String? continuation,
+  });
+
+  Future<InnerTubeSearchResultPage<InnerTubeArtist>> searchArtistsPage(
+    String query, {
+    String? continuation,
+  });
+
+  Future<InnerTubeSearchResultPage<InnerTubePlaylist>> searchPlaylistsPage(
+    String query, {
+    String? continuation,
+  });
+}
+
 abstract interface class YouTubeMusicTrackLookup {
   /// Returns the metadata for [videoId], or `null` when YouTube reports that
   /// the video is not currently playable music.
@@ -185,6 +215,7 @@ class InnerTubeSearchService
         YouTubeMusicSearchSuggestions,
         YouTubeMusicCatalogSearch,
         YouTubeMusicArtistSearch,
+        YouTubeMusicPagedSearch,
         YouTubeMusicTrackLookup,
         YouTubeMusicDurationLookup,
         YouTubeMusicHome,
@@ -385,6 +416,10 @@ class InnerTubeSearchService
   static const String videosFilter = 'EgWKAQIQAWoMEA4QChADEAQQCRAF';
   static const String albumsFilter = 'EgWKAQIYAWoMEA4QChADEAQQCRAF';
   static const String artistsFilter = 'EgWKAQIgAWoMEA4QChADEAQQCRAF';
+
+  /// Community playlists. YouTube's featured playlists filter returns one
+  /// short page without a continuation.
+  static const String playlistsFilter = 'EgeKAQQoAEABagwQDhAKEAMQBBAJEAU=';
   static const String moodsAndGenresBrowseId = 'FEmusic_moods_and_genres';
   static const String defaultUserAgent =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -581,15 +616,90 @@ class InnerTubeSearchService
     return _parseLimitedResponse(response, _artistSearchParser.parse, limit);
   }
 
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchSongsPage(
+    String query, {
+    String? continuation,
+  }) => _searchResultPage(query, songsFilter, continuation, _parser.parse);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeSong>> searchVideosPage(
+    String query, {
+    String? continuation,
+  }) => _searchResultPage(query, videosFilter, continuation, _parser.parse);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeAlbum>> searchAlbumsPage(
+    String query, {
+    String? continuation,
+  }) =>
+      _searchResultPage(query, albumsFilter, continuation, _albumParser.parse);
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubeArtist>> searchArtistsPage(
+    String query, {
+    String? continuation,
+  }) => _searchResultPage(
+    query,
+    artistsFilter,
+    continuation,
+    _artistSearchParser.parse,
+  );
+
+  @override
+  Future<InnerTubeSearchResultPage<InnerTubePlaylist>> searchPlaylistsPage(
+    String query, {
+    String? continuation,
+  }) => _searchResultPage(
+    query,
+    playlistsFilter,
+    continuation,
+    const InnerTubePlaylistSearchParser().parse,
+  );
+
+  Future<InnerTubeSearchResultPage<T>> _searchResultPage<T>(
+    String query,
+    String filter,
+    String? continuation,
+    List<T> Function(Object?, {required int limit}) parse,
+  ) async {
+    _ensureActive();
+    final token = continuation?.trim() ?? '';
+    final normalizedQuery = query.trim();
+    if (token.isEmpty && normalizedQuery.isEmpty) {
+      return InnerTubeSearchResultPage<T>(items: const []);
+    }
+    if (token.length > _maxContinuationLength) {
+      throw ArgumentError.value(continuation, 'continuation', 'Too long.');
+    }
+    final response = await _searchCatalogRequest(
+      token.isEmpty
+          ? <String, Object>{'query': normalizedQuery, 'params': filter}
+          : <String, Object>{'continuation': token},
+    );
+    _validateJsonResponse(response);
+    return parseInnerTubeJson(
+      response.body,
+      _InnerTubeSearchPageResponseParser<T>(parse).parse,
+    );
+  }
+
+  static const int _maxContinuationLength = 4096;
+
   Future<InnerTubeHttpResponse> _searchCatalog(
     String query, {
     required String filter,
-  }) async {
+  }) =>
+      _searchCatalogRequest(<String, Object>{'query': query, 'params': filter});
+
+  Future<InnerTubeHttpResponse> _searchCatalogRequest(
+    Map<String, Object> request,
+  ) async {
     var configuration = await _configuration();
-    var response = await _requestSearch(query, filter, configuration);
+    var response = await _requestSearch(request, configuration);
     if (_needsFreshConfiguration(response.statusCode)) {
       configuration = await _freshConfiguration();
-      response = await _requestSearch(query, filter, configuration);
+      response = await _requestSearch(request, configuration);
     }
 
     if (response.statusCode < HttpStatus.ok ||
@@ -1503,8 +1613,7 @@ class InnerTubeSearchService
   }
 
   Future<InnerTubeHttpResponse> _requestSearch(
-    String query,
-    String filter,
+    Map<String, Object> request,
     InnerTubeConfiguration configuration,
   ) async {
     final uri = _endpoint.replace(
@@ -1524,8 +1633,7 @@ class InnerTubeSearchService
           'visitorData': configuration.visitorData,
         },
       },
-      'query': query,
-      'params': filter,
+      ...request,
     };
 
     return _sendWithRetry(
@@ -2848,6 +2956,100 @@ final class _InnerTubeCollectionHeaderParser {
 
 /// Parses artist-only search responses without treating song credits as
 /// standalone artist results.
+/// Parses community playlist results into their `VL` browse targets.
+class InnerTubePlaylistSearchParser {
+  const InnerTubePlaylistSearchParser({
+    this._songParser = const InnerTubeSearchParser(),
+  });
+
+  final InnerTubeSearchParser _songParser;
+
+  static final RegExp _playlistBrowseIdPattern = RegExp(
+    r'^VL[A-Za-z0-9_-]{1,200}$',
+  );
+
+  List<InnerTubePlaylist> parse(Object? payload, {int limit = 20}) {
+    if (limit < 1 || limit > InnerTubeSearchService.maxResults) {
+      throw RangeError.range(
+        limit,
+        1,
+        InnerTubeSearchService.maxResults,
+        'limit',
+      );
+    }
+    if (payload is! Map) {
+      throw const InnerTubeFormatException(
+        'YouTube Music playlist search response must be a JSON object.',
+      );
+    }
+
+    final playlists = <InnerTubePlaylist>[];
+    final seenBrowseIds = <String>{};
+    for (final candidate in _songParser._songItemRenderers(payload)) {
+      final playlist = _parsePlaylist(
+        candidate.renderer,
+        isTwoRow: candidate.isTwoRow,
+      );
+      if (playlist == null || !seenBrowseIds.add(playlist.browseId)) {
+        continue;
+      }
+      playlists.add(playlist);
+      if (playlists.length == limit) {
+        break;
+      }
+    }
+    return List.unmodifiable(playlists);
+  }
+
+  InnerTubePlaylist? _parsePlaylist(
+    Map<dynamic, dynamic> renderer, {
+    required bool isTwoRow,
+  }) {
+    if (_songParser._browsePageType(renderer) != 'MUSIC_PAGE_TYPE_PLAYLIST') {
+      return null;
+    }
+    final browseId = _songParser._browseId(renderer);
+    if (browseId == null || !_playlistBrowseIdPattern.hasMatch(browseId)) {
+      return null;
+    }
+
+    final String? title;
+    final List<Map<dynamic, dynamic>> subtitleRuns;
+    if (isTwoRow) {
+      title = _songParser._firstText(_songParser._runs(renderer['title']));
+      subtitleRuns = _songParser
+          ._runs(renderer['subtitle'])
+          .toList(growable: false);
+    } else {
+      final columns = _songParser
+          ._maps(renderer['flexColumns'])
+          .toList(growable: false);
+      title = columns.isEmpty
+          ? null
+          : _songParser._firstText(_songParser._columnRuns(columns.first));
+      subtitleRuns = [
+        for (final column in columns.skip(1))
+          ..._songParser._columnRuns(column),
+      ];
+    }
+    if (title == null) {
+      return null;
+    }
+    final subtitle = [
+      for (final run in subtitleRuns)
+        if (_songParser._text(run['text']) case final text?
+            when !_songParser._isSeparator(text))
+          text,
+    ].join(' • ');
+    return InnerTubePlaylist(
+      browseId: browseId,
+      title: title,
+      subtitle: subtitle.isEmpty ? null : subtitle,
+      thumbnailUrl: _songParser._thumbnailUrl(renderer),
+    );
+  }
+}
+
 class InnerTubeArtistSearchParser {
   const InnerTubeArtistSearchParser({
     this._searchParser = const InnerTubeSearchParser(),
@@ -4319,6 +4521,54 @@ class _InnerTubeLimitedResponseParser<T> {
   final int limit;
 
   T parse(Object? payload) => parser(payload, limit: limit);
+}
+
+class _InnerTubeSearchPageResponseParser<T> {
+  const _InnerTubeSearchPageResponseParser(this.parser);
+  final List<T> Function(Object?, {required int limit}) parser;
+
+  InnerTubeSearchResultPage<T> parse(Object? payload) =>
+      InnerTubeSearchResultPage<T>(
+        items: parser(payload, limit: InnerTubeSearchService.maxResults),
+        continuation: innerTubeSearchContinuation(payload),
+      );
+}
+
+/// Finds the next-page token of a filtered search or search continuation.
+///
+/// Only the filtered result shelf paginates. The legacy
+/// `nextContinuationData` shape is what YouTube Music sends today;
+/// `continuationItemRenderer` is the shape YouTube uses elsewhere.
+String? innerTubeSearchContinuation(Object? payload) {
+  if (payload is Map) {
+    for (final key in const ['musicShelfRenderer', 'musicShelfContinuation']) {
+      final shelf = payload[key];
+      if (shelf is Map && shelf['continuations'] is List) {
+        for (final entry in shelf['continuations'] as List) {
+          final next = entry is Map ? entry['nextContinuationData'] : null;
+          final token = next is Map ? next['continuation'] : null;
+          if (token is String && token.trim().isNotEmpty) return token.trim();
+        }
+      }
+    }
+    final item = payload['continuationItemRenderer'];
+    if (item is Map) {
+      final endpoint = item['continuationEndpoint'];
+      final command = endpoint is Map ? endpoint['continuationCommand'] : null;
+      final token = command is Map ? command['token'] : null;
+      if (token is String && token.trim().isNotEmpty) return token.trim();
+    }
+    for (final value in payload.values) {
+      final token = innerTubeSearchContinuation(value);
+      if (token != null) return token;
+    }
+  } else if (payload is List) {
+    for (final value in payload) {
+      final token = innerTubeSearchContinuation(value);
+      if (token != null) return token;
+    }
+  }
+  return null;
 }
 
 class _InnerTubeMetadataResponseParser<T> {
