@@ -1,9 +1,9 @@
 name: Nightly native smoke
 
+# Songbrook: the daily schedule is off because GitHub's Android emulator does
+# not boot (upstream fails the same way). Run it by hand when needed.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "41 6 * * *"
 
 permissions:
   contents: read

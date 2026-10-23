@@ -54,6 +54,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - **iOS'ta webm yok:** AVPlayer webm açamıyor. iOS `isAvFoundationCompatibleInnerTubeAudio` filtresiyle yalnızca AAC/MP4 seçiyor; testlerde de bu filtreyi kullan.
 - **Stream çözümleme kırılgan:** Token gerektirmeyen "visionOS" istemci profiline dayanıyor. Yedek sıra: `androidSdkless` ve `visionOS01` (ikisi de tokensiz), `webEmbedded` (EJS), sonra `mweb` ve `webMusic` (EJS + BotGuard PO token). EJS/PO yolları bu fork'ta canlı test edilmedi. Ayrıntılar: [docs/innertube_playback.md](docs/innertube_playback.md).
 - `developer.log` çıktıları `flutter run` loguna düşmüyor.
+- **GitHub Actions (24 Ekim 2026 kararı):** `Release installers` yalnızca `v*` etiketlerinde ve elle çalışıyor; `Nightly native smoke` yalnızca elle (GitHub'ın Android emülatörü açılmıyor, upstream'de de aynı). Push'ta yalnızca `Dependency and security checks` çalışıyor. Yani format/analyze/test kapısı push'ta yok: push'tan önce yerelde `dart format --set-exit-if-changed .`, `flutter analyze`, `flutter test` çalıştır.
 - **Dokümanlar:** `README.md` Songbrook'un kendi README'si (İngilizce); upstream README'si referans olarak `docs/upstream-readme.md`'de. Fork değişiklikleri `CHANGELOG.md`'nin başındaki "Unreleased (Songbrook)" bölümünde. `test/core/constants/app_metadata_test.dart`, README'deki `Current version: **x+y**` satırını ve CHANGELOG'daki ilk `## x.y.z+n` başlığını `pubspec.yaml` ile karşılaştırıyor; sürüm değişince üçünü birlikte güncelle.
 
 ## Simülatör notları
@@ -65,14 +66,13 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 ## Son durum (22 Ekim 2026)
 
-- Yerel `main` GitHub'dan önde, **push edilmedi** (kullanıcı topluca push istiyor; sayı için `git status -sb`).
+- 24 Ekim 2026'da toplu push yapıldı; sonraki commit'ler yine yerelde birikir (`git status -sb`).
 - iPhone'da (UDID `00008140-0018303E2128401C`, iPhone17,2) Türkçe sürüm kurulu; son iki değişiklik (cihaz dili varsayılanı, `hl=en`) henüz telefonda ve dmg'de yok.
 - Mac: `dist/Songbrook-1.2.9.dmg` notarize edilmiş ve staple'lı (cihaz dili değişikliğinden önceki sürüm). `songbrook-notary` profili anahtar zincirinde kayıtlı.
 - Uygulama sürümü hâlâ upstream'in `1.2.9+129` numarası (`pubspec.yaml`).
 
 ### Kullanıcıdan bekleyen kararlar
 
-- **GitHub Actions:** `Nightly native smoke` her gün kalıyor (GitHub'ın Android emülatörü açılmıyor; upstream'de de aynı, kodla ilgisiz). Öneri: günlük zamanlamayı kapat, elle çalıştırılabilir kalsın; `Release installers` yalnızca `v*` etiketlerinde ve elle çalışsın (private repo, Actions dakika kotası). Kullanıcı henüz cevap vermedi.
 - **Android:** Bu Mac'te APK derlenemiyor: Java yok, Android `cmdline-tools` yok (SDK'nın bir kısmı `~/Library/Android/sdk` altında). Öneri: Homebrew ile JDK 17 ve Android komut satırı araçları, repo dışında (`~/.songbrook/`) kalıcı bir imza anahtarı (parolayı kullanıcı terminalde girer), `android/key.properties` ile release APK. Google Play geliştirici hesabı gerekmiyor (Play Store'a çıkılmayacak). Kullanıcıya Google'ın Play dışı kurulumlar için geliştirici doğrulaması planı anlatıldı (2026 sonbaharında birkaç ülkede, 2027'den itibaren dünya geneli; ADB kurulumu muaf); ayrıntılar değişmiş olabilir.
 
 ## İş sırası
@@ -95,7 +95,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 8. **Dağıtım ve paylaşım:**
    - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
    - Android APK (yukarıdaki karara bağlı), iOS ipa (AltStore/Sideloadly).
-   - Toplu `git push`, repoyu public yapma kararı, upstream'e PR. Public yapmak ve PR açmak için önce kullanıcıya sor.
+   - Repoyu public yapma kararı, upstream'e PR. Public yapmak ve PR açmak için önce kullanıcıya sor.
 
 ### Yeni özellikler (24 Ekim 2026 değerlendirmesi, öncelik sırasıyla)
 
