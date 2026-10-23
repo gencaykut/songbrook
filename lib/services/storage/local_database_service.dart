@@ -1999,7 +1999,8 @@ class LocalDatabaseService {
             catalog_key TEXT,
             added_at TEXT NOT NULL,
             last_played_at TEXT,
-            last_played_playlist_id TEXT
+            last_played_playlist_id TEXT,
+            loudness_db REAL
           )
         ''');
         await db.execute('''
@@ -2156,6 +2157,7 @@ class LocalDatabaseService {
       'catalog_thumbnail_url': 'TEXT',
       'artist_browse_ids_json': "TEXT NOT NULL DEFAULT '[]'",
       'catalog_key': 'TEXT',
+      'loudness_db': 'REAL',
     };
     for (final column in additiveColumns.entries) {
       if (localColumns.add(column.key)) {

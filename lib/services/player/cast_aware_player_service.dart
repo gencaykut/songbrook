@@ -4,6 +4,7 @@ import 'dart:io';
 import '../../features/music/domain/entities/local_track.dart';
 import '../../features/music/domain/entities/track_info.dart';
 import '../casting/cast_coordinator.dart';
+import 'loudness_normalization.dart';
 import 'player_service.dart';
 
 /// Retains the existing local backend and all of its optional capabilities.
@@ -14,7 +15,8 @@ class CastAwarePlayerService
         PlayerService,
         NativeRemoteQueuePlayer,
         CrossfadeCapablePlayer,
-        SkipSilenceCapablePlayer {
+        SkipSilenceCapablePlayer,
+        LoudnessNormalizingPlayer {
   CastAwarePlayerService({required PlayerService local, required this.cast})
     // Preserve a named injection point for the local backend.
     // ignore: prefer_initializing_formals
@@ -500,6 +502,18 @@ class CastAwarePlayerService
   Future<void> configureSkipSilence({required bool enabled}) async {
     if (_local case final SkipSilenceCapablePlayer player) {
       await player.configureSkipSilence(enabled: enabled);
+    }
+  }
+
+  // Cast receivers keep their own volume; only local decks are normalized.
+  @override
+  bool get loudnessNormalizationEnabled =>
+      _local is LoudnessNormalizingPlayer &&
+      (_local as LoudnessNormalizingPlayer).loudnessNormalizationEnabled;
+  @override
+  Future<void> configureLoudnessNormalization({required bool enabled}) async {
+    if (_local case final LoudnessNormalizingPlayer player) {
+      await player.configureLoudnessNormalization(enabled: enabled);
     }
   }
 

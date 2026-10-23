@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2647 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2664 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -38,6 +38,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 - `integration_test/claude_*.dart`: Canlı YouTube'a giden araştırma testleri. Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
   - `claude_url_test.dart` imzalı stream URL'si yazdırır. Çıktısını hiçbir yere commit'leme ya da paylaşma.
+- `tool/claude_loudness_probe.dart`: Canlı player yanıtındaki ses yüksekliği alanlarını (`playerConfig.audioConfig`, formatların `loudnessDb`'si) üç tokensiz profil için yazdırır. `integration_test/claude_loudness_test.dart` gerçek `JustAudioPlayerService` ile AVPlayer'a yazılan sesi doğrular.
 - `tool/claude_hl_probe.dart`: Ayrıştırıcıların iki `hl` dilinde canlı YouTube Music yanıtından ne çıkardığını karşılaştırır.
 - `tool/mp4/`: MP4 kutu analizi (`boxes.py`), `moov` sürelerini sıfırlama (`zero_moov.py`), AVFoundation ile süre ölçümü (`swiftc -O tool/mp4/avdur.swift -o tool/mp4/avdur`).
 
@@ -104,7 +105,7 @@ BStream çekirdek olarak kalıyor; başka bir oynatıcı reposuna geçilmiyor. 9
 - [YouPipe Music](https://github.com/SanuSanal/YouPipe-Music): **LICENSE yok**, yani tüm hakları saklı. Koddan hiçbir şey kopyalanmaz; yalnızca yapısına bakılır. Songbrook'la aynı yığın (just_audio + audio_service).
 - [PlayerVf](https://github.com/superstilist/PlayerVf): MIT, arşivlenmiş. Oynatıcısı her platformda media_kit/mpv; EQ, pitch ve reverb mpv `lavfi` filtreleriyle yapılmış.
 
-9. **Ses seviyesi dengeleme:** YouTube'un player yanıtındaki `loudnessDb`'yi oku (şu an okunmuyor), `setVolume` ile yalnızca kısarak uygula. iOS'ta AVPlayer 1.0'ın üstüne çıkmadığı için yükseltme yok. DSP gerekmez, her platformda çalışır.
+9. ~~**Ses seviyesi dengeleme**~~ Tamamlandı (24 Ekim 2026). YouTube her stream için hedefe (−14 LKFS) göre `loudnessDb` gönderiyor: visionOS profillerinde formatın içinde, androidSdkless'ta `playerConfig.audioConfig`'te. Değer `InnerTubeAudioFormat` → `AudioStreamResolution` → `TrackInfo` (`loudness_db`) hattıyla taşınıyor; indirilenler için `local_tracks.loudness_db` sütunu (eklemeli onarımla, sürüm artmadan). Oynatıcılar yalnızca destelere yazılan sesi `10^(−dB/20)` ile kısıyor (yükseltme yok); kullanıcının seçtiği ses (`snapshot.volume`) değişmiyor. Crossfade'de her deste kendi kazancıyla. Ayar varsayılan açık (`settings.loudnessNormalizationEnabled`); Cast alıcısına uygulanmıyor. Bu değişiklikten önce indirilen şarkıların değeri yok, onlar dengelenmiyor (gerekirse ileride çevrimiçiyken doldurulabilir).
 10. **Arama sayfalaması:** Arama 20 sonuçla sınırlı (`InnerTubeSearchService.maxResults`). Continuation altyapısı ana sayfa ve tür/ruh hali sayfalarında var; aramaya bağla, Playlists filtresini ekle (`searchArtists` zaten var). Kod upstream'den cherry-pick alınan `lib/services/youtube_music/` içinde; çakışmayı azaltmak için upstream'e PR düşünülebilir (önce kullanıcıya sor). RustyPipe (GPL) kodu alınmaz.
 11. **Songbrook Connect:** Cihazlar arasında yalnızca `videoId`, kuyruk, konum, shuffle/repeat senkronize edilir; hedef cihaz stream'i kendi resolver'ıyla çözer (Ariami'de de ses ayrı çekiliyor, Connect yalnızca meta veri taşıyor).
     - Ariami modeli: tüm cihazlar tek bir hub'a WebSocket açar; aynı anda tek "owner" çalar, diğerleri onun durumunu yansıtıp komut gönderir. Hub'ın verdiği `ownerEpoch` ile eski mesajlar reddedilir; sahipliği kaybeden cihaz önce duraklar (await), sonra yansıtmaya geçer. Devretme prepare (hedef yükler ve konuma gider, çalmaz) → commit (hedef çalar, kaynak durur) → gerekirse cancel (hedef eski durumuna döner). Owner düşerse hemen failover. v3, kuyruğu ayrı mesajda yalnızca değişince gönderir. `docs/connect/07-gotchas.md`'deki 42 madde (ör. just_audio'nun `play()`'ini handler içinde await etme, kuyruk sırası id'ye değil konuma göre) doğrudan bizim için geçerli.

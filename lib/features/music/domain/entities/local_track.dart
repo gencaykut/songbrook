@@ -19,6 +19,7 @@ class LocalTrack {
     this.sourceId,
     this.lastPlayedAt,
     this.lastPlayedPlaylistId,
+    this.loudnessDb,
     this.isExternal = false,
   });
 
@@ -39,6 +40,10 @@ class LocalTrack {
   final String? sourceId;
   final DateTime? lastPlayedAt;
   final String? lastPlayedPlaylistId;
+
+  /// YouTube's loudness of the downloaded stream relative to its playback
+  /// target, in dB. Null for downloads made before it was recorded.
+  final double? loudnessDb;
 
   /// True for a transient track opened from Android outside BStream's library.
   final bool isExternal;
@@ -61,6 +66,7 @@ class LocalTrack {
     String? sourceId,
     DateTime? lastPlayedAt,
     String? lastPlayedPlaylistId,
+    double? loudnessDb,
     bool? isExternal,
   }) {
     return LocalTrack(
@@ -81,6 +87,7 @@ class LocalTrack {
       sourceId: sourceId ?? this.sourceId,
       lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
       lastPlayedPlaylistId: lastPlayedPlaylistId ?? this.lastPlayedPlaylistId,
+      loudnessDb: loudnessDb ?? this.loudnessDb,
       isExternal: isExternal ?? this.isExternal,
     );
   }

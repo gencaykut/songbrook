@@ -20,6 +20,7 @@ class TrackInfoModel extends TrackInfo {
     super.streamChannels,
     super.streamClientProfileKey,
     super.streamDuration,
+    super.loudnessDb,
     super.extractor,
     super.album,
     super.albumBrowseId,
@@ -81,6 +82,7 @@ class TrackInfoModel extends TrackInfo {
           _positiveIntValue((selectedFormat ?? json)['audioChannels']),
       streamClientProfileKey: _stringValue(json['stream_client_profile_key']),
       streamDuration: _millisecondsDuration(json['stream_duration_ms']),
+      loudnessDb: _finiteDoubleValue(json['loudness_db']),
       extractor:
           _stringValue(json['extractor']) ??
           _stringValue(json['extractor_key']) ??
@@ -125,6 +127,7 @@ class TrackInfoModel extends TrackInfo {
       'stream_channels': streamChannels,
       'stream_client_profile_key': streamClientProfileKey,
       'stream_duration_ms': streamDuration?.inMilliseconds,
+      'loudness_db': loudnessDb,
       'extractor': extractor,
       'album': album,
       'album_browse_id': albumBrowseId,
@@ -469,6 +472,13 @@ class TrackInfoModel extends TrackInfo {
       return null;
     }
     return Duration(seconds: seconds);
+  }
+
+  static double? _finiteDoubleValue(Object? value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '');
+    return number != null && number.isFinite ? number : null;
   }
 
   static Duration? _millisecondsDuration(Object? value) {

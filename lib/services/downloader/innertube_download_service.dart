@@ -119,6 +119,7 @@ final class InnerTubeDownloadService
       streamChannels: resolved.format.audioChannels,
       streamClientProfileKey: resolved.profile.key,
       streamDuration: resolved.format.approxDuration,
+      loudnessDb: resolved.format.loudnessDb,
       httpHeaders: resolved.headers,
     );
   }
@@ -254,6 +255,7 @@ final class InnerTubeDownloadService
             sourceUrl: url,
             filePath: result.file.path,
             mediaType: DownloadMediaType.audio,
+            loudnessDb: resolved.format.loudnessDb,
           );
         } on HttpAudioTransferException catch (error) {
           if (!error.shouldRefreshUrl || refresh >= maxStreamRefreshes) {

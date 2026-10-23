@@ -83,6 +83,7 @@ final class InnerTubeAudioResolver
         clientProfileKey: resolved.profile.key,
         expiresAt: resolved.expiresAt,
         streamDuration: resolved.format.approxDuration,
+        loudnessDb: resolved.format.loudnessDb,
       );
     } catch (error) {
       onResolverFailure?.call(source, error);

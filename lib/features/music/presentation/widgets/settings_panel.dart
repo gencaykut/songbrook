@@ -649,15 +649,30 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                 ),
                 if (showSkipSilence) ...[
                   const SizedBox(height: appCardGap),
-                  _SkipSilenceSettings(
+                  _PlaybackSwitchSettings(
                     key: const ValueKey('settings-inline-skip-silence'),
+                    switchKey: const ValueKey('settings-skip-silence-switch'),
                     enabled: state.skipSilenceEnabled,
-                    strings: strings,
+                    icon: Icons.fast_forward_rounded,
+                    title: strings.skipSilence,
+                    summary: strings.skipSilenceSummary,
                     onEnabledChanged: ref
                         .read(settingsControllerProvider.notifier)
                         .setSkipSilenceEnabled,
                   ),
                 ],
+                const SizedBox(height: appCardGap),
+                _PlaybackSwitchSettings(
+                  key: const ValueKey('settings-inline-loudness'),
+                  switchKey: const ValueKey('settings-loudness-switch'),
+                  enabled: state.loudnessNormalizationEnabled,
+                  icon: Icons.equalizer_rounded,
+                  title: strings.loudnessNormalization,
+                  summary: strings.loudnessNormalizationSummary,
+                  onEnabledChanged: ref
+                      .read(settingsControllerProvider.notifier)
+                      .setLoudnessNormalizationEnabled,
+                ),
               ],
             ),
             _SettingsGroup(
@@ -4052,16 +4067,22 @@ class _CrossfadeSettings extends StatelessWidget {
   }
 }
 
-class _SkipSilenceSettings extends StatelessWidget {
-  const _SkipSilenceSettings({
+class _PlaybackSwitchSettings extends StatelessWidget {
+  const _PlaybackSwitchSettings({
+    required this.switchKey,
     required this.enabled,
-    required this.strings,
+    required this.icon,
+    required this.title,
+    required this.summary,
     required this.onEnabledChanged,
     super.key,
   });
 
+  final Key switchKey;
   final bool enabled;
-  final AppStrings strings;
+  final IconData icon;
+  final String title;
+  final String summary;
   final ValueChanged<bool> onEnabledChanged;
 
   @override
@@ -4085,18 +4106,15 @@ class _SkipSilenceSettings extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: SwitchListTile.adaptive(
-            key: const ValueKey('settings-skip-silence-switch'),
+            key: switchKey,
             value: enabled,
             onChanged: onEnabledChanged,
-            secondary: const Icon(Icons.fast_forward_rounded),
+            secondary: Icon(icon),
             title: Text(
-              strings.skipSilence,
+              title,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            subtitle: Text(
-              strings.skipSilenceSummary,
-              style: appListCardSubtitleStyle(context),
-            ),
+            subtitle: Text(summary, style: appListCardSubtitleStyle(context)),
           ),
         ),
       ),

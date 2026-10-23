@@ -12,6 +12,7 @@ import '../../features/music/domain/entities/local_track.dart';
 import '../../features/music/domain/entities/track_info.dart';
 import 'crossfade_transition.dart';
 import 'fragmented_mp4_duration.dart';
+import 'loudness_normalization.dart';
 import 'notification_artwork_service.dart';
 import 'player_service.dart';
 
@@ -29,7 +30,8 @@ class JustAudioPlayerService
         PlayerService,
         NativeRemoteQueuePlayer,
         CrossfadeCapablePlayer,
-        SkipSilenceCapablePlayer {
+        SkipSilenceCapablePlayer,
+        LoudnessNormalizingPlayer {
   static const _crossfadeShutdownGrace = Duration(seconds: 2);
   static const _crossfadeRetirementGrace = Duration(milliseconds: 250);
   static const _backgroundPositionSnapshotInterval = Duration(seconds: 1);
@@ -163,7 +165,7 @@ class JustAudioPlayerService
           return;
         }
         final physical = volume.clamp(0, 1).toDouble();
-        if ((physical - _masterVolume).abs() <= 0.001) {
+        if ((physical - _primaryPhysicalVolume).abs() <= 0.001) {
           _emit(_snapshot.copyWith(volume: _masterVolume));
         }
       }),
@@ -461,6 +463,16 @@ class JustAudioPlayerService
 
   PlayerSnapshot _snapshot = const PlayerSnapshot(status: PlayerStatus.idle);
   double _masterVolume = 1;
+
+  /// Attenuation of the primary deck's current track (1 when disabled).
+  /// The logical [_masterVolume] stays the user's choice; only the volume
+  /// written to the decks is scaled.
+  bool _loudnessNormalizationEnabled = false;
+  double _primaryLoudnessGain = 1;
+  double _incomingLoudnessGain = 1;
+  String? _primaryLoudnessKey;
+
+  double get _primaryPhysicalVolume => _masterVolume * _primaryLoudnessGain;
   int _playbackGeneration = 0;
   bool _playWhenReady = false;
   bool _playbackExplicitlySuppressed = false;
@@ -588,6 +600,88 @@ class JustAudioPlayerService
 
   @override
   bool get skipSilenceEnabled => _skipSilenceEnabled;
+
+  @override
+  bool get loudnessNormalizationEnabled => _loudnessNormalizationEnabled;
+
+  @override
+  Future<void> configureLoudnessNormalization({required bool enabled}) async {
+    if (_loudnessNormalizationEnabled == enabled) {
+      return;
+    }
+    _loudnessNormalizationEnabled = enabled;
+    _primaryLoudnessKey = null;
+    await _syncPrimaryLoudness(_snapshot);
+  }
+
+  /// Rescales the primary deck when the logical track changes.
+  ///
+  /// A running crossfade owns both deck volumes; its promotion adopts the
+  /// incoming gain itself, so only the bookkeeping is updated meanwhile.
+  Future<void> _syncPrimaryLoudness(PlayerSnapshot snapshot) async {
+    final key = snapshot.isRemote
+        ? 'remote:${snapshot.queueEntryId}\u0000${snapshot.trackId}'
+        : 'local:${snapshot.trackId}';
+    if (key == _primaryLoudnessKey) {
+      return;
+    }
+    final (:known, :loudnessDb) = _loudnessDbFor(snapshot);
+    // A load can publish its snapshot before its queue is adopted. Keep the
+    // current gain and retry on the next snapshot rather than jumping to unity.
+    if (!known) {
+      return;
+    }
+    _primaryLoudnessKey = key;
+    final gain = _loudnessNormalizationEnabled
+        ? loudnessNormalizationGain(loudnessDb)
+        : 1.0;
+    if (gain == _primaryLoudnessGain) {
+      return;
+    }
+    _primaryLoudnessGain = gain;
+    if (_disposed || _crossfadeRamp != null || _crossfadePromotionInProgress) {
+      return;
+    }
+    try {
+      await _writePrimaryCrossfadeVolume(_primaryPhysicalVolume);
+    } catch (_) {
+      // The next volume write or track change reasserts the gain.
+    }
+  }
+
+  ({bool known, double? loudnessDb}) _loudnessDbFor(PlayerSnapshot snapshot) {
+    final trackId = snapshot.trackId;
+    if (trackId == null) {
+      return (known: true, loudnessDb: null);
+    }
+    if (!snapshot.isRemote) {
+      for (final track in _localQueueTracks) {
+        if (track.id == trackId) {
+          return (known: true, loudnessDb: track.loudnessDb);
+        }
+      }
+      return (known: false, loudnessDb: null);
+    }
+    final entryId = snapshot.queueEntryId;
+    if (entryId != null) {
+      for (final source in _remoteQueueSources) {
+        if (source.queueEntryId == entryId) {
+          return (known: true, loudnessDb: source.track.loudnessDb);
+        }
+      }
+    }
+    final active = _activeRemoteTrack;
+    if (active != null && (active.id == trackId || active.url == trackId)) {
+      return (known: true, loudnessDb: active.loudnessDb);
+    }
+    return (known: false, loudnessDb: null);
+  }
+
+  double _crossfadeLoudnessGain(CrossfadePlaybackSource source) {
+    return _loudnessNormalizationEnabled
+        ? loudnessNormalizationGain(crossfadeSourceLoudnessDb(source))
+        : 1.0;
+  }
 
   @override
   Future<void> configureSkipSilence({required bool enabled}) async {
@@ -1179,7 +1273,7 @@ class JustAudioPlayerService
       try {
         // A ramp tick may already be queued when cancellation wins. Restore
         // through the same lane so this write is guaranteed to be last.
-        await _writePrimaryCrossfadeVolume(_masterVolume);
+        await _writePrimaryCrossfadeVolume(_primaryPhysicalVolume);
       } catch (_) {
         // The next explicit load restores the logical master volume.
       }
@@ -1295,6 +1389,7 @@ class JustAudioPlayerService
       if (currentRampDuration == null) {
         return;
       }
+      _incomingLoudnessGain = _crossfadeLoudnessGain(source);
       late final CrossfadeRamp ramp;
       ramp = CrossfadeRamp(
         duration: currentRampDuration,
@@ -1311,8 +1406,8 @@ class JustAudioPlayerService
           await _writeCrossfadeVolumes(
             outgoing: outgoing,
             incoming: incoming,
-            outgoingVolume: gains.outgoing * master,
-            incomingVolume: gains.incoming * master,
+            outgoingVolume: gains.outgoing * master * _primaryLoudnessGain,
+            incomingVolume: gains.incoming * master * _incomingLoudnessGain,
           );
         },
       );
@@ -1548,7 +1643,7 @@ class JustAudioPlayerService
           outgoing: outgoing,
           incoming: incoming,
           outgoingVolume: 0,
-          incomingVolume: _masterVolume,
+          incomingVolume: _masterVolume * _incomingLoudnessGain,
         );
         if (!_isCrossfadeCurrent(generation) ||
             !identical(outgoing, _player) ||
@@ -1585,6 +1680,10 @@ class JustAudioPlayerService
         _crossfadePreparation = null;
         _crossfadePrimaryGain = 1;
         _crossfadeIncomingGain = 0;
+        // The incoming deck already plays at its own gain; adopt it so the
+        // snapshot below does not rescale the newly promoted primary.
+        _primaryLoudnessGain = _incomingLoudnessGain;
+        _primaryLoudnessKey = null;
         _snapshot = nextSnapshot;
         _attachPrimaryPlayer(incoming);
         _emit(nextSnapshot);
@@ -2609,12 +2708,14 @@ class JustAudioPlayerService
       await _writeCrossfadeVolumes(
         outgoing: outgoing,
         incoming: incoming,
-        outgoingVolume: _crossfadePrimaryGain * normalized,
-        incomingVolume: _crossfadeIncomingGain * normalized,
+        outgoingVolume:
+            _crossfadePrimaryGain * normalized * _primaryLoudnessGain,
+        incomingVolume:
+            _crossfadeIncomingGain * normalized * _incomingLoudnessGain,
       );
       return;
     }
-    await _player.setVolume(normalized);
+    await _player.setVolume(_primaryPhysicalVolume);
   }
 
   @override
@@ -3162,6 +3263,7 @@ class JustAudioPlayerService
     }
     snapshot = snapshot.copyWith(playWhenReady: _playWhenReady);
     _snapshot = snapshot;
+    unawaited(_syncPrimaryLoudness(snapshot));
     if (!_snapshotController.isClosed) {
       _snapshotController.add(snapshot);
     }

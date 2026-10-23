@@ -161,6 +161,89 @@ void main() {
     },
   );
 
+  group('loudness normalization', () {
+    // 6.0206 dB above YouTube's target halves the linear volume.
+    const loud = 6.0206;
+    const louder = 12.0412;
+
+    test('scales only the deck volume of each opened track', () async {
+      final backend = _FakeMediaKitBackend();
+      final service = MediaKitPlayerService(backend: backend);
+      addTearDown(service.dispose);
+
+      await service.configureLoudnessNormalization(enabled: true);
+      await service.setVolume(0.8);
+      await _playAndComplete(service, backend, 'loud', loudnessDb: loud);
+      expect(backend.volumeCalls.last, closeTo(40, 0.01));
+      expect(service.currentSnapshot.volume, 0.8);
+
+      await service.setVolume(0.6);
+      expect(backend.volumeCalls.last, closeTo(30, 0.01));
+
+      final quiet = service.playRemote(_track('quiet', loudnessDb: -8.16));
+      await _waitUntil(() => backend.openCalls.length == 2);
+      backend.completeOpen(1);
+      await quiet;
+      expect(backend.volumeCalls.last, closeTo(60, 0.01));
+    });
+
+    test('toggling the setting rescales the playing track', () async {
+      final backend = _FakeMediaKitBackend();
+      final service = MediaKitPlayerService(backend: backend);
+      addTearDown(service.dispose);
+
+      await _playAndComplete(service, backend, 'loud', loudnessDb: loud);
+      expect(backend.volumeCalls.last, closeTo(100, 0.01));
+
+      await service.configureLoudnessNormalization(enabled: true);
+      expect(backend.volumeCalls.last, closeTo(50, 0.01));
+
+      await service.configureLoudnessNormalization(enabled: false);
+      expect(backend.volumeCalls.last, closeTo(100, 0.01));
+    });
+
+    test('a crossfade fades each deck at its own gain', () async {
+      final active = _FakeMediaKitBackend();
+      final standby = _FakeMediaKitBackend();
+      final service = MediaKitPlayerService(
+        backend: active,
+        backendFactory: () => standby,
+      );
+      addTearDown(service.dispose);
+
+      await service.configureLoudnessNormalization(enabled: true);
+      await _playAndComplete(service, active, 'a', loudnessDb: loud);
+      await service.setVolume(0.8);
+      await service.configureCrossfade(
+        enabled: true,
+        duration: const Duration(milliseconds: 400),
+      );
+      await _prepareAndComplete(service, standby, 'b', loudnessDb: louder);
+      final outgoingStart = active.volumeCalls.length;
+
+      active
+        ..emitDuration(const Duration(seconds: 2))
+        ..emitPosition(const Duration(milliseconds: 1600));
+      await _waitUntil(() => service.currentSnapshot.trackId == 'b');
+
+      expect(
+        active.volumeCalls.sublist(outgoingStart),
+        everyElement(inInclusiveRange(0, 40.01)),
+        reason: 'The loud outgoing track keeps its attenuation.',
+      );
+      expect(
+        standby.volumeCalls,
+        everyElement(inInclusiveRange(0, 20.01)),
+        reason: 'The incoming track fades in at its own attenuation.',
+      );
+      expect(standby.volumeCalls.last, closeTo(20, 0.01));
+      expect(service.currentSnapshot.volume, 0.8);
+
+      await service.setVolume(0.5);
+      expect(standby.volumeCalls.last, closeTo(12.5, 0.01));
+    });
+  });
+
   group('dual-deck crossfade', () {
     test(
       'preloads silently, hands off, and ignores the retired deck',
@@ -847,6 +930,7 @@ TrackInfo _track(
   String? streamExtension,
   Map<String, String>? httpHeaders,
   Duration? duration,
+  double? loudnessDb,
 }) => TrackInfo(
   id: id,
   title: 'Track $id',
@@ -856,10 +940,18 @@ TrackInfo _track(
   streamExtension: streamExtension,
   httpHeaders: httpHeaders,
   duration: duration,
+  loudnessDb: loudnessDb,
 );
 
-RemoteCrossfadePlaybackSource _crossfadeSource(String id) {
-  final track = _track(id, duration: const Duration(minutes: 3));
+RemoteCrossfadePlaybackSource _crossfadeSource(
+  String id, {
+  double? loudnessDb,
+}) {
+  final track = _track(
+    id,
+    duration: const Duration(minutes: 3),
+    loudnessDb: loudnessDb,
+  );
   return RemoteCrossfadePlaybackSource(
     RemotePlaybackSource(
       track: track,
@@ -872,9 +964,10 @@ RemoteCrossfadePlaybackSource _crossfadeSource(String id) {
 Future<void> _playAndComplete(
   MediaKitPlayerService service,
   _FakeMediaKitBackend backend,
-  String id,
-) async {
-  final play = service.playRemote(_track(id));
+  String id, {
+  double? loudnessDb,
+}) async {
+  final play = service.playRemote(_track(id, loudnessDb: loudnessDb));
   await _waitUntil(() => backend.openCalls.isNotEmpty);
   backend.completeOpen(backend.openCalls.length - 1);
   await play;
@@ -883,9 +976,12 @@ Future<void> _playAndComplete(
 Future<void> _prepareAndComplete(
   MediaKitPlayerService service,
   _FakeMediaKitBackend standby,
-  String id,
-) async {
-  final preparation = service.prepareCrossfade(_crossfadeSource(id));
+  String id, {
+  double? loudnessDb,
+}) async {
+  final preparation = service.prepareCrossfade(
+    _crossfadeSource(id, loudnessDb: loudnessDb),
+  );
   await _waitUntil(() => standby.openCalls.isNotEmpty);
   standby.completeOpen(standby.openCalls.length - 1);
   await preparation;

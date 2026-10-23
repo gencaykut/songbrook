@@ -9,6 +9,7 @@ class DownloadResult {
     required this.mediaType,
     required this.completedAt,
     this.bytes,
+    this.loudnessDb,
   });
 
   final String id;
@@ -18,6 +19,10 @@ class DownloadResult {
   final DownloadMediaType mediaType;
   final DateTime completedAt;
   final int? bytes;
+
+  /// YouTube's loudness of the downloaded stream relative to its playback
+  /// target, in dB, when the provider reported it.
+  final double? loudnessDb;
 }
 
 enum DownloadProgressStatus { queued, running, completed, failed }

@@ -260,5 +260,84 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    group('loudness', () {
+      Map<String, dynamic> payload({
+        Map<String, dynamic>? audioConfig,
+        Map<String, dynamic> format = const <String, dynamic>{},
+      }) => <String, dynamic>{
+        'playabilityStatus': <String, dynamic>{'status': 'OK'},
+        'playerConfig': ?(audioConfig == null
+            ? null
+            : <String, dynamic>{'audioConfig': audioConfig}),
+        'streamingData': <String, dynamic>{
+          'adaptiveFormats': <Object?>[
+            <String, dynamic>{
+              'itag': 140,
+              'url': 'https://media.example.test/aac',
+              'mimeType': 'audio/mp4; codecs="mp4a.40.2"',
+              ...format,
+            },
+          ],
+        },
+      };
+
+      double? loudnessOf(Map<String, dynamic> value) => parser
+          .parse(value, clientId: 'visionOS')
+          .adaptiveFormats
+          .single
+          .loudnessDb;
+
+      test('reads the per-format value visionOS clients send', () {
+        expect(
+          loudnessOf(
+            payload(
+              audioConfig: <String, dynamic>{'loudnessDb': -1.0},
+              format: <String, dynamic>{
+                'loudnessDb': 2.0699997,
+                'trackAbsoluteLoudnessLkfs': -11.93,
+              },
+            ),
+          ),
+          closeTo(2.07, 0.001),
+        );
+      });
+
+      test('falls back to audioConfig as Android clients send it', () {
+        expect(
+          loudnessOf(
+            payload(audioConfig: <String, dynamic>{'loudnessDb': 2.9399996}),
+          ),
+          closeTo(2.94, 0.001),
+        );
+      });
+
+      test('derives the value from absolute loudness and its target', () {
+        expect(
+          loudnessOf(
+            payload(
+              audioConfig: <String, dynamic>{
+                'perceptualLoudnessDb': -22.16,
+                'trackAbsoluteLoudnessLkfs': -22.16,
+                'loudnessTargetLkfs': -14,
+              },
+            ),
+          ),
+          closeTo(-8.16, 0.001),
+        );
+      });
+
+      test('leaves missing or implausible values unknown', () {
+        expect(loudnessOf(payload()), isNull);
+        expect(
+          loudnessOf(payload(format: <String, dynamic>{'loudnessDb': 'loud'})),
+          isNull,
+        );
+        expect(
+          loudnessOf(payload(format: <String, dynamic>{'loudnessDb': 90})),
+          isNull,
+        );
+      });
+    });
   });
 }

@@ -9,6 +9,7 @@ import '../../core/platform/app_platform.dart';
 import '../../features/music/domain/entities/local_track.dart';
 import '../../features/music/domain/entities/track_info.dart';
 import 'crossfade_transition.dart';
+import 'loudness_normalization.dart';
 import 'player_service.dart';
 
 typedef MediaKitOperationDeadline = Future<void> Function(Duration duration);
@@ -208,7 +209,11 @@ class _MediaKitPlayerBackend implements MediaKitPlayerBackend {
   }
 }
 
-class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
+class MediaKitPlayerService
+    implements
+        PlayerService,
+        CrossfadeCapablePlayer,
+        LoudnessNormalizingPlayer {
   static const _crossfadeShutdownGrace = Duration(seconds: 2);
   static const _crossfadeRetirementGrace = Duration(milliseconds: 250);
 
@@ -247,6 +252,20 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
 
   PlayerSnapshot _snapshot = const PlayerSnapshot(status: PlayerStatus.idle);
   double _masterVolume = 1;
+
+  /// Loudness of the active and standby decks' tracks. The logical
+  /// [_masterVolume] stays the user's choice; only deck volumes are scaled.
+  bool _loudnessNormalizationEnabled = false;
+  double? _primaryLoudnessDb;
+  double? _incomingLoudnessDb;
+
+  double get _primaryLoudnessGain => _loudnessGain(_primaryLoudnessDb);
+  double get _incomingLoudnessGain => _loudnessGain(_incomingLoudnessDb);
+  double get _primaryPhysicalVolume => _masterVolume * _primaryLoudnessGain;
+
+  double _loudnessGain(double? loudnessDb) => _loudnessNormalizationEnabled
+      ? loudnessNormalizationGain(loudnessDb)
+      : 1.0;
   Future<void> _operationTail = Future<void>.value();
   _MediaKitOperationLease? _activeOperation;
   int _requestedGeneration = 0;
@@ -283,6 +302,25 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
 
   @override
   bool get crossfadeEnabled => _crossfadeEnabled;
+
+  @override
+  bool get loudnessNormalizationEnabled => _loudnessNormalizationEnabled;
+
+  @override
+  Future<void> configureLoudnessNormalization({required bool enabled}) async {
+    if (_loudnessNormalizationEnabled == enabled) {
+      return;
+    }
+    _loudnessNormalizationEnabled = enabled;
+    // A running crossfade rescales both decks on its next tick.
+    if (_disposed || _crossfadeRamp != null || _crossfadePromotionInProgress) {
+      return;
+    }
+    await _enqueueOperation(
+      () => _player.setVolume(_primaryPhysicalVolume * 100),
+      label: 'setLoudnessNormalization',
+    );
+  }
 
   @override
   Future<void> configureCrossfade({
@@ -583,6 +621,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
       return;
     }
     final outgoing = _player;
+    _incomingLoudnessDb = crossfadeSourceLoudnessDb(source);
     late final CrossfadeRamp ramp;
     ramp = CrossfadeRamp(
       duration: duration,
@@ -595,8 +634,8 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
         await _writeCrossfadeVolumes(
           outgoing: outgoing,
           incoming: incoming,
-          outgoingVolume: gains.outgoing * master,
-          incomingVolume: gains.incoming * master,
+          outgoingVolume: gains.outgoing * master * _primaryLoudnessGain,
+          incomingVolume: gains.incoming * master * _incomingLoudnessGain,
         );
       },
     );
@@ -677,7 +716,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
         outgoing: outgoing,
         incoming: incoming,
         outgoingVolume: 0,
-        incomingVolume: _masterVolume,
+        incomingVolume: _masterVolume * _incomingLoudnessGain,
       );
       if (!isCurrent()) {
         return;
@@ -701,6 +740,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
       // media_kit's serialized stop path cannot alter the promoted snapshot.
       _player = incoming;
       _standbyPlayer = outgoing;
+      _primaryLoudnessDb = _incomingLoudnessDb;
       _preparedCrossfadeSource = null;
       _crossfadePreparation = null;
       _crossfadeRamp = null;
@@ -800,7 +840,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
         // A cancelled ramp may still have one native volume write in flight.
         // Restore only after that write settles so it cannot win late.
         await _crossfadeVolumeWriteTail;
-        await _player.setVolume(_masterVolume * 100);
+        await _player.setVolume(_primaryPhysicalVolume * 100);
       } catch (_) {
         // A normal explicit load will restore the target volume again.
       }
@@ -911,7 +951,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
           return;
         }
         final physical = (volume / 100).clamp(0, 1).toDouble();
-        if ((physical - _masterVolume).abs() <= 0.001) {
+        if ((physical - _primaryPhysicalVolume).abs() <= 0.001) {
           _emit(_snapshot.copyWith(volume: _masterVolume));
         }
       }),
@@ -995,6 +1035,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
     if (!_isCurrentGeneration(generation)) {
       return;
     }
+    _primaryLoudnessDb = track.loudnessDb;
     _emit(
       PlayerSnapshot(
         status: PlayerStatus.loading,
@@ -1132,6 +1173,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
     if (!_isCurrentGeneration(generation)) {
       return;
     }
+    _primaryLoudnessDb = track.loudnessDb;
     _emit(
       PlayerSnapshot(
         status: PlayerStatus.loading,
@@ -1329,13 +1371,13 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
       await _writeCrossfadeVolumes(
         outgoing: _player,
         incoming: standby,
-        outgoingVolume: gains.outgoing,
-        incomingVolume: gains.incoming,
+        outgoingVolume: gains.outgoing * _primaryLoudnessGain,
+        incomingVolume: gains.incoming * _incomingLoudnessGain,
       );
       return;
     }
     await _enqueueOperation(
-      () => _player.setVolume(normalized * 100),
+      () => _player.setVolume(_primaryPhysicalVolume * 100),
       label: 'setVolume',
     );
   }
@@ -1452,7 +1494,7 @@ class MediaKitPlayerService implements PlayerService, CrossfadeCapablePlayer {
         }
         // A cancelled open is isolated by a new backend. Restore the logical
         // volume before that replacement begins playback.
-        await _player.setVolume(_masterVolume * 100);
+        await _player.setVolume(_primaryPhysicalVolume * 100);
         if (!_isCurrentGeneration(generation)) {
           return;
         }

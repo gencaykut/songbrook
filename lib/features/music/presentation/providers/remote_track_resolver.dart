@@ -76,6 +76,7 @@ TrackInfo _mergeTrackInfo(TrackInfo base, TrackInfo resolved) {
     streamDuration: hasResolvedTransport
         ? resolved.streamDuration
         : base.streamDuration,
+    loudnessDb: hasResolvedTransport ? resolved.loudnessDb : base.loudnessDb,
     extractor: resolved.extractor ?? base.extractor,
     album: preserveMusicMetadata
         ? _preferredOptionalText(base.album, resolved.album)
@@ -324,6 +325,7 @@ class RemoteTrackResolver {
       streamChannels: resolution.channels,
       streamClientProfileKey: resolution.clientProfileKey,
       streamDuration: resolution.streamDuration,
+      loudnessDb: resolution.loudnessDb,
       httpHeaders: resolution.httpHeaders,
     );
   }
@@ -578,6 +580,7 @@ class RemoteTrackResolver {
       streamChannels: track.streamChannels,
       streamClientProfileKey: track.streamClientProfileKey,
       streamDuration: track.streamDuration,
+      loudnessDb: track.loudnessDb,
       extractor: track.extractor,
       album: track.album,
       albumBrowseId: track.albumBrowseId,

@@ -38,6 +38,7 @@ import '../../../../services/media_session/desktop_media_session_binding.dart';
 import '../../../../services/media_session/desktop_media_session_factory.dart';
 import '../../../../services/player/just_audio_player_service.dart';
 import '../../../../services/player/media_kit_player_service.dart';
+import '../../../../services/player/loudness_normalization.dart';
 import '../../../../services/player/player_service.dart';
 import '../../../../services/recommendations/recommendations.dart';
 import '../../../../services/sharing/bstream_track_link.dart';

@@ -2438,6 +2438,21 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
         '自动缩短检测到的静音，以便歌曲无需等待即可开始和转换。',
         '検出された無音を自動的に短くし、待たずに曲が開始して移行できるようにします。',
       ],
+  'Normalize volume': <String>[
+    'Normalizar volume',
+    'Normaliser le volume',
+    '볼륨 정규화',
+    '音量标准化',
+    '音量を均一化',
+  ],
+  "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":
+      <String>[
+        'Reduz as músicas masterizadas acima da referência do YouTube para manter um volume estável.',
+        'Baisse les chansons masterisées plus fort que la référence de YouTube pour garder un volume stable.',
+        'YouTube 기준보다 크게 마스터링된 노래의 볼륨을 낮춰 재생 음량을 일정하게 유지합니다.',
+        '降低母带音量高于 YouTube 参考值的歌曲，使播放音量保持稳定。',
+        'YouTube の基準より大きくマスタリングされた曲の音量を下げ、再生音量を一定に保ちます。',
+      ],
   'Apply': <String>['Aplicar', 'Appliquer', 'Apply', '应用', '適用'],
   'Timer duration': <String>[
     'Duração do temporizador',

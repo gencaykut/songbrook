@@ -12,12 +12,14 @@ class DownloadResultModel extends DownloadResult {
     required super.mediaType,
     required super.completedAt,
     super.bytes,
+    super.loudnessDb,
   });
 
   factory DownloadResultModel.completed({
     required String sourceUrl,
     required String filePath,
     required DownloadMediaType mediaType,
+    double? loudnessDb,
   }) {
     final file = File(filePath);
     return DownloadResultModel(
@@ -30,6 +32,7 @@ class DownloadResultModel extends DownloadResult {
       mediaType: mediaType,
       completedAt: DateTime.now(),
       bytes: file.existsSync() ? file.lengthSync() : null,
+      loudnessDb: loudnessDb,
     );
   }
 }

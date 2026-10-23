@@ -115,6 +115,7 @@ final class InnerTubeAudioFormat {
     this.audioQuality,
     this.qualityLabel,
     this.audioTrack,
+    this.loudnessDb,
     this.isDrc = false,
     this.isDrm = false,
   }) : codecs = List<String>.unmodifiable(codecs);
@@ -135,6 +136,12 @@ final class InnerTubeAudioFormat {
   final String? audioQuality;
   final String? qualityLabel;
   final InnerTubeAudioTrack? audioTrack;
+
+  /// YouTube's measured loudness relative to its playback target, in dB.
+  ///
+  /// Positive values are louder than the target (-14 LKFS today). YouTube's
+  /// own players attenuate by this amount and never boost quieter tracks.
+  final double? loudnessDb;
   final bool isDrc;
   final bool isDrm;
 

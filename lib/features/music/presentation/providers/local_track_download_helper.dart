@@ -433,6 +433,7 @@ class LocalTrackDownloadHelper {
         sourceId: metadataTrack.id.trim().isEmpty ? null : metadataTrack.id,
         lastPlayedAt: staleMatch?.lastPlayedAt,
         lastPlayedPlaylistId: staleMatch?.lastPlayedPlaylistId,
+        loudnessDb: result.loudnessDb ?? staleMatch?.loudnessDb,
       );
 
       await _ref.read(libraryRepositoryProvider).saveLocalTrack(localTrack);

@@ -6975,6 +6975,8 @@ void main() {
     );
     await tester.ensureVisible(about);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(about);
+    await tester.pumpAndSettle();
     await tester.tap(about);
     await tester.pumpAndSettle();
     final button = find.byKey(const ValueKey('settings-about-support'));
@@ -7036,7 +7038,13 @@ void main() {
       350,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(about);
+    await tester.pumpAndSettle();
     await tester.tap(about);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-about-version')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-about-version')));
     await tester.pumpAndSettle();
@@ -7068,6 +7076,10 @@ void main() {
       findsNothing,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-about-version')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-about-version')));
     await tester.pumpAndSettle();
     await tester.tap(
@@ -7119,7 +7131,13 @@ void main() {
       350,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(about);
+    await tester.pumpAndSettle();
     await tester.tap(about);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-about-version')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-about-version')));
     await tester.pumpAndSettle();
@@ -7163,6 +7181,8 @@ void main() {
       350,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(about);
+    await tester.pumpAndSettle();
     await tester.ensureVisible(about);
     await tester.pumpAndSettle();
     await tester.tap(about);

@@ -20,6 +20,7 @@ class TrackInfo {
     this.streamChannels,
     this.streamClientProfileKey,
     this.streamDuration,
+    this.loudnessDb,
     this.extractor,
     this.album,
     this.albumBrowseId,
@@ -64,6 +65,10 @@ class TrackInfo {
   /// [duration] is catalog metadata rounded to whole seconds and can exceed
   /// the real audio, so it must not be used to mark the end of a stream.
   final Duration? streamDuration;
+
+  /// YouTube's loudness of the media behind [streamUrl] relative to its
+  /// playback target, in dB. Positive values are louder than the target.
+  final double? loudnessDb;
   final String? extractor;
   final String? album;
   final String? albumBrowseId;
@@ -98,6 +103,7 @@ class TrackInfo {
     int? streamChannels,
     String? streamClientProfileKey,
     Duration? streamDuration,
+    double? loudnessDb,
     String? extractor,
     String? album,
     String? albumBrowseId,
@@ -127,6 +133,7 @@ class TrackInfo {
       streamClientProfileKey:
           streamClientProfileKey ?? this.streamClientProfileKey,
       streamDuration: streamDuration ?? this.streamDuration,
+      loudnessDb: loudnessDb ?? this.loudnessDb,
       extractor: extractor ?? this.extractor,
       album: album ?? this.album,
       albumBrowseId: albumBrowseId ?? this.albumBrowseId,

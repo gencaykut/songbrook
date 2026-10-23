@@ -22,6 +22,7 @@ class LocalTrackModel extends LocalTrack {
     super.sourceId,
     super.lastPlayedAt,
     super.lastPlayedPlaylistId,
+    super.loudnessDb,
   });
 
   factory LocalTrackModel.fromMap(Map<String, Object?> map) {
@@ -43,6 +44,7 @@ class LocalTrackModel extends LocalTrack {
       sourceId: map['source_id'] as String?,
       lastPlayedAt: _date(map['last_played_at']),
       lastPlayedPlaylistId: map['last_played_playlist_id'] as String?,
+      loudnessDb: _loudnessDb(map['loudness_db']),
     );
   }
 
@@ -65,6 +67,7 @@ class LocalTrackModel extends LocalTrack {
       sourceId: track.sourceId,
       lastPlayedAt: track.lastPlayedAt,
       lastPlayedPlaylistId: track.lastPlayedPlaylistId,
+      loudnessDb: track.loudnessDb,
     );
   }
 
@@ -87,6 +90,7 @@ class LocalTrackModel extends LocalTrack {
       'added_at': addedAt.toIso8601String(),
       'last_played_at': lastPlayedAt?.toIso8601String(),
       'last_played_playlist_id': lastPlayedPlaylistId,
+      'loudness_db': loudnessDb,
     };
   }
 
@@ -98,6 +102,13 @@ class LocalTrackModel extends LocalTrack {
         ? value.toInt()
         : int.tryParse(value.toString());
     return seconds == null ? null : Duration(seconds: seconds);
+  }
+
+  static double? _loudnessDb(Object? value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '');
+    return number != null && number.isFinite ? number : null;
   }
 
   static DateTime? _date(Object? value) {

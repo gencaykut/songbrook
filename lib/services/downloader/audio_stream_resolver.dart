@@ -100,6 +100,7 @@ class AudioStreamResolution {
     this.clientProfileKey,
     this.expiresAt,
     this.streamDuration,
+    this.loudnessDb,
   });
 
   /// Which resolver produced this result.
@@ -146,6 +147,9 @@ class AudioStreamResolution {
   /// so players can rely on it as the real end of the audio.
   final Duration? streamDuration;
 
+  /// YouTube's loudness relative to its playback target, in dB.
+  final double? loudnessDb;
+
   bool get isUsable {
     final uri = Uri.tryParse(streamUrl);
     return uri != null &&
@@ -168,6 +172,7 @@ class AudioStreamResolution {
       clientProfileKey: clientProfileKey,
       expiresAt: expiresAt,
       streamDuration: streamDuration,
+      loudnessDb: loudnessDb,
     );
   }
 
@@ -191,6 +196,7 @@ class AudioStreamResolution {
       channels: track.streamChannels,
       clientProfileKey: track.streamClientProfileKey,
       streamDuration: track.streamDuration,
+      loudnessDb: track.loudnessDb,
     );
   }
 

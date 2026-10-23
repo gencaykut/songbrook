@@ -112,6 +112,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
 
   Future<void> _crossfadeConfigurationTail = Future<void>.value();
   Future<void> _skipSilenceConfigurationTail = Future<void>.value();
+  Future<void> _loudnessConfigurationTail = Future<void>.value();
   final _CrossfadePreparationCoordinator _crossfadePreparation =
       _CrossfadePreparationCoordinator();
   Future<void>? _nextNavigationInFlight;
@@ -158,6 +159,17 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       (previous, next) {
         if (next != null && next != previous) {
           _scheduleSkipSilenceConfiguration(next);
+        }
+      },
+      fireImmediately: true,
+    );
+    ref.listen<bool?>(
+      settingsControllerProvider.select(
+        (settings) => settings.asData?.value.loudnessNormalizationEnabled,
+      ),
+      (previous, next) {
+        if (next != null && next != previous) {
+          _scheduleLoudnessConfiguration(next);
         }
       },
       fireImmediately: true,
@@ -855,6 +867,26 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       (_) {},
       onError: (Object error, StackTrace stackTrace) {
         debugPrint('Crossfade configuration failed: $error\n$stackTrace');
+      },
+    );
+  }
+
+  void _scheduleLoudnessConfiguration(bool enabled) {
+    final previous = _loudnessConfigurationTail;
+    _loudnessConfigurationTail = () async {
+      await previous;
+      if (_disposed) {
+        return;
+      }
+      final service = ref.read(playerServiceProvider);
+      if (service case final LoudnessNormalizingPlayer player) {
+        await player.configureLoudnessNormalization(enabled: enabled);
+      }
+    }();
+    _loudnessConfigurationTail = _loudnessConfigurationTail.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        debugPrint('Loudness configuration failed: $error\n$stackTrace');
       },
     );
   }

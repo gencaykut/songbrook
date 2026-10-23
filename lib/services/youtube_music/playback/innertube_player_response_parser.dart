@@ -22,15 +22,22 @@ final class InnerTubePlayerResponseParser {
         _hasDrmMetadata(streamingData) ||
         playability.value == InnerTubePlayability.drmProtected;
 
+    // visionOS-style clients report loudness per format; Android clients
+    // report it once in playerConfig.audioConfig instead.
+    final responseLoudnessDb = _loudnessDb(
+      _asMap(_asMap(payload['playerConfig'])?['audioConfig']),
+    );
     final formats = _parseFormats(
       streamingData?['formats'],
       source: InnerTubeFormatSource.formats,
       responseHasDrm: responseHasDrm,
+      responseLoudnessDb: responseLoudnessDb,
     );
     final adaptiveFormats = _parseFormats(
       streamingData?['adaptiveFormats'],
       source: InnerTubeFormatSource.adaptiveFormats,
       responseHasDrm: responseHasDrm,
+      responseLoudnessDb: responseLoudnessDb,
     );
     final details = _asMap(payload['videoDetails']);
 
@@ -141,6 +148,7 @@ final class InnerTubePlayerResponseParser {
     Object? value, {
     required InnerTubeFormatSource source,
     required bool responseHasDrm,
+    double? responseLoudnessDb,
   }) {
     if (value is! List) {
       return const <InnerTubeAudioFormat>[];
@@ -156,6 +164,7 @@ final class InnerTubePlayerResponseParser {
         data,
         source: source,
         responseHasDrm: responseHasDrm,
+        responseLoudnessDb: responseLoudnessDb,
       );
       if (format != null) {
         parsed.add(format);
@@ -168,6 +177,7 @@ final class InnerTubePlayerResponseParser {
     Map<dynamic, dynamic> data, {
     required InnerTubeFormatSource source,
     required bool responseHasDrm,
+    double? responseLoudnessDb,
   }) {
     final itag = _positiveInt(data['itag']);
     final mime = _parseMimeType(_text(data['mimeType']));
@@ -213,6 +223,7 @@ final class InnerTubePlayerResponseParser {
       audioQuality: audioQuality,
       qualityLabel: _text(data['qualityLabel']) ?? _text(data['quality']),
       audioTrack: audioTrack,
+      loudnessDb: _loudnessDb(data) ?? responseLoudnessDb,
       isDrc: isDrc,
       isDrm: responseHasDrm || _hasDrmMetadata(data),
     );
@@ -447,6 +458,37 @@ bool? _boolean(Object? value) {
 Duration? _secondsDuration(Object? value) {
   final seconds = _positiveInt(value);
   return seconds == null ? null : Duration(seconds: seconds);
+}
+
+/// Reads loudness relative to YouTube's target from a format or audioConfig.
+///
+/// Falls back to the absolute track loudness minus the target when only those
+/// are present. Implausible values are dropped rather than clamped.
+double? _loudnessDb(Map<dynamic, dynamic>? data) {
+  if (data == null) {
+    return null;
+  }
+  var loudness = _finiteDouble(data['loudnessDb']);
+  if (loudness == null) {
+    final absolute = _finiteDouble(data['trackAbsoluteLoudnessLkfs']);
+    final target = _finiteDouble(data['loudnessTargetLkfs']);
+    if (absolute != null && target != null) {
+      loudness = absolute - target;
+    }
+  }
+  if (loudness == null || loudness.abs() > 60) {
+    return null;
+  }
+  return loudness;
+}
+
+double? _finiteDouble(Object? value) {
+  final number = switch (value) {
+    final num number => number.toDouble(),
+    final String text => double.tryParse(text.trim()),
+    _ => null,
+  };
+  return number != null && number.isFinite ? number : null;
 }
 
 Duration? _millisecondsDuration(Object? value) {

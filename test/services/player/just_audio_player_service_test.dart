@@ -1193,6 +1193,149 @@ void main() {
     },
   );
 
+  group('loudness normalization', () {
+    // 6.0206 dB above YouTube's target halves the linear volume.
+    const loud = 6.0206;
+    const louder = 12.0412;
+
+    test('scales only the deck volume of a loud stream', () async {
+      final fixture = await _Fixture.create();
+      try {
+        await fixture.service.configureLoudnessNormalization(enabled: true);
+        await fixture.service.setVolume(0.8);
+        await fixture.service.playRemoteSource(
+          _remoteSource('loud', loudnessDb: loud),
+        );
+        await _drainEvents();
+
+        expect(fixture.backend.volumeCalls.last, closeTo(0.4, 0.001));
+        expect(fixture.service.currentSnapshot.volume, 0.8);
+
+        await fixture.service.setVolume(0.6);
+        expect(fixture.backend.volumeCalls.last, closeTo(0.3, 0.001));
+        expect(fixture.service.currentSnapshot.volume, 0.6);
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('a native queue transition adopts the next track gain', () async {
+      final fixture = await _Fixture.create();
+      try {
+        await fixture.service.configureLoudnessNormalization(enabled: true);
+        await fixture.service.setVolume(0.8);
+        await fixture.service.playRemoteSource(
+          _remoteSource('loud', loudnessDb: loud),
+        );
+        await fixture.service.updateRemoteQueue([
+          _remoteSource('quiet', loudnessDb: -8.16),
+        ]);
+        await _drainEvents();
+        expect(fixture.backend.volumeCalls.last, closeTo(0.4, 0.001));
+
+        fixture.backend.emitSequenceState(currentIndex: 1);
+        await _drainEvents();
+
+        expect(fixture.service.currentSnapshot.trackId, 'quiet');
+        expect(
+          fixture.backend.volumeCalls.last,
+          closeTo(0.8, 0.001),
+          reason: 'Quieter tracks are never boosted above the user volume.',
+        );
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('a local queue uses the loudness stored with the download', () async {
+      final fixture = await _Fixture.create();
+      try {
+        await fixture.service.configureLoudnessNormalization(enabled: true);
+        await fixture.service.playLocalQueue([
+          _localTrack('downloaded', loudnessDb: loud),
+        ], 0);
+        await _drainEvents();
+
+        expect(fixture.backend.volumeCalls.last, closeTo(0.5, 0.001));
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('toggling the setting rescales the playing track', () async {
+      final fixture = await _Fixture.create();
+      try {
+        await fixture.service.playRemoteSource(
+          _remoteSource('loud', loudnessDb: loud),
+        );
+        await _drainEvents();
+        expect(
+          fixture.backend.volumeCalls.where((volume) => volume < 1),
+          isEmpty,
+          reason: 'Normalization is off until the setting enables it.',
+        );
+
+        await fixture.service.configureLoudnessNormalization(enabled: true);
+        expect(fixture.backend.volumeCalls.last, closeTo(0.5, 0.001));
+
+        await fixture.service.configureLoudnessNormalization(enabled: false);
+        expect(fixture.backend.volumeCalls.last, 1);
+      } finally {
+        await fixture.dispose();
+      }
+    });
+
+    test('a crossfade fades each deck at its own gain', () async {
+      final fixture = await _CrossfadeFixture.create();
+      try {
+        await fixture.service.configureLoudnessNormalization(enabled: true);
+        await fixture.service.playRemoteSource(
+          _remoteSource('current', loudnessDb: loud),
+        );
+        await fixture.service.updateRemoteQueue([
+          _remoteSource('next', loudnessDb: louder),
+        ]);
+        await fixture.service.setVolume(0.8);
+        await fixture.service.configureCrossfade(
+          enabled: true,
+          duration: const Duration(milliseconds: 400),
+        );
+        fixture.primary.emitDuration(const Duration(milliseconds: 800));
+        await _drainEvents();
+        await fixture.service.prepareCrossfade(
+          RemoteCrossfadePlaybackSource(
+            _remoteSource('next', loudnessDb: louder),
+          ),
+        );
+        final outgoingStart = fixture.primary.volumeCalls.length;
+
+        fixture.primary.emitPosition(const Duration(milliseconds: 400));
+        await _waitUntil(
+          () => fixture.service.currentSnapshot.queueEntryId == 'remote:next',
+          attempts: 700,
+        );
+
+        expect(
+          fixture.primary.volumeCalls.sublist(outgoingStart),
+          everyElement(lessThanOrEqualTo(0.4001)),
+          reason: 'The loud outgoing track keeps its attenuation.',
+        );
+        expect(
+          fixture.standby.volumeCalls,
+          everyElement(lessThanOrEqualTo(0.2001)),
+          reason: 'The incoming track fades in at its own attenuation.',
+        );
+        expect(fixture.standby.volumeCalls.last, closeTo(0.2, 0.001));
+        expect(fixture.service.currentSnapshot.volume, 0.8);
+
+        await fixture.service.setVolume(0.5);
+        expect(fixture.standby.volumeCalls.last, closeTo(0.125, 0.001));
+      } finally {
+        await fixture.dispose();
+      }
+    });
+  });
+
   group('dual-deck crossfade', () {
     test(
       'background snapshot throttling keeps crossfade timing precise',
@@ -2543,18 +2686,20 @@ RemotePlaybackSource _mp4RemoteSource(
   httpHeaders: const {'User-Agent': 'test-agent'},
 );
 
-RemotePlaybackSource _remoteSource(String id) => RemotePlaybackSource(
-  track: TrackInfo(
-    id: id,
-    title: 'Remote $id',
-    artist: 'Remote artist',
-    url: 'https://www.youtube.com/watch?v=$id',
-    streamUrl: 'https://media.example/$id.webm',
-    streamExtension: 'webm',
-  ),
-  uri: Uri.parse('https://media.example/$id.webm'),
-  queueEntryId: 'remote:$id',
-);
+RemotePlaybackSource _remoteSource(String id, {double? loudnessDb}) =>
+    RemotePlaybackSource(
+      track: TrackInfo(
+        id: id,
+        title: 'Remote $id',
+        artist: 'Remote artist',
+        url: 'https://www.youtube.com/watch?v=$id',
+        streamUrl: 'https://media.example/$id.webm',
+        streamExtension: 'webm',
+        loudnessDb: loudnessDb,
+      ),
+      uri: Uri.parse('https://media.example/$id.webm'),
+      queueEntryId: 'remote:$id',
+    );
 
 String? _queueEntryId(_BlockingAudioPlayer backend) {
   if (backend.sequence.isEmpty) return null;
@@ -2728,13 +2873,14 @@ class _CrossfadeFixture {
   }
 }
 
-LocalTrack _localTrack(String id, {String? filePath}) {
+LocalTrack _localTrack(String id, {String? filePath, double? loudnessDb}) {
   return LocalTrack(
     id: id,
     title: 'Track $id',
     artist: 'Local artist',
     filePath: filePath ?? 'C:\\music\\$id.mp3',
     addedAt: DateTime(2026),
+    loudnessDb: loudnessDb,
   );
 }
 
