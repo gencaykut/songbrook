@@ -10,8 +10,8 @@ void main() {
         InnerTubeClientRegistry.defaults.map((profile) => profile.key),
         <String>[
           'visionOS',
-          'androidSdkless',
           'visionOS01',
+          'androidSdkless',
           'webEmbedded',
           'mweb',
           'webMusic',

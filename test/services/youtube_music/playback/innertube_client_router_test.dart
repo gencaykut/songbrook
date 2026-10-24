@@ -15,6 +15,68 @@ void main() {
     );
   });
 
+  test('tries audio-only fallbacks before Android\'s muxed stream', () {
+    final router = InnerTubeClientRouter();
+    expect(
+      router
+          .candidates(skipPrimary: true)
+          .take(2)
+          .map((profile) => profile.key),
+      orderedEquals(<String>['visionOS01', 'androidSdkless']),
+    );
+
+    // visionOS01 cannot serve one video, so Android serves its muxed stream,
+    // faster than visionOS01 serves the rest.
+    router
+      ..recordSuccess('visionOS01', const Duration(milliseconds: 900))
+      ..recordSuccess(
+        'androidSdkless',
+        const Duration(milliseconds: 300),
+        muxed: true,
+      );
+    expect(router.healthFor('androidSdkless').lastSuccessWasMuxed, isTrue);
+    expect(
+      router
+          .candidates(skipPrimary: true)
+          .take(2)
+          .map((profile) => profile.key),
+      orderedEquals(<String>['visionOS01', 'androidSdkless']),
+      reason: 'A muxed stream never outranks an audio-only one on latency.',
+    );
+
+    expect(
+      router.candidates(skipPrimary: true).skip(2).first.key,
+      'webEmbedded',
+      reason: 'Unmeasured later clients keep their place behind Android.',
+    );
+
+    router.recordSuccess('androidSdkless', const Duration(milliseconds: 300));
+    expect(
+      router.candidates(skipPrimary: true).first.key,
+      'androidSdkless',
+      reason: 'Once Android serves audio alone again, latency decides.',
+    );
+  });
+
+  test('a muxed success does not jump an earlier unmeasured client', () {
+    // visionOS01 failed its first video, so only Android has a latency.
+    final router = InnerTubeClientRouter()
+      ..recordFailure('visionOS01', InnerTubeClientFailureKind.unavailable)
+      ..recordSuccess(
+        'androidSdkless',
+        const Duration(milliseconds: 300),
+        muxed: true,
+      );
+
+    expect(
+      router
+          .candidates(skipPrimary: true)
+          .take(3)
+          .map((profile) => profile.key),
+      orderedEquals(<String>['visionOS01', 'androidSdkless', 'webEmbedded']),
+    );
+  });
+
   test('moves a repeatedly failing primary behind healthy clients', () {
     var now = DateTime.utc(2026, 8, 31);
     final router = InnerTubeClientRouter(clock: () => now);
@@ -36,8 +98,8 @@ void main() {
       router.candidates(supportsJavaScript: false, supportsWebPo: false),
       <InnerTubeClientProfile>[
         InnerTubeClientRegistry.visionOS,
-        InnerTubeClientRegistry.androidSdkless,
         InnerTubeClientRegistry.visionOS01,
+        InnerTubeClientRegistry.androidSdkless,
       ],
     );
   });

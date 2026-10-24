@@ -16,6 +16,7 @@ final class InnerTubeClientHealth {
     required this.averageLatency,
     this.cooldownUntil,
     this.lastFailure,
+    this.lastSuccessWasMuxed = false,
   });
 
   final String profileKey;
@@ -25,6 +26,9 @@ final class InnerTubeClientHealth {
   final DateTime? cooldownUntil;
   final InnerTubeClientFailureKind? lastFailure;
 
+  /// Whether the latest success served audio only inside a video stream.
+  final bool lastSuccessWasMuxed;
+
   bool isCoolingDownAt(DateTime instant) =>
       cooldownUntil != null && instant.isBefore(cooldownUntil!);
 }
@@ -33,7 +37,10 @@ final class InnerTubeClientHealth {
 ///
 /// The selected default remains deterministic. Successful fallback clients are
 /// ranked by an exponentially weighted latency, while correctness always wins:
-/// profiles in cooldown are attempted only after every healthy candidate.
+/// profiles in cooldown are attempted only after every healthy candidate, and
+/// a client whose latest success was a muxed video stream never overtakes,
+/// however fast it is, a client measured serving audio alone or one placed
+/// before it in the configured order.
 final class InnerTubeClientRouter {
   InnerTubeClientRouter({
     List<InnerTubeClientProfile> profiles = InnerTubeClientRegistry.defaults,
@@ -135,7 +142,11 @@ final class InnerTubeClientRouter {
     ]);
   }
 
-  void recordSuccess(String profileKey, Duration latency) {
+  void recordSuccess(
+    String profileKey,
+    Duration latency, {
+    bool muxed = false,
+  }) {
     if (latency.isNegative) {
       throw ArgumentError.value(latency, 'latency', 'Must not be negative.');
     }
@@ -148,6 +159,7 @@ final class InnerTubeClientRouter {
       ..consecutiveFailures = 0
       ..cooldownUntil = null
       ..lastFailure = null
+      ..lastSuccessWasMuxed = muxed
       ..averageLatencyMicros = state.averageLatencyMicros == null
           ? latency.inMicroseconds.toDouble()
           : (state.averageLatencyMicros! * 0.7) +
@@ -200,6 +212,18 @@ final class InnerTubeClientRouter {
       if (left.key == primaryKey) return -1;
       if (right.key == primaryKey) return 1;
     }
+    // A muxed success must not let a client overtake one that serves audio
+    // alone (measured) or that the configured order already tries first.
+    final leftMuxed = _health[left.key]?.lastSuccessWasMuxed ?? false;
+    final rightMuxed = _health[right.key]?.lastSuccessWasMuxed ?? false;
+    if (leftMuxed != rightMuxed) {
+      final muxed = leftMuxed ? left : right;
+      final other = leftMuxed ? right : left;
+      if (_health[other.key]?.averageLatencyMicros != null ||
+          profiles.indexOf(other) < profiles.indexOf(muxed)) {
+        return leftMuxed ? 1 : -1;
+      }
+    }
     final leftLatency = _health[left.key]?.averageLatencyMicros;
     final rightLatency = _health[right.key]?.averageLatencyMicros;
     if (leftLatency != null && rightLatency != null) {
@@ -223,6 +247,7 @@ final class _MutableClientHealth {
   double? averageLatencyMicros;
   DateTime? cooldownUntil;
   InnerTubeClientFailureKind? lastFailure;
+  bool lastSuccessWasMuxed = false;
 
   bool isCoolingDownAt(DateTime instant) =>
       cooldownUntil != null && instant.isBefore(cooldownUntil!);
@@ -236,5 +261,6 @@ final class _MutableClientHealth {
         : Duration(microseconds: averageLatencyMicros!.round()),
     cooldownUntil: cooldownUntil,
     lastFailure: lastFailure,
+    lastSuccessWasMuxed: lastSuccessWasMuxed,
   );
 }

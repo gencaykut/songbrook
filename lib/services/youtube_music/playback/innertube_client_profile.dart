@@ -500,10 +500,14 @@ abstract final class InnerTubeClientRegistry {
   ///
   /// Experimental and platform-token-only clients are excluded. They remain
   /// available through [benchmarkCandidates] and [all].
+  ///
+  /// `visionOS01` precedes `androidSdkless`: Android's audio-only formats are
+  /// now SABR-only, so it serves just the muxed 360p stream (itag 18), several
+  /// times the data of an audio-only one.
   static const List<InnerTubeClientProfile> defaults = <InnerTubeClientProfile>[
     visionOS,
-    androidSdkless,
     visionOS01,
+    androidSdkless,
     webEmbedded,
     mweb,
     webMusic,

@@ -99,14 +99,21 @@ algorithm or canonical byte representation.
 The maintained production order is:
 
 1. `visionOS` — current tokenless/JS-less default.
-2. `androidSdkless` — independent tokenless/JS-less fallback.
-3. `visionOS01` — a second VisionOS identity kept fallback-only because its
-   content coverage is narrower, even though it is fast.
+2. `visionOS01` — a second VisionOS identity kept fallback-only because its
+   content coverage is narrower, even though it is fast. Songbrook tries it
+   before `androidSdkless` because it serves audio-only formats.
+3. `androidSdkless` — independent tokenless/JS-less fallback. As of
+   2026-10-24 its audio-only formats carry neither a URL nor a cipher
+   (SABR-only), so it serves only the muxed 360p stream (itag 18).
 4. `webEmbedded` — tokenless GVS with dynamic embedded bootstrap and EJS;
    limited to embeddable videos.
 5. `mweb` — preferred EJS plus WebPO fallback; ordinary WEB commonly exposes
    only SABR.
 6. `webMusic` — EJS plus WebPO.
+
+The router ranks healthy fallbacks by latency, except that a client whose
+latest success was a muxed stream never overtakes one measured serving audio
+alone or one placed before it in this order.
 
 EJS and WebPO each have an independent shared two-minute circuit breaker. A
 runtime/module failure is attempted once, skips the remaining profiles that

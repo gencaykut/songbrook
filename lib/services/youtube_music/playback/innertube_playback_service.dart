@@ -437,7 +437,11 @@ class InnerTubePlaybackService {
           totalStopwatch: stopwatch,
         );
         _ensureCurrent(shouldContinue);
-        _router.recordSuccess(profile.key, attemptStopwatch.elapsed);
+        _router.recordSuccess(
+          profile.key,
+          attemptStopwatch.elapsed,
+          muxed: !resolved.format.isAudioOnly,
+        );
         developer.log(
           'resolved client=${profile.key}, video=${videoId.value}, '
           'itag=${resolved.format.itag}, '
