@@ -34,28 +34,6 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
   'Error de reproducción.': 'Çalma hatası.',
   'Conexión inestable. Reintentando ZXQPH0X/ZXQPH1X…':
       'Bağlantı kararsız. Yeniden deneniyor ZXQPH0X/ZXQPH1X…',
-  'Listo para conectar.': 'Bağlanmaya hazır.',
-  'Ingresa @usuario o el link del live.':
-      '@kullanıcı adını veya yayın bağlantısını gir.',
-  'No hay pedidos en la cola LIVE para retirar.':
-      'CANLI yayın sırasında geri alınacak istek yok.',
-  'Comando no permitido para ZXQPH0X: ZXQPH1X':
-      'ZXQPH0X bu komutu kullanamaz: ZXQPH1X',
-  'Cola LIVE llena (máximo ZXQPH0X). Límpiala antes de agregar más pedidos.':
-      'CANLI yayın sırası dolu (en fazla ZXQPH0X). Yeni istek eklemeden önce sırayı temizle.',
-  'No hay una canción LIVE reproduciéndose.':
-      'Çalan bir CANLI yayın şarkısı yok.',
-  'Reproducción LIVE pausada.': 'CANLI yayın şarkısı duraklatıldı.',
-  'No se pudo ejecutar ZXQPH0X: ZXQPH1X': 'ZXQPH0X çalıştırılamadı: ZXQPH1X',
-  'La búsqueda excedió ZXQPH0X segundos.': 'Arama ZXQPH0X saniyeyi aştı.',
-  'El pedido no contiene una búsqueda.': 'İstekte aranacak bir şey yok.',
-  'Sin resultados': 'Sonuç yok',
-  'Error desconocido': 'Bilinmeyen hata',
-  'No se pudo reproducir "ZXQPH0X": ZXQPH1X': '"ZXQPH0X" çalınamadı: ZXQPH1X',
-  'Lista para reproducir en streaming': 'İnternetten çalmaya hazır',
-  'Agregado para reproducción remota: ZXQPH0X':
-      'İnternetten çalmak için eklendi: ZXQPH0X',
-  'El reproductor falló sin detalle.': 'Oynatıcı ayrıntı vermeden durdu.',
   'La playlist ya no está disponible.':
       'Bu çalma listesi artık kullanılamıyor.',
   'La migración del directorio falló y no pudo revertirse por completo: ZXQPH0X (rollback: ZXQPH1X)':
@@ -92,8 +70,6 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
       'YouTube Music geçersiz veya eksik oturum bilgisi gönderdi.',
   'No se pudo validar la cuenta de YouTube Music.':
       'YouTube Music hesabı doğrulanamadı.',
-  'La overlay LIVE local solo está disponible en PC.':
-      'Yerel CANLI yayın katmanı yalnızca bilgisayarda kullanılabilir.',
   'Microsoft WebView2 no está instalado en este equipo.':
       'Bu bilgisayarda Microsoft WebView2 yüklü değil.',
   'No se pudo preparar una sesión privada para iniciar sesión.':
@@ -403,24 +379,10 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
   'El manifiesto del respaldo no es válido.': 'Yedeğin bilgi dosyası geçersiz.',
   'Nuevos para ti': 'Senin için yeni',
   'Descubrimiento para ti': 'Senin için keşifler',
-  'Falló la conexión directa con TikTok LIVE: ZXQPH0X':
-      'TikTok LIVE ile doğrudan bağlantı kurulamadı: ZXQPH0X',
-  'La conexión LIVE se cerró. Reconectando...':
-      'CANLI yayın bağlantısı kapandı. Yeniden bağlanılıyor...',
-  'No se confirmó la conexión LIVE. Reintentando (ZXQPH0X/ZXQPH1X)...':
-      'CANLI yayın bağlantısı doğrulanamadı. Yeniden deneniyor (ZXQPH0X/ZXQPH1X)...',
-  'No se pudo mantener la conexión con TikTok LIVE.':
-      'TikTok LIVE bağlantısı sürdürülemedi.',
-  'No se pudo conectar a TikTok LIVE: ZXQPH0X':
-      'TikTok LIVE\'a bağlanılamadı: ZXQPH0X',
-  'No encontré un LIVE activo para @ZXQPH0X. ZXQPH1X':
-      '@ZXQPH0X için etkin bir CANLI yayın bulunamadı. ZXQPH1X',
-  'El LIVE finalizó.': 'CANLI yayın sona erdi.',
   'No se pudo iniciar ZXQPH0X porque el puerto ZXQPH1X ya está en uso.':
       'ZXQPH0X başlatılamadı, çünkü ZXQPH1X numaralı bağlantı noktası kullanımda.',
   'No se pudo iniciar ZXQPH0X porque Windows denegó o reservó el puerto ZXQPH1X.':
       'ZXQPH0X başlatılamadı, çünkü Windows ZXQPH1X numaralı bağlantı noktasını engelledi veya ayırdı.',
-  'No se pudo iniciar ZXQPH0X.': 'ZXQPH0X başlatılamadı.',
   'Windows configuró el dominio local, pero Songbrook no pudo verificar de forma segura http://ZXQPH0X/health.':
       'Windows yerel alan adını yapılandırdı, ancak Songbrook http://ZXQPH0X/health adresini güvenli bir şekilde doğrulayamadı.',
   'No hay una URL reproducible. Obtén la información del track primero.':

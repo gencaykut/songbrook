@@ -20,14 +20,11 @@ import '../../../../platform_channels/android_file_export_channel.dart';
 import '../../../../platform_channels/android_supported_links_settings_channel.dart';
 import '../../../../platform_channels/ios_file_export_channel.dart';
 import '../../../../services/app_update/github_release_checker.dart';
-import '../../../../services/live/tiktok_live_command_service.dart';
 import '../../../../services/storage/library_csv_import_service.dart';
 import '../../../../services/storage/library_csv_service.dart';
-import '../providers/live_overlay_controller.dart';
 import '../providers/music_providers.dart';
 import 'app_update_dialog.dart';
 import 'lyrics_animation_transition.dart';
-import 'live_widget_style_settings.dart';
 import 'scrolled_under_tab_frame.dart';
 import 'youtube_music_settings_account_card.dart';
 
@@ -121,28 +118,13 @@ final settingsReleaseCheckerProvider = Provider<SettingsReleaseChecker>((ref) {
 
 typedef SettingsSupportedLinksLauncher = Future<bool> Function();
 
-typedef _TikTokCommandPermissionChanged =
-    void Function(
-      TikTokCommandAudience audience,
-      TikTokLiveCommand command,
-      bool enabled,
-    );
-
 final settingsSupportedLinksLauncherProvider =
     Provider<SettingsSupportedLinksLauncher>((ref) {
       const channel = AndroidSupportedLinksSettingsChannel();
       return channel.open;
     });
 
-enum _SettingsRoute {
-  root,
-  appearance,
-  liveWidget,
-  lyrics,
-  storage,
-  live,
-  about,
-}
+enum _SettingsRoute { root, appearance, lyrics, storage, about }
 
 const double _settingsRootCardHorizontalPadding = 6.0;
 
@@ -198,9 +180,7 @@ class SettingsPanel extends ConsumerStatefulWidget {
 
 class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   final _downloadPathController = TextEditingController();
-  final _tiktokLiveController = TextEditingController();
   final _downloadPathFocusNode = FocusNode();
-  final _tiktokLiveFocusNode = FocusNode();
   bool _backupBusy = false;
   bool _recommendationClearBusy = false;
   bool _releaseCheckBusy = false;
@@ -228,9 +208,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
   void dispose() {
     widget.navigationController?._detach(this);
     _downloadPathController.dispose();
-    _tiktokLiveController.dispose();
     _downloadPathFocusNode.dispose();
-    _tiktokLiveFocusNode.dispose();
     super.dispose();
   }
 
@@ -248,12 +226,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             ),
           )
         : false;
-    final supportsTikTokLive =
-        AppPlatform.supportsTikTokLive ||
-        AppPlatform.isMobileTargetPlatform(Theme.of(context).platform);
-    final tiktokLive = supportsTikTokLive && _route == _SettingsRoute.live
-        ? ref.watch(tiktokLiveControllerProvider)
-        : null;
     final strings = ref.watch(appStringsProvider);
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
     final transitionDuration = disableAnimations
@@ -322,16 +294,11 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     return settings.when(
       data: (state) {
         _syncControllers(state);
-        final tiktokState = tiktokLive?.value;
-        if (tiktokState != null) {
-          _syncTikTokController(tiktokState);
-        }
         final rootSelected = _route == _SettingsRoute.root;
         final routeBody = rootSelected
             ? const SizedBox.shrink()
             : _buildRoute(
                 state: state,
-                tiktokLive: tiktokLive,
                 csvTransferBusy: csvTransferBusy,
                 strings: strings,
               );
@@ -352,11 +319,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
               child: routeFrame(
                 routeBody,
                 rootSlivers: rootSelected
-                    ? _buildRootSlivers(
-                        state: state,
-                        supportsTikTokLive: supportsTikTokLive,
-                        strings: strings,
-                      )
+                    ? _buildRootSlivers(state: state, strings: strings)
                     : null,
               ),
             ),
@@ -393,11 +356,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     if (_route == _SettingsRoute.root) {
       return;
     }
-    setState(() {
-      _route = _route == _SettingsRoute.liveWidget
-          ? _SettingsRoute.appearance
-          : _SettingsRoute.root;
-    });
+    setState(() => _route = _SettingsRoute.root);
     widget.navigationController?._routeChanged();
   }
 
@@ -405,17 +364,14 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     return switch (route) {
       _SettingsRoute.root => strings.settings,
       _SettingsRoute.appearance => strings.appearance,
-      _SettingsRoute.liveWidget => strings.liveWidget,
       _SettingsRoute.lyrics => strings.lyricsAppearance,
       _SettingsRoute.storage => strings.storage,
-      _SettingsRoute.live => strings.liveConnection,
       _SettingsRoute.about => strings.aboutApplication,
     };
   }
 
   Widget _buildRoute({
     required SettingsState state,
-    required AsyncValue<TikTokLiveState>? tiktokLive,
     required bool csvTransferBusy,
     required AppStrings strings,
   }) {
@@ -426,12 +382,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         surfaceBackgroundMode: state.surfaceBackgroundMode,
         appBackgroundPath: state.appBackgroundPath,
         playerFont: state.playerFont,
-        liveWidgetStyle: state.liveWidgetStyle,
-        onOpenLiveWidget:
-            AppPlatform.isDesktop &&
-                !AppPlatform.isMobileTargetPlatform(Theme.of(context).platform)
-            ? () => _openRoute(_SettingsRoute.liveWidget)
-            : null,
         playerStyle: state.playerStyle,
         showAudioQuality: state.showAudioQuality,
         animatedArtworkEnabled: state.animatedArtworkEnabled,
@@ -481,14 +431,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
             .read(settingsControllerProvider.notifier)
             .setMiniPlayerBackgroundMode(mode),
       ),
-      _SettingsRoute.liveWidget => LiveWidgetStyleSettings(
-        style: state.liveWidgetStyle,
-        accent: state.accent,
-        strings: strings,
-        onChanged: (style) => ref
-            .read(settingsControllerProvider.notifier)
-            .setLiveWidgetStyle(style),
-      ),
       _SettingsRoute.lyrics => _LyricsAppearanceSettings(
         animationStyle: state.lyricsAnimationStyle,
         alignment: state.lyricsTextAlignment,
@@ -522,30 +464,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         onExportBackup: _exportBackup,
         onExportCsv: _exportCsv,
       ),
-      _SettingsRoute.live =>
-        tiktokLive == null
-            ? Text(strings.liveUnavailable)
-            : tiktokLive.when(
-                data: (liveState) => _TikTokLiveSettings(
-                  controller: _tiktokLiveController,
-                  focusNode: _tiktokLiveFocusNode,
-                  state: liveState,
-                  strings: strings,
-                  onConnect: () => ref
-                      .read(tiktokLiveControllerProvider.notifier)
-                      .connect(_tiktokLiveController.text),
-                  onDisconnect: () => ref
-                      .read(tiktokLiveControllerProvider.notifier)
-                      .disconnect(),
-                  onCommandPermissionChanged: (audience, command, enabled) =>
-                      ref
-                          .read(tiktokLiveControllerProvider.notifier)
-                          .setCommandPermission(audience, command, enabled),
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) =>
-                    Text(strings.runtimeMessage(error.toString())),
-              ),
       _SettingsRoute.about => _AboutApplicationSettings(
         strings: strings,
         checkingForUpdates: _releaseCheckBusy,
@@ -561,7 +479,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
 
   List<Widget> _buildRootSlivers({
     required SettingsState state,
-    required bool supportsTikTokLive,
     required AppStrings strings,
   }) {
     final showSupportedLinks =
@@ -746,56 +663,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                 ),
               ],
             ),
-            if (showSupportedLinks || supportsTikTokLive)
-              Consumer(
-                builder: (context, scopedRef, _) {
-                  final tiktokLive = supportsTikTokLive
-                      ? scopedRef.watch(tiktokLiveControllerProvider)
-                      : null;
-                  final liveState = tiktokLive?.value;
-                  return _SettingsGroup(
-                    title: strings.integrations,
-                    children: [
-                      if (showSupportedLinks)
-                        _SettingsEntryCard(
-                          key: const ValueKey('settings-card-supported-links'),
-                          icon: Icons.link_rounded,
-                          title: strings.supportedLinks,
-                          subtitle: strings.supportedLinksSummary,
-                          onTap: _openSupportedLinksSettings,
-                        ),
-                      if (showSupportedLinks && tiktokLive != null)
-                        const SizedBox(height: appCardGap),
-                      if (tiktokLive != null) ...[
-                        _SettingsEntryCard(
-                          key: const ValueKey('settings-card-live'),
-                          icon: Icons.live_tv_rounded,
-                          title: strings.liveConnection,
-                          subtitle:
-                              strings.runtimeMessageOrNull(
-                                liveState?.message,
-                              ) ??
-                              strings.liveConnectionSummary,
-                          status: switch (liveState?.status) {
-                            TikTokLiveStatus.connected => true,
-                            TikTokLiveStatus.error ||
-                            TikTokLiveStatus.liveEnded => false,
-                            _ => null,
-                          },
-                          onTap: () => _openRoute(_SettingsRoute.live),
-                        ),
-                        const SizedBox(height: appCardGap),
-                        _LiveRequestStorageCard(
-                          state: liveState,
-                          strings: strings,
-                          onChanged: (value) => scopedRef
-                              .read(tiktokLiveControllerProvider.notifier)
-                              .setSaveRequestsToLibrary(value),
-                        ),
-                      ],
-                    ],
-                  );
-                },
+            if (showSupportedLinks)
+              _SettingsGroup(
+                title: strings.integrations,
+                children: [
+                  _SettingsEntryCard(
+                    key: const ValueKey('settings-card-supported-links'),
+                    icon: Icons.link_rounded,
+                    title: strings.supportedLinks,
+                    subtitle: strings.supportedLinksSummary,
+                    onTap: _openSupportedLinksSettings,
+                  ),
+                ],
               ),
             _SettingsGroup(
               title: strings.applicationInformation,
@@ -921,13 +800,6 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     ref
         .read(sleepTimerControllerProvider.notifier)
         .selectDuration(Duration(minutes: minutes));
-  }
-
-  void _syncTikTokController(TikTokLiveState state) {
-    if (!_tiktokLiveFocusNode.hasFocus &&
-        _tiktokLiveController.text != state.creatorInput) {
-      _tiktokLiveController.text = state.creatorInput;
-    }
   }
 
   Future<void> _openUpstreamRepository() async {
@@ -1764,7 +1636,6 @@ class _SettingsEntryCard extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.accent,
-    this.status,
     this.trailing,
     super.key,
   }) : assert(icon != null || leading != null);
@@ -1775,7 +1646,6 @@ class _SettingsEntryCard extends StatelessWidget {
   final String subtitle;
   final VoidCallback? onTap;
   final Color? accent;
-  final bool? status;
   final Widget? trailing;
 
   @override
@@ -1843,14 +1713,6 @@ class _SettingsEntryCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (status != null) ...[
-                  const SizedBox(width: 8),
-                  Icon(
-                    status! ? Icons.check_circle_rounded : Icons.error_rounded,
-                    color: status! ? colors.primary : colors.error,
-                    size: 19,
-                  ),
-                ],
                 if (trailing case final trailing?) ...[
                   const SizedBox(width: 8),
                   trailing,
@@ -2655,8 +2517,6 @@ class _AppearanceSettings extends StatelessWidget {
     required this.surfaceBackgroundMode,
     required this.appBackgroundPath,
     required this.playerFont,
-    required this.liveWidgetStyle,
-    this.onOpenLiveWidget,
     required this.playerStyle,
     required this.showAudioQuality,
     required this.animatedArtworkEnabled,
@@ -2688,8 +2548,6 @@ class _AppearanceSettings extends StatelessWidget {
   final SurfaceBackgroundMode surfaceBackgroundMode;
   final String? appBackgroundPath;
   final PlayerFont playerFont;
-  final LiveWidgetStyle liveWidgetStyle;
-  final VoidCallback? onOpenLiveWidget;
   final PlayerStyle playerStyle;
   final bool showAudioQuality;
   final bool animatedArtworkEnabled;
@@ -3089,16 +2947,6 @@ class _AppearanceSettings extends StatelessWidget {
             ),
             onTap: () => _chooseMiniPlayerBackgroundMode(context),
           ),
-          if (onOpenLiveWidget != null) ...[
-            const SizedBox(height: 24),
-            _SettingsEntryCard(
-              key: const ValueKey('live-widget-style-selector'),
-              icon: Icons.live_tv_rounded,
-              title: strings.liveWidget,
-              subtitle: strings.liveWidgetStyleLabel(liveWidgetStyle),
-              onTap: onOpenLiveWidget,
-            ),
-          ],
         ],
       ),
     );
@@ -4852,481 +4700,6 @@ class _StorageTransferSection extends StatelessWidget {
       ],
     );
   }
-}
-
-class _LiveRequestStorageCard extends StatelessWidget {
-  const _LiveRequestStorageCard({
-    required this.state,
-    required this.strings,
-    required this.onChanged,
-  });
-
-  final TikTokLiveState? state;
-  final AppStrings strings;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final liveState = state;
-    final savesToLibrary = liveState?.saveRequestsToLibrary ?? false;
-    final hasQueuedRequests = liveState?.liveQueue.isNotEmpty ?? false;
-    final canChange = liveState != null && !hasQueuedRequests;
-    return _SettingsEntryCard(
-      key: const ValueKey('settings-card-live-request-storage'),
-      icon: savesToLibrary
-          ? Icons.library_add_check_rounded
-          : Icons.cloud_queue_rounded,
-      title: strings.saveLiveRequestsToLibrary,
-      subtitle: hasQueuedRequests
-          ? strings.saveLiveRequestsToLibraryLocked
-          : savesToLibrary
-          ? strings.saveLiveRequestsToLibraryEnabled
-          : strings.saveLiveRequestsToLibraryDisabled,
-      onTap: canChange ? () => onChanged(!savesToLibrary) : null,
-      trailing: Switch.adaptive(
-        key: const ValueKey('tiktok-live-save-requests-to-library'),
-        value: savesToLibrary,
-        onChanged: canChange ? onChanged : null,
-      ),
-    );
-  }
-}
-
-class _TikTokLiveSettings extends StatelessWidget {
-  const _TikTokLiveSettings({
-    required this.controller,
-    required this.focusNode,
-    required this.state,
-    required this.strings,
-    required this.onConnect,
-    required this.onDisconnect,
-    required this.onCommandPermissionChanged,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final TikTokLiveState state;
-  final AppStrings strings;
-  final VoidCallback onConnect;
-  final VoidCallback onDisconnect;
-  final _TikTokCommandPermissionChanged onCommandPermissionChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final connected = state.isConnected;
-    final busy = state.isBusy;
-    final statusColor = switch (state.status) {
-      TikTokLiveStatus.connected => Theme.of(context).colorScheme.primary,
-      TikTokLiveStatus.error => Theme.of(context).colorScheme.error,
-      TikTokLiveStatus.liveEnded => Theme.of(context).colorScheme.error,
-      _ => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: _settingsContentMaxWidth(context, 760),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(strings.tiktokLive, style: appSectionTitleStyle(context)),
-          const SizedBox(height: appSectionTitleGap),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final input = TextField(
-                key: const ValueKey('tiktok-live-user-field'),
-                controller: controller,
-                focusNode: focusNode,
-                enabled: !busy && !connected,
-                decoration: InputDecoration(
-                  labelText: strings.tiktokLiveUser,
-                  prefixIcon: const Icon(Icons.live_tv_rounded),
-                ),
-                onSubmitted: (_) {
-                  if (!connected && !busy) {
-                    onConnect();
-                  }
-                },
-              );
-              final action = connected || busy
-                  ? FilledButton.tonalIcon(
-                      key: const ValueKey('tiktok-live-disconnect'),
-                      icon: Icon(
-                        busy ? Icons.close_rounded : Icons.link_off_rounded,
-                      ),
-                      label: Text(strings.disconnect),
-                      onPressed: onDisconnect,
-                    )
-                  : FilledButton.icon(
-                      key: const ValueKey('tiktok-live-connect'),
-                      icon: const Icon(Icons.sensors_rounded),
-                      label: Text(strings.connect),
-                      onPressed: onConnect,
-                    );
-              if (constraints.maxWidth < 600) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    input,
-                    const SizedBox(height: 10),
-                    SizedBox(height: 48, child: action),
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(child: input),
-                  const SizedBox(width: 10),
-                  action,
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Column(
-            key: const ValueKey('tiktok-live-session-details'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(_statusIcon(state.status), color: statusColor, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      state.message,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: statusColor),
-                    ),
-                  ),
-                ],
-              ),
-              if (state.roomId != null && state.roomId!.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  '${strings.roomId}: ${state.roomId}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (state.pendingPlayCommands > 0) ...[
-                const SizedBox(height: 6),
-                Text(
-                  '${strings.pendingRequests}: ${state.pendingPlayCommands}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-              if (state.lastCommand != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  '${strings.lastCommand}: ${state.lastCommand!.text}'
-                  '${_commandRoleSuffix(state.lastCommand!, strings)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ],
-          ),
-          const _LiveOverlayServerControl(),
-          const SizedBox(height: 12),
-          Text(
-            strings.commandPermissions,
-            style: appSecondaryLabelStyle(context),
-          ),
-          const SizedBox(height: 8),
-          _TikTokCommandAudienceSection(
-            audience: TikTokCommandAudience.everyone,
-            permissions: state.commandPermissions,
-            strings: strings,
-            onChanged: onCommandPermissionChanged,
-          ),
-          const SizedBox(height: 10),
-          _TikTokCommandAudienceSection(
-            audience: TikTokCommandAudience.followers,
-            permissions: state.commandPermissions,
-            strings: strings,
-            onChanged: onCommandPermissionChanged,
-          ),
-          const SizedBox(height: 10),
-          _TikTokCommandAudienceSection(
-            audience: TikTokCommandAudience.moderators,
-            permissions: state.commandPermissions,
-            strings: strings,
-            onChanged: onCommandPermissionChanged,
-          ),
-          const SizedBox(height: 10),
-          _TikTokCommandAudienceSection(
-            audience: TikTokCommandAudience.subscribers,
-            permissions: state.commandPermissions,
-            strings: strings,
-            onChanged: onCommandPermissionChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _statusIcon(TikTokLiveStatus status) {
-    return switch (status) {
-      TikTokLiveStatus.connected => Icons.check_circle_rounded,
-      TikTokLiveStatus.connecting => Icons.sync_rounded,
-      TikTokLiveStatus.error => Icons.error_rounded,
-      TikTokLiveStatus.liveEnded => Icons.stop_circle_rounded,
-      _ => Icons.info_rounded,
-    };
-  }
-
-  String _commandRoleSuffix(TikTokLiveChatCommand command, AppStrings strings) {
-    final roles = <String>[
-      if (command.isModerator) strings.moderator,
-      if (command.isFollower) strings.follower,
-      if (command.isSubscriber) strings.subscriber,
-    ];
-    return roles.isEmpty ? '' : ' - ${roles.join(', ')}';
-  }
-}
-
-class _LiveOverlayServerControl extends ConsumerWidget {
-  const _LiveOverlayServerControl();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final available = ref.watch(liveOverlayAvailableProvider);
-    if (!available || Theme.of(context).platform != TargetPlatform.windows) {
-      return const SizedBox.shrink();
-    }
-
-    final overlay = ref.watch(liveOverlayControllerProvider);
-    final strings = ref.watch(appStringsProvider);
-    final canStop = overlay.isActive;
-    final canStart =
-        !overlay.isBusy &&
-        !overlay.isActive &&
-        overlay.status != LiveOverlayStatus.unsupported;
-    final canToggle = canStop || canStart;
-    final subtitle = switch (overlay.status) {
-      LiveOverlayStatus.inactive => strings.liveOverlayInactive,
-      LiveOverlayStatus.starting => strings.liveOverlayStarting,
-      LiveOverlayStatus.active =>
-        overlay.error ??
-            strings.liveOverlayActive(
-              (overlay.url ?? Uri.parse(liveOverlayUrl)).toString(),
-            ),
-      LiveOverlayStatus.stopping => strings.liveOverlayStopping,
-      LiveOverlayStatus.unsupported =>
-        overlay.error ?? strings.liveOverlayUnsupported,
-      LiveOverlayStatus.error => overlay.error ?? strings.liveOverlayError,
-    };
-
-    void toggle() {
-      final controller = ref.read(liveOverlayControllerProvider.notifier);
-      if (overlay.isActive) {
-        unawaited(controller.stop());
-      } else if (canStart) {
-        unawaited(controller.start());
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: _SettingsEntryCard(
-        key: const ValueKey('tiktok-live-overlay-card'),
-        icon: overlay.isActive ? Icons.language_rounded : Icons.web_rounded,
-        title: strings.liveOverlay,
-        subtitle: subtitle,
-        onTap: canToggle ? toggle : null,
-        accent:
-            overlay.status == LiveOverlayStatus.error ||
-                overlay.status == LiveOverlayStatus.unsupported
-            ? Theme.of(context).colorScheme.error
-            : null,
-        trailing: overlay.isBusy
-            ? const SizedBox.square(
-                key: ValueKey('tiktok-live-overlay-progress'),
-                dimension: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.4),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (overlay.isActive) ...[
-                    IconButton(
-                      key: const ValueKey('tiktok-live-overlay-copy-url'),
-                      tooltip: strings.copyOverlayUrl,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => unawaited(
-                        Clipboard.setData(
-                          ClipboardData(
-                            text: (overlay.url ?? Uri.parse(liveOverlayUrl))
-                                .toString(),
-                          ),
-                        ),
-                      ),
-                      icon: const Icon(Icons.content_copy_rounded, size: 20),
-                    ),
-                    IconButton(
-                      key: const ValueKey('tiktok-live-overlay-preview'),
-                      tooltip: strings.openOverlayPreview,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => unawaited(
-                        launchUrl(
-                          overlay.url ?? Uri.parse(liveOverlayUrl),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                      ),
-                      icon: const Icon(Icons.open_in_new_rounded, size: 20),
-                    ),
-                  ],
-                  Switch.adaptive(
-                    key: const ValueKey('tiktok-live-overlay-switch'),
-                    value: overlay.isActive,
-                    onChanged: canToggle ? (_) => toggle() : null,
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-}
-
-class _TikTokCommandAudienceSection extends StatelessWidget {
-  const _TikTokCommandAudienceSection({
-    required this.audience,
-    required this.permissions,
-    required this.strings,
-    required this.onChanged,
-  });
-
-  final TikTokCommandAudience audience;
-  final TikTokCommandPermissions permissions;
-  final AppStrings strings;
-  final _TikTokCommandPermissionChanged onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      key: ValueKey('tiktok-command-section-${audience.name}'),
-      color: AppColors.cardSurfaceFor(context),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.45),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(_icon, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _hint,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            for (final command in TikTokLiveCommand.values)
-              _commandTile(context, command),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _commandTile(BuildContext context, TikTokLiveCommand command) {
-    final inherited =
-        audience != TikTokCommandAudience.everyone &&
-        permissions.everyone.contains(command);
-    final selected =
-        inherited || permissions.isExplicitlyEnabled(audience, command);
-    final description = _commandDescription(command);
-    return CheckboxListTile(
-      key: ValueKey('tiktok-command-${audience.name}-${command.name}'),
-      value: selected,
-      onChanged: inherited
-          ? null
-          : (value) => onChanged(audience, command, value ?? false),
-      controlAffinity: ListTileControlAffinity.leading,
-      dense: true,
-      visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        _commandLabel(command),
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-      ),
-      subtitle: Text(
-        inherited
-            ? '$description ${strings.commandAllowedForEveryone}'
-            : description,
-      ),
-    );
-  }
-
-  IconData get _icon => switch (audience) {
-    TikTokCommandAudience.everyone => Icons.groups_rounded,
-    TikTokCommandAudience.followers => Icons.person_add_alt_1_rounded,
-    TikTokCommandAudience.moderators => Icons.shield_rounded,
-    TikTokCommandAudience.subscribers => Icons.workspace_premium_rounded,
-  };
-
-  String get _title => switch (audience) {
-    TikTokCommandAudience.everyone => strings.everyone,
-    TikTokCommandAudience.followers => strings.followers,
-    TikTokCommandAudience.moderators => strings.moderators,
-    TikTokCommandAudience.subscribers => strings.subscribers,
-  };
-
-  String get _hint => switch (audience) {
-    TikTokCommandAudience.everyone => strings.everyoneCommandPermissionsHint,
-    TikTokCommandAudience.followers => strings.followerCommandPermissionsHint,
-    TikTokCommandAudience.moderators => strings.moderatorCommandPermissionsHint,
-    TikTokCommandAudience.subscribers =>
-      strings.subscriberCommandPermissionsHint,
-  };
-
-  String _commandLabel(TikTokLiveCommand command) => switch (command) {
-    TikTokLiveCommand.play => strings.livePlayCommand,
-    TikTokLiveCommand.skip => strings.liveSkipCommand,
-    TikTokLiveCommand.revoke => strings.liveRevokeCommand,
-    TikTokLiveCommand.stop => strings.liveStopCommand,
-  };
-
-  String _commandDescription(TikTokLiveCommand command) => switch (command) {
-    TikTokLiveCommand.play => strings.livePlayCommandDescription,
-    TikTokLiveCommand.skip => strings.liveSkipCommandDescription,
-    TikTokLiveCommand.revoke => strings.liveRevokeCommandDescription,
-    TikTokLiveCommand.stop => strings.liveStopCommandDescription,
-  };
 }
 
 class _PathField extends StatelessWidget {

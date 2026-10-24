@@ -52,19 +52,6 @@ class AppPlatform {
   static bool supportsSkipSilenceOn(AppPlatformType platform) =>
       platform == AppPlatformType.android;
 
-  /// Platforms where the in-process Dart TikTok LIVE transport is exposed.
-  ///
-  /// The TikTok LIVE client uses `dart:io` HTTP/TLS/WebSocket primitives and
-  /// does not depend on a platform plugin or companion executable.
-  static bool get supportsTikTokLive => supportsTikTokLiveOn(current);
-
-  static bool supportsTikTokLiveOn(AppPlatformType platform) =>
-      platform == AppPlatformType.android ||
-      platform == AppPlatformType.ios ||
-      platform == AppPlatformType.windows ||
-      platform == AppPlatformType.linux ||
-      platform == AppPlatformType.macos;
-
   static bool get isDesktop =>
       current == AppPlatformType.windows ||
       current == AppPlatformType.linux ||

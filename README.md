@@ -44,6 +44,8 @@ detail, is kept at [docs/upstream-readme.md](docs/upstream-readme.md).
 - **Own identity.** Bundle ID `io.github.gencaykut.songbrook` on every
   platform, with the App Group `group.io.github.gencaykut.songbrook` for the
   iOS widget.
+- **No TikTok LIVE.** BStream Music's TikTok LIVE song requests, including
+  the Windows LIVE overlay, are removed.
 - **Signed macOS distribution.** A universal (Apple Silicon and Intel) DMG
   signed with Developer ID and notarized by Apple.
 
@@ -73,7 +75,6 @@ Known limitations:
   `webEmbedded` client play, while the two Web PO token clients are currently
   rejected by YouTube's CDN. Android was not tested. See
   [docs/innertube_playback.md](docs/innertube_playback.md).
-- TikTok LIVE requests are inherited from BStream Music and will be removed.
 - iOS cannot play WebM, so only AAC/M4A streams are selected there.
 
 ## Build

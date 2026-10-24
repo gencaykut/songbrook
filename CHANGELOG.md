@@ -40,6 +40,12 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 - The app shows the name Songbrook in its header, window title, and media
   controls.
 
+### Removed
+
+- Removed TikTok LIVE song requests: the LIVE connection and command
+  settings, the LIVE queue in Library, the Windows LIVE overlay and its LIVE
+  widget styles, and the vendored `piratetok_live` package.
+
 ### Fixed
 
 - Fixed songs ending minutes late on iOS. AVFoundation reports twice the real

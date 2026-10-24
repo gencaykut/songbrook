@@ -39,7 +39,7 @@ import 'scrolled_under_tab_frame.dart';
 import 'source_image.dart';
 import 'track_play_button.dart';
 
-enum _LibraryRouteType { root, downloads, live, playlist }
+enum _LibraryRouteType { root, downloads, playlist }
 
 enum _TrackMenuAction {
   download,
@@ -75,8 +75,6 @@ class _LibraryRoute {
     : type = _LibraryRouteType.downloads,
       playlistId = null;
 
-  const _LibraryRoute.live() : type = _LibraryRouteType.live, playlistId = null;
-
   const _LibraryRoute.playlist(this.playlistId)
     : type = _LibraryRouteType.playlist;
 
@@ -86,7 +84,6 @@ class _LibraryRoute {
   String get key => switch (type) {
     _LibraryRouteType.root => 'root',
     _LibraryRouteType.downloads => 'downloads',
-    _LibraryRouteType.live => 'live',
     _LibraryRouteType.playlist => 'playlist-$playlistId',
   };
 }
@@ -242,8 +239,6 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
               subscribedArtists: subscribedArtists,
               strings: strings,
               onOpenDownloads: _openDownloads,
-              supportsTikTokLive: _supportsTikTokLive,
-              onOpenLive: _openLive,
               onOpenPlaylist: _openPlaylist,
               onCreatePlaylist: () => _showCreateDialog(context),
               onOpenArtist: _openSubscribedArtist,
@@ -281,13 +276,6 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
                 onBack: _goRoot,
                 title: strings.library,
               ),
-            ),
-            _LibraryRouteType.live => _LibraryLiveRoute(
-              bottomContentPadding: widget.bottomContentPadding,
-              supported: _supportsTikTokLive,
-              strings: strings,
-              onBack: _goRoot,
-              onOpenPlayer: widget.onOpenPlayer,
             ),
             _LibraryRouteType.playlist => playlists.when(
               data: (items) {
@@ -447,22 +435,6 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
     });
     widget.navigationController?._notifyRouteChanged(_route);
   }
-
-  void _openLive() {
-    if (!_supportsTikTokLive) {
-      return;
-    }
-    _filterController.clear();
-    setState(() {
-      _routeDirection = 1;
-      _route = const _LibraryRoute.live();
-    });
-    widget.navigationController?._notifyRouteChanged(_route);
-  }
-
-  bool get _supportsTikTokLive =>
-      AppPlatform.supportsTikTokLive ||
-      AppPlatform.isMobileTargetPlatform(Theme.of(context).platform);
 
   void _openPlaylist(String playlistId) {
     _selectedTrackIds.clear();
@@ -844,10 +816,8 @@ class _LibraryRootView extends StatelessWidget {
     required this.playlists,
     required this.catalogPlaylists,
     required this.subscribedArtists,
-    required this.supportsTikTokLive,
     required this.strings,
     required this.onOpenDownloads,
-    required this.onOpenLive,
     required this.onOpenPlaylist,
     required this.onCreatePlaylist,
     required this.onOpenArtist,
@@ -858,10 +828,8 @@ class _LibraryRootView extends StatelessWidget {
   final AsyncValue<List<Playlist>> playlists;
   final AsyncValue<List<CatalogPlaylist>> catalogPlaylists;
   final AsyncValue<List<RemoteSubscribedArtist>> subscribedArtists;
-  final bool supportsTikTokLive;
   final AppStrings strings;
   final VoidCallback onOpenDownloads;
-  final VoidCallback onOpenLive;
   final ValueChanged<String> onOpenPlaylist;
   final VoidCallback onCreatePlaylist;
   final ValueChanged<RemoteSubscribedArtist> onOpenArtist;
@@ -910,12 +878,6 @@ class _LibraryRootView extends StatelessWidget {
             ),
           ),
         ),
-        if (supportsTikTokLive) ...[
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-          SliverToBoxAdapter(
-            child: _LibraryLiveEntry(strings: strings, onOpenLive: onOpenLive),
-          ),
-        ],
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
         SliverToBoxAdapter(
           child: Padding(
@@ -963,400 +925,6 @@ class _LibraryRootView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _LibraryLiveEntry extends ConsumerWidget {
-  const _LibraryLiveEntry({required this.strings, required this.onOpenLive});
-
-  final AppStrings strings;
-  final VoidCallback onOpenLive;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final liveQueue = ref.watch(
-      tiktokLiveControllerProvider.select(_selectLibraryLiveQueue),
-    );
-    return liveQueue.when(
-      data: (items) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: _LibraryEntry(
-          key: const ValueKey('library-live-entry'),
-          icon: Icons.sensors_rounded,
-          title: strings.liveQueue,
-          subtitle: strings.liveQueueSummary(
-            items.length,
-            items.where((item) => item.isReady).length,
-            items.where((item) => item.isPending).length,
-          ),
-          onTap: onOpenLive,
-        ),
-      ),
-      loading: () => const _LoadingRow(),
-      error: (error, _) => _ErrorRow(error: error),
-    );
-  }
-}
-
-AsyncValue<List<LiveQueueItem>> _selectLibraryLiveQueue(
-  AsyncValue<TikTokLiveState> state,
-) => state.whenData((value) => value.liveQueue);
-
-class _LibraryLiveRoute extends ConsumerWidget {
-  const _LibraryLiveRoute({
-    required this.bottomContentPadding,
-    required this.supported,
-    required this.strings,
-    required this.onBack,
-    required this.onOpenPlayer,
-  });
-
-  final double bottomContentPadding;
-  final bool supported;
-  final AppStrings strings;
-  final VoidCallback onBack;
-  final VoidCallback onOpenPlayer;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (!supported) {
-      return _PanelError(
-        title: strings.library,
-        error: strings.playlistMissing,
-        onBack: onBack,
-      );
-    }
-    final liveQueue = ref.watch(
-      tiktokLiveControllerProvider.select(_selectLibraryLiveQueue),
-    );
-    return liveQueue.when(
-      data: (items) => _LiveQueueView(
-        bottomContentPadding: bottomContentPadding,
-        items: items,
-        strings: strings,
-        onBack: onBack,
-        onOpenPlayer: onOpenPlayer,
-      ),
-      loading: () => const _PanelLoading(key: ValueKey('live-load')),
-      error: (error, _) => _PanelError(
-        error: error,
-        onBack: onBack,
-        title: strings.liveQueueTitle,
-      ),
-    );
-  }
-}
-
-class _LiveQueueView extends ConsumerWidget {
-  const _LiveQueueView({
-    required this.bottomContentPadding,
-    required this.items,
-    required this.strings,
-    required this.onBack,
-    required this.onOpenPlayer,
-  });
-
-  final double bottomContentPadding;
-  final List<LiveQueueItem> items;
-  final AppStrings strings;
-  final VoidCallback onBack;
-  final VoidCallback onOpenPlayer;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ScrolledUnderTabFrame(
-      surfaceKey: const ValueKey('library-detail-header-surface'),
-      scrollKey: const ValueKey('library-live-queue-scroll'),
-      header: _DetailHeader(
-        key: const ValueKey('library-detail-header'),
-        title: strings.liveQueueTitle,
-        subtitle: strings.liveQueueSummary(
-          items.length,
-          items.where((item) => item.isReady).length,
-          items.where((item) => item.isPending).length,
-        ),
-        onBack: onBack,
-        trailing: items.isEmpty
-            ? null
-            : IconButton.filledTonal(
-                tooltip: strings.clearLiveQueue,
-                icon: const Icon(Icons.playlist_remove_rounded),
-                onPressed: () async {
-                  await ref
-                      .read(tiktokLiveControllerProvider.notifier)
-                      .clearLiveQueue();
-                },
-              ),
-      ),
-      slivers: items.isEmpty
-          ? <Widget>[
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    strings.liveQueueEmpty,
-                    style: TextStyle(
-                      color: AppColors.contentSubtitleFor(context),
-                    ),
-                  ),
-                ),
-              ),
-            ]
-          : <Widget>[
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  14,
-                  0,
-                  bottomContentPadding + 12,
-                ),
-                sliver: SliverList.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
-                      child: _LiveQueueTile(
-                        item: items[index],
-                        onOpenPlayer: onOpenPlayer,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-    );
-  }
-}
-
-class _LiveQueueTile extends ConsumerWidget {
-  const _LiveQueueTile({required this.item, required this.onOpenPlayer});
-
-  final LiveQueueItem item;
-  final VoidCallback onOpenPlayer;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final strings = ref.watch(appStringsProvider);
-    final activeTrack = ref.watch(
-      playerControllerProvider.select(
-        (player) => (
-          trackId: player.value?.trackId,
-          sourceUrl: player.value?.sourceUrl,
-        ),
-      ),
-    );
-    final isCurrent = _matchesActiveTrack(
-      trackId: activeTrack.trackId,
-      sourceUrl: activeTrack.sourceUrl,
-    );
-    final statusColor = _statusColor(context, isCurrent: isCurrent);
-    final playButtonSize = AppPlatform.isMobile ? 48.0 : 52.0;
-    final playIconSize = AppPlatform.isMobile ? 30.0 : 26.0;
-    final subtitleStyle = appListCardSubtitleStyle(context);
-
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
-      side: isCurrent
-          ? BorderSide(color: Theme.of(context).colorScheme.primary)
-          : BorderSide(
-              color: AppColors.cardBorderFor(context, solidInLiquidGlass: true),
-            ),
-    );
-    return AppCardGradientBorder(
-      radius: 8,
-      solidInLiquidGlass: true,
-      emphasized: isCurrent,
-      child: Material(
-        key: ValueKey('library-live-track-${item.id}'),
-        color: AppColors.cardSurfaceFor(context),
-        clipBehavior: Clip.antiAlias,
-        shape: shape,
-        child: ListTile(
-          dense: false,
-          minTileHeight: 86,
-          contentPadding: const EdgeInsets.only(left: 12, right: 4),
-          horizontalTitleGap: 10,
-          shape: shape,
-          tileColor: Colors.transparent,
-          leading: _LocalArtwork(source: _thumbnailSource),
-          title: MarqueeText(
-            item.displayTitle,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: AppColors.contentTitleFor(context),
-            ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      '${strings.requestedBy}: ${item.requestedBy}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: subtitleStyle,
-                    ),
-                  ),
-                  if (item.requestedByModerator) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.shield_rounded,
-                      size: 15,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      strings.moderator,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              Text(
-                _statusText(strings, isCurrent: isCurrent),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: subtitleStyle.copyWith(
-                  color: statusColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          trailing: item.isReady
-              ? IconButton.filledTonal(
-                  tooltip: strings.play,
-                  icon: const Icon(Icons.play_arrow_rounded),
-                  iconSize: playIconSize,
-                  padding: EdgeInsets.zero,
-                  style: AppPlatform.isMobile
-                      ? IconButton.styleFrom(
-                          fixedSize: Size.square(playButtonSize),
-                          minimumSize: Size.square(playButtonSize),
-                          maximumSize: Size.square(playButtonSize),
-                          padding: EdgeInsets.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        )
-                      : null,
-                  constraints: BoxConstraints.tight(
-                    Size.square(playButtonSize),
-                  ),
-                  onPressed: () async {
-                    onOpenPlayer();
-                    await ref
-                        .read(tiktokLiveControllerProvider.notifier)
-                        .playLiveQueueItem(item.id);
-                  },
-                )
-              : _LiveQueueStatusIcon(item: item, color: statusColor),
-          onTap: item.isReady
-              ? () async {
-                  onOpenPlayer();
-                  await ref
-                      .read(tiktokLiveControllerProvider.notifier)
-                      .playLiveQueueItem(item.id);
-                }
-              : null,
-        ),
-      ),
-    );
-  }
-
-  String? get _thumbnailSource {
-    final localTrack = item.localTrack;
-    if (localTrack != null) {
-      return localTrack.thumbnailPath ?? localTrack.thumbnailUrl;
-    }
-    return item.remoteTrack?.thumbnailUrl;
-  }
-
-  Color _statusColor(BuildContext context, {required bool isCurrent}) {
-    if (isCurrent) {
-      return Theme.of(context).colorScheme.primary;
-    }
-    return switch (item.status) {
-      LiveQueueItemStatus.ready => Theme.of(context).colorScheme.primary,
-      LiveQueueItemStatus.failed => Theme.of(context).colorScheme.error,
-      _ => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
-  }
-
-  String _statusText(AppStrings strings, {required bool isCurrent}) {
-    if (isCurrent) {
-      return strings.nowPlaying;
-    }
-    return switch (item.status) {
-      LiveQueueItemStatus.resolving =>
-        strings.runtimeMessageOrNull(item.message) ?? strings.search,
-      LiveQueueItemStatus.downloading =>
-        strings.runtimeMessageOrNull(item.message) ?? strings.downloading,
-      LiveQueueItemStatus.ready =>
-        item.localTrack == null
-            ? strings.readyForRemotePlayback
-            : item.reusedExisting
-            ? strings.reusedDownload
-            : strings.completed,
-      LiveQueueItemStatus.failed =>
-        strings.runtimeMessageOrNull(item.message) ?? strings.error,
-    };
-  }
-
-  bool _matchesActiveTrack({String? trackId, String? sourceUrl}) {
-    final localTrack = item.localTrack;
-    if (localTrack != null && localTrack.id == trackId) {
-      return true;
-    }
-    final remoteTrack = item.remoteTrack;
-    if (remoteTrack == null) {
-      return false;
-    }
-    final remoteId = remoteTrack.id.trim();
-    if (remoteId.isNotEmpty && remoteId == trackId) {
-      return true;
-    }
-    final activeSource = sourceUrl?.trim();
-    return activeSource != null &&
-        activeSource.isNotEmpty &&
-        (activeSource == remoteTrack.url ||
-            activeSource == remoteTrack.streamUrl);
-  }
-}
-
-class _LiveQueueStatusIcon extends StatelessWidget {
-  const _LiveQueueStatusIcon({required this.item, required this.color});
-
-  final LiveQueueItem item;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = switch (item.status) {
-      LiveQueueItemStatus.resolving => Icons.manage_search_rounded,
-      LiveQueueItemStatus.downloading => Icons.downloading_rounded,
-      LiveQueueItemStatus.ready => Icons.check_circle_rounded,
-      LiveQueueItemStatus.failed => Icons.error_rounded,
-    };
-    final spinning = item.status == LiveQueueItemStatus.downloading;
-    return SizedBox(
-      width: 52,
-      height: 52,
-      child: Center(
-        child: spinning
-            ? SizedBox.square(
-                dimension: 24,
-                child: CircularProgressIndicator(strokeWidth: 2, color: color),
-              )
-            : Icon(icon, color: color, size: 28),
-      ),
     );
   }
 }

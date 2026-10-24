@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2682 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2446 test geçer (TikTok LIVE testleri silinince 2682'den düştü); macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -40,6 +40,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
   - `claude_url_test.dart` imzalı stream URL'si yazdırır. Çıktısını hiçbir yere commit'leme ya da paylaşma.
 - `tool/claude_loudness_probe.dart`: Canlı player yanıtındaki ses yüksekliği alanlarını (`playerConfig.audioConfig`, formatların `loudnessDb`'si) üç tokensiz profil için yazdırır. `integration_test/claude_loudness_test.dart` gerçek `JustAudioPlayerService` ile AVPlayer'a yazılan sesi doğrular.
 - `tool/claude_search_continuation_probe.dart`: Arama devam belirtecinin yerini ve derinliğini (ham istekle) ve uygulamanın sayfalı arama API'sini canlı yoklar. `integration_test/claude_search_paging_test.dart` gerçek arama ekranında kaydırınca sayfa eklenmesini ve Çalma listeleri sekmesini doğrular.
+- `integration_test/claude_queue_advance_test.dart`: Canlı arama sonucundan 3 şarkılık kuyruğu gerçek `PlayerController` ve oynatıcıyla çalar; şarkı sonunda otomatik geçişi, Next/Previous'u ve shuffle/repeat'i doğrular. `playNext`, 900 ms içinde başlamış bir geçişle birleştiği için test Next'ten önce 2 sn bekler (upstream davranışı).
 - `tool/claude_hl_probe.dart`: Ayrıştırıcıların iki `hl` dilinde canlı YouTube Music yanıtından ne çıkardığını karşılaştırır.
 - `tool/mp4/`: MP4 kutu analizi (`boxes.py`), `moov` sürelerini sıfırlama (`zero_moov.py`), AVFoundation ile süre ölçümü (`swiftc -O tool/mp4/avdur.swift -o tool/mp4/avdur`).
 
@@ -74,7 +75,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 ## Son durum (24 Ekim 2026)
 
-- `main` GitHub'a göre 1 commit önde (`cd0d349` markalama) ve bu doküman güncellemesi; push edilmedi. Önceki her şey 24 Ekim'de push edildi.
+- `main` GitHub'dan önde: yeni ikon (3 commit) ve TikTok LIVE'ın kaldırılması; push edilmedi. Önceki her şey 24 Ekim'de push edildi.
 - Uygulama sürümü `1.0.0+130`. Derleme numarası upstream'in 129'unun üstünde tutuldu ki eski Songbrook kurulumları yükseltilebilsin. Sürüm değişince `pubspec.yaml`, README'deki `Current version`, CHANGELOG'un ilk başlığı, `AppConstants.appVersion` ve `packaging/windows/BStreamMusic.iss` birlikte güncellenir (`app_metadata_test.dart` denetler).
 - iPhone'da (UDID `00008140-0018303E2128401C`, iPhone17,2) eski bir Türkçe sürüm kurulu (1.2.9+129). 22–24 Ekim değişikliklerinin hiçbiri telefonda yok.
 - Mac: `dist/Songbrook-1.2.9.dmg` notarize ve staple'lı ama eski; 1.0.0 için yeniden üretilmeli. `songbrook-notary` profili anahtar zincirinde kayıtlı.
@@ -91,6 +92,8 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - Arama sayfalaması: filtreli arama 20'şerli sayfa; devam isteği aynı `/search` ucuna `{"continuation": token}` gövdesiyle (sorgu/`params` yok), belirteç `musicShelfRenderer`/`musicShelfContinuation.continuations[].nextContinuationData`'da. `YouTubeMusicPagedSearch` (`search*Page`), `innerTubeSearchContinuation`. **Çalma listeleri** sekmesi topluluk listelerini (`playlistsFilter`) `VL…` kimliğiyle koleksiyon sayfasında açıyor. `SearchController.loadMore` tekrarları ayıklıyor, kategori başına en fazla 200 sonuç (sonuçlar tek `Column`'da); hata olursa "Tekrar dene", video yedeğine düşülmüyor. Tetikleme `_SearchLoadMoreFooter` (sona 900 px kala).
 - Yedek stream yolları canlı test edildi, iOS/macOS'ta EJS/WebPO'yu tamamen bozan iki WebKit hatası düzeltildi, visionOS01 androidSdkless'ın önüne alındı (ayrıntı: "Stream çözümleme kırılgan").
 - GitHub Actions: release yalnızca `v*` etiketi/elle, nightly yalnızca elle.
+- TikTok LIVE koddan silindi (servisler, `third_party/piratetok_live`, Windows overlay, LIVE widget stili, ayar kartları, kütüphanedeki LIVE kuyruğu, metinler ve çevirileri, testler). `player_controller.dart`'taki LIVE kuyruğu askıya alma/geri yükleme dalları kaldırıldı; LIVE dışı davranış değişmedi. `docs/upstream-readme.md` upstream'in referans kopyası olduğu için LIVE bölümleri silinmedi, başına not düşüldü. Eski kurulumlarda `settings.liveWidgetStyle` tercihi diskte kalır, okunmaz.
+- Uygulama ikonu: kaynak `assets/icons/source/songbrook_icon.svg` (gök geçişi `#1E5AA8` → `#4F9BE0`), Android durum çubuğu için `songbrook_notification.svg`. Tüm platform çıktıları `swift scripts/generate_app_icons.swift` ile üretilir (upstream'in PowerShell betiği kaldırıldı). macOS ikonları Apple'ın 824/1024 ızgarasında, iOS ikonları kare ve saydamsız.
 
 ### Kullanıcıdan bekleyen kararlar
 
@@ -100,21 +103,20 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 ## İş sırası (kalanlar, kullanıcının onayladığı sırayla)
 
-1. **TikTok LIVE'ı koddan kaldırma** (kullanıcı onayladı; gizlemek yerine silmek). Kapsam: `lib/services/live/` ve `third_party/piratetok_live/` (~6.400 satır), Windows overlay, `pubspec.yaml`'daki `piratetok_live` bağımlılığı, ayar kartları, metinler (3 çeviri dosyası), THIRD_PARTY_NOTICES'taki PirateTok bölümü, 17 test dosyası, README/upstream-readme'deki anılar. Asıl risk `player_controller.dart`'taki ~31 LIVE dalı (LIVE isteklerinin kuyruğa eklenmesi): önce bunları ayır, sonra servisleri sil, tam test paketi ve simülatörde kuyruk/otomatik geçiş doğrula. Türkçe arayüzde LIVE kartının alt yazısı İspanyolca kalmıştı; silinince gider.
-2. **iPhone'da deneme:** 1.0.0'ı kur; ses dengeleme, arama sayfalaması, Çalma listeleri, yeni ad ve Hakkında'yı cihazda dene.
-3. **İlk dağıtım:** 1.0.0 notarize dmg (`macos/package_dmg.sh`), AltStore/Sideloadly için ipa; Android APK yukarıdaki karara bağlı.
-4. **"Sıradakiler" paneli (kullanıcı isteği):** Oynatıcının altında yukarı çekilen panel.
+1. **iPhone'da deneme:** 1.0.0'ı kur; ses dengeleme, arama sayfalaması, Çalma listeleri, yeni ad ve Hakkında'yı cihazda dene.
+2. **İlk dağıtım:** 1.0.0 notarize dmg (`macos/package_dmg.sh`), AltStore/Sideloadly için ipa; Android APK yukarıdaki karara bağlı.
+3. **"Sıradakiler" paneli (kullanıcı isteği):** Oynatıcının altında yukarı çekilen panel.
    - Aşama 1: mevcut `_PlaybackQueuePanel` (şu an ayrı sayfa) oynatıcının altına çekilen panel olarak.
    - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
    - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
-5. **Şarkı/video eşleştirme + SponsorBlock:** Müzik videosu çalınınca YouTube Music'in şarkı (ATV) karşılığına geçmek asıl kazanç. SponsorBlock `music_offtopic` kategorisi tamamlayıcı; veri CC BY-NC-SA 4.0 (atıf gerekli), gizlilik için hash önekli sorgu kullan. Sessizlik atlama yalnızca Android'de var.
-6. **Songbrook Connect:** Cihazlar arasında yalnızca `videoId`, kuyruk, konum, shuffle/repeat senkronize edilir; hedef cihaz stream'i kendi resolver'ıyla çözer. Sıradakiler panelinden sonra (kuyruk modeline dayanıyor).
+4. **Şarkı/video eşleştirme + SponsorBlock:** Müzik videosu çalınınca YouTube Music'in şarkı (ATV) karşılığına geçmek asıl kazanç. SponsorBlock `music_offtopic` kategorisi tamamlayıcı; veri CC BY-NC-SA 4.0 (atıf gerekli), gizlilik için hash önekli sorgu kullan. Sessizlik atlama yalnızca Android'de var.
+5. **Songbrook Connect:** Cihazlar arasında yalnızca `videoId`, kuyruk, konum, shuffle/repeat senkronize edilir; hedef cihaz stream'i kendi resolver'ıyla çözer. Sıradakiler panelinden sonra (kuyruk modeline dayanıyor).
    - Referans [Ariami](https://github.com/picccassso/Ariami) (MIT, aktif): protokol `docs/connect/` altında belgeli; hub `ariami_core/lib/services/connect/connect_hub.dart` saf Dart (yalnızca `web_socket_channel`). Atıfla uyarlanabilir (THIRD_PARTY_NOTICES'a ekle).
    - Ariami modeli: tüm cihazlar tek bir hub'a WebSocket açar; aynı anda tek "owner" çalar, diğerleri onun durumunu yansıtıp komut gönderir. Hub'ın verdiği `ownerEpoch` ile eski mesajlar reddedilir; sahipliği kaybeden cihaz önce duraklar (await), sonra yansıtmaya geçer. Devretme prepare (hedef yükler ve konuma gider, çalmaz) → commit (hedef çalar, kaynak durur) → gerekirse cancel. Owner düşerse hemen failover. v3, kuyruğu ayrı mesajda yalnızca değişince gönderir. `docs/connect/07-gotchas.md`'deki 42 madde (ör. just_audio'nun `play()`'ini handler içinde await etme, kuyruk sırası id'ye değil konuma göre) doğrudan geçerli.
    - Fark: Songbrook'ta sunucu yok; hub bir cihazın içinde çalışmalı (Mac ya da o an çalan cihaz). iOS arka planda çalmıyorken askıya alınır; güvenilir hub olamaz, kumanda olur. Kimlik doğrulama yerine eşleştirme (QR/PIN ile paylaşılan anahtar). Keşif yerel ağda Bonjour/mDNS (iOS'ta yerel ağ izni yeterli). Ağlar arası devretme kapsam dışı.
    - İlk adım: protokolü ve hub'ı MIT atfıyla uyarla, Mac'i hub, iPhone'u kumanda + oynatıcı istemci yap.
-7. **Android Auto + Cast testi:** `audio_service`'in MediaBrowserService'i manifestte var ama göz atma ağacı (`getChildren`) ve `automotive_app_desc` yok. [YouPipe Music](https://github.com/SanuSanal/YouPipe-Music) aynı yığınla (just_audio + audio_service) bunu bir göz atma ağacı ve `res/xml/automotive_app_desc.xml` ile yapıyor; **LICENSE yok**, koddan hiçbir şey alınmaz, yalnızca yapı fikri. Play dışı kurulumda Auto, kullanıcı geliştirici ayarlarında "Bilinmeyen kaynaklar"ı açmadıkça uygulamayı göstermiyor. Chromecast/DLNA zaten var (`lib/services/casting/`, docs/audio-routing.md); gerçek alıcıyla test gerekiyor. Android derleme ortamı gerekli.
-8. **EQ / DSP:** Android'de vendored just_audio'nun `AndroidEqualizer`/`AndroidLoudnessEnhancer`'ı, Mac'te media_kit/libmpv `af` filtreleri ile kolay. [PlayerVf](https://github.com/superstilist/PlayerVf) (MIT, arşivlenmiş) EQ/pitch/reverb'ü mpv `lavfi` ile yapıyor; yalnızca Mac oynatıcısına uyar. iOS'ta AVPlayer'da EQ yok; `MTAudioProcessingTap` gerekir ve süre kırpmasıyla etkileşir. Önerilmeyenler: MusicBrainz (uygulama dosyalara etiket yazmıyor), pitch/reverb, kelime düzeyinde karaoke (LRCLIB yalnızca satır zamanlaması veriyor).
+6. **Android Auto + Cast testi:** `audio_service`'in MediaBrowserService'i manifestte var ama göz atma ağacı (`getChildren`) ve `automotive_app_desc` yok. [YouPipe Music](https://github.com/SanuSanal/YouPipe-Music) aynı yığınla (just_audio + audio_service) bunu bir göz atma ağacı ve `res/xml/automotive_app_desc.xml` ile yapıyor; **LICENSE yok**, koddan hiçbir şey alınmaz, yalnızca yapı fikri. Play dışı kurulumda Auto, kullanıcı geliştirici ayarlarında "Bilinmeyen kaynaklar"ı açmadıkça uygulamayı göstermiyor. Chromecast/DLNA zaten var (`lib/services/casting/`, docs/audio-routing.md); gerçek alıcıyla test gerekiyor. Android derleme ortamı gerekli.
+7. **EQ / DSP:** Android'de vendored just_audio'nun `AndroidEqualizer`/`AndroidLoudnessEnhancer`'ı, Mac'te media_kit/libmpv `af` filtreleri ile kolay. [PlayerVf](https://github.com/superstilist/PlayerVf) (MIT, arşivlenmiş) EQ/pitch/reverb'ü mpv `lavfi` ile yapıyor; yalnızca Mac oynatıcısına uyar. iOS'ta AVPlayer'da EQ yok; `MTAudioProcessingTap` gerekir ve süre kırpmasıyla etkileşir. Önerilmeyenler: MusicBrainz (uygulama dosyalara etiket yazmıyor), pitch/reverb, kelime düzeyinde karaoke (LRCLIB yalnızca satır zamanlaması veriyor).
 
 ### Açık kalan küçük konular
 

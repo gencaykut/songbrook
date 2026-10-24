@@ -29,7 +29,6 @@ import '../../../../services/downloader/audio_stream_resolver.dart';
 import '../../../../services/downloader/downloader_service.dart';
 import '../../../../services/downloader/innertube_audio_resolver.dart';
 import '../../../../services/downloader/innertube_download_service.dart';
-import '../../../../services/live/tiktok_live_command_service.dart';
 import '../../../../services/lyrics/lyrics_service.dart';
 import '../../../../services/lyrics/lyrics_romanization_service.dart';
 import '../../../../services/lyrics/lyrics_translation_service.dart';
@@ -99,7 +98,6 @@ import 'app_strings.dart';
 import 'home_feed_activity_provider.dart';
 import 'local_audio_availability.dart';
 import 'lyrics_animation_style.dart';
-import 'live_widget_style.dart';
 import 'mini_player_background_mode.dart';
 import 'mini_player_mode.dart';
 import 'player_artwork_style.dart';
@@ -118,7 +116,6 @@ import 'player/remote_playback_retry_coordinator.dart';
 export 'app_strings.dart';
 export 'home_feed_activity_provider.dart';
 export 'lyrics_animation_style.dart';
-export 'live_widget_style.dart';
 export 'mini_player_background_mode.dart';
 export 'mini_player_mode.dart';
 export 'player_artwork_style.dart';
@@ -152,7 +149,6 @@ part 'search_browse_controller.dart';
 part 'search_controller.dart';
 part 'settings_controller.dart';
 part 'sleep_timer_controller.dart';
-part 'tiktok_live_controller.dart';
 part 'youtube_music_playlist_sync_controller.dart';
 
 final homeScreenWidgetSyncProvider = Provider<void>((ref) {
@@ -2892,12 +2888,4 @@ final libraryTracksProvider = FutureProvider<List<LocalTrack>>((ref) {
 
 final historyProvider = FutureProvider<List<LocalTrack>>((ref) {
   return ref.watch(getHistoryProvider).call();
-});
-
-final tiktokLiveCommandServiceProvider = Provider<TikTokLiveCommandService>((
-  ref,
-) {
-  final service = TikTokLiveCommandService();
-  ref.onDispose(service.dispose);
-  return service;
 });

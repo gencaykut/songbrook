@@ -32,441 +32,6 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  group('LIVE temporary queue', () {
-    test(
-      'Pause during slow restoration retains the saved position for the next resume',
-      () async {
-        final player = _BlockingRemotePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = _queuedRemoteTrack('slow-return-normal');
-        await controller.playRemote(normal);
-        await _flushCompletion();
-        await controller.seek(const Duration(seconds: 42));
-        player.block(normal.id);
-        await controller.playRemote(
-          _queuedRemoteTrack('slow-return-live'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(
-          () =>
-              player.startedRemoteIds.where((id) => id == normal.id).length ==
-              2,
-        );
-        await controller.pause();
-        expect(
-          container.read(playerControllerProvider).value?.position,
-          const Duration(seconds: 42),
-        );
-        player.release(normal.id);
-        await controller.waitForLiveQueueRestoration();
-        await _flushCompletion();
-        expect(
-          container.read(playerControllerProvider).value?.wantsToPlay,
-          isFalse,
-        );
-        await controller.resume();
-        await _flushCompletion();
-        expect(player.lastSeekPosition, const Duration(seconds: 42));
-      },
-    );
-
-    test(
-      'a downloaded LIVE request that cannot open still returns to the normal queue',
-      () async {
-        final player = _FailingLiveRequestPlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = _queuedRemoteTrack('local-error-normal');
-        await controller.playRemote(normal);
-        await controller.playLocal(
-          _track(99),
-          queueSourceId: PlayerController.liveQueueSourceId,
-          useNativeQueue: false,
-        );
-        await _waitUntil(
-          () =>
-              !controller.isLiveQueueActive && player.playedRemote.length == 2,
-        );
-        await controller.waitForLiveQueueRestoration();
-        expect(player.playedRemote.last.id, normal.id);
-      },
-    );
-
-    test(
-      'a missing downloaded LIVE file cannot leave the temporary queue stuck',
-      () async {
-        final player = _FakePlayerService();
-        final missing = _track(99);
-        final repository = _FakeLibraryRepository()..localTracks.add(missing);
-        final container = _container(
-          player,
-          repository: repository,
-          fileProbe: (path) async => path == missing.filePath
-              ? LocalTrackFileAvailability.missing
-              : LocalTrackFileAvailability.present,
-        );
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = _queuedRemoteTrack('missing-live-normal');
-        await controller.playRemote(normal);
-        await controller.playLocal(
-          missing,
-          queueSourceId: PlayerController.liveQueueSourceId,
-          useNativeQueue: false,
-        );
-        await _waitUntil(
-          () =>
-              !controller.isLiveQueueActive && player.playedRemote.length == 2,
-        );
-        await controller.waitForLiveQueueRestoration();
-        expect(player.playedRemote.last.id, normal.id);
-        expect(player.playedLocalIds, isEmpty);
-      },
-    );
-
-    test(
-      'restores the remote queue, selected song and position after its last request',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = List.generate(3, (i) => _queuedRemoteTrack('normal-$i'));
-        await controller.playRemote(
-          normal[1],
-          queue: normal,
-          queueSourceId: 'normal-radio',
-        );
-        await _flushCompletion();
-        await controller.seek(const Duration(seconds: 41));
-        final live = [
-          _queuedRemoteTrack('request-a'),
-          _queuedRemoteTrack('request-b'),
-        ];
-        var completions = 0;
-        controller.addLiveQueueCompletionListener(() => completions++);
-        await controller.playRemote(
-          live.first,
-          queue: live,
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(() => player.playedRemote.last.id == live.last.id);
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(
-          () =>
-              !controller.isLiveQueueActive &&
-              player.playedRemote.last.id == normal[1].id,
-        );
-        await controller.waitForLiveQueueRestoration();
-        await _flushCompletion();
-        expect(completions, 1);
-        expect(
-          container.read(playbackQueueProvider).entries.map((e) => e.id),
-          normal.map((e) => e.id),
-        );
-        expect(container.read(playbackQueueProvider).currentIndex, 1);
-        expect(player.lastSeekPosition, const Duration(seconds: 41));
-        expect(
-          container.read(playerControllerProvider).value?.wantsToPlay,
-          isTrue,
-        );
-        await controller.playNext();
-        expect(player.playedRemote.last.id, normal.last.id);
-      },
-    );
-
-    test(
-      'restores a downloaded playlist and its original native queue mode',
-      () async {
-        final player = _FakePlayerService(supportsLocalQueueReplacement: true);
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = [_track(1), _track(2), _track(3)];
-        final sourceId = PlayerController.playlistQueueSourceId('before-live');
-        await controller.playLocal(
-          normal[1],
-          queue: normal,
-          queueSourceId: sourceId,
-        );
-        await _flushCompletion();
-        await controller.seek(const Duration(seconds: 28));
-        final live = [_track(11), _track(12)];
-        await controller.playLocal(
-          live.first,
-          queue: live,
-          useNativeQueue: false,
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(() => player.playedLocalIds.last == live.last.id);
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(
-          () =>
-              !controller.isLiveQueueActive &&
-              player.playedLocalIds.last == normal[1].id,
-        );
-        await controller.waitForLiveQueueRestoration();
-        expect(controller.isLocalQueueSourceActive(sourceId), isTrue);
-        expect(
-          player.lastLocalQueue?.map((e) => e.id),
-          normal.map((e) => e.id),
-        );
-        expect(player.lastLocalQueueIndex, 1);
-        expect(player.lastSeekPosition, const Duration(seconds: 28));
-      },
-    );
-
-    test(
-      'LIVE stays FIFO and restores shuffle and repeat of the normal queue',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = [
-          _queuedRemoteTrack('shuffle-a'),
-          _queuedRemoteTrack('shuffle-b'),
-        ];
-        await controller.playRemote(normal.first, queue: normal);
-        controller.setShuffleEnabled(true);
-        controller.setRepeatMode(PlaybackRepeatMode.one);
-        await _flushCompletion();
-        final live = [
-          _queuedRemoteTrack('fifo-a'),
-          _queuedRemoteTrack('fifo-b'),
-        ];
-        await controller.playRemote(
-          live.first,
-          queue: live,
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        controller.setShuffleEnabled(true);
-        controller.setRepeatMode(PlaybackRepeatMode.all);
-        await _flushCompletion();
-        expect(
-          container.read(playerControllerProvider).value?.shuffleEnabled,
-          isFalse,
-        );
-        expect(
-          container.read(playerControllerProvider).value?.repeatMode,
-          PlaybackRepeatMode.off,
-        );
-        await controller.playNext();
-        expect(player.playedRemote.last.id, live.last.id);
-        await controller.playNext();
-        await _flushCompletion();
-        expect(player.playedRemote.last.id, normal.first.id);
-        expect(
-          container.read(playerControllerProvider).value?.shuffleEnabled,
-          isTrue,
-        );
-        expect(
-          container.read(playerControllerProvider).value?.repeatMode,
-          PlaybackRepeatMode.one,
-        );
-      },
-    );
-
-    test(
-      'a paused normal queue stays paused and supports a deferred seek on return',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = _queuedRemoteTrack('paused-normal');
-        await controller.playRemote(normal);
-        await _flushCompletion();
-        await controller.seek(const Duration(seconds: 31));
-        await controller.pause();
-        await controller.playRemote(
-          _queuedRemoteTrack('paused-request'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(() => !controller.isLiveQueueActive);
-        await controller.waitForLiveQueueRestoration();
-        await _flushCompletion();
-        final restored = container.read(playerControllerProvider).requireValue;
-        expect(restored.status, PlayerStatus.paused);
-        expect(restored.trackId, normal.id);
-        expect(restored.position, const Duration(seconds: 31));
-        expect(player.playedRemote.map((e) => e.id), [
-          normal.id,
-          'paused-request',
-        ]);
-        await controller.seek(const Duration(seconds: 45));
-        expect(player.lastSeekPosition, const Duration(seconds: 31));
-        await controller.resume();
-        await _flushCompletion();
-        expect(player.playedRemote.last.id, normal.id);
-        expect(player.lastSeekPosition, const Duration(seconds: 45));
-      },
-    );
-
-    test(
-      'without a previous queue it clears playback instead of replaying requests',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        await controller.playRemote(
-          _queuedRemoteTrack('lone-request'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        player.emit(
-          player.currentSnapshot.copyWith(status: PlayerStatus.completed),
-        );
-        await _waitUntil(() => !controller.isLiveQueueActive);
-        await controller.waitForLiveQueueRestoration();
-        await _flushCompletion();
-        expect(container.read(playbackQueueProvider).entries, isEmpty);
-        expect(container.read(playerControllerProvider).value?.trackId, isNull);
-        expect(
-          container.read(playerControllerProvider).value?.status,
-          PlayerStatus.idle,
-        );
-        expect(player.playedRemote, hasLength(1));
-      },
-    );
-
-    test(
-      'recommendation continuation is available again after returning',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final tracks = List.generate(
-          6,
-          (i) => _queuedRemoteTrack('recommended-$i'),
-        );
-        var extensions = 0;
-        await controller.playRecommendation(
-          RecommendationPlaybackItem(track: tracks.first),
-          queue: tracks
-              .take(5)
-              .map((t) => RecommendationPlaybackItem(track: t))
-              .toList(),
-          queueSourceId: 'personalized-home:temporary-live',
-          queueExtender: () async {
-            extensions++;
-            return tracks
-                .map((t) => RecommendationPlaybackItem(track: t))
-                .toList();
-          },
-        );
-        expect(extensions, 0);
-        await controller.playRemote(
-          _queuedRemoteTrack('recommendation-request'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        await controller.playNext();
-        await _flushCompletion();
-        expect(extensions, 0);
-        await controller.playNext();
-        await _waitUntil(() => extensions > 0);
-        await _flushCompletion();
-        expect(
-          container.read(playbackQueueProvider).entries.map((e) => e.id),
-          tracks.map((e) => e.id),
-        );
-        expect(player.playedRemote.last.id, tracks[1].id);
-      },
-    );
-
-    test(
-      'an explicit replacement supersedes the old return queue across LIVE cycles',
-      () async {
-        final player = _FakePlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        await controller.playRemote(_queuedRemoteTrack('discarded-normal'));
-        await controller.playRemote(
-          _queuedRemoteTrack('first-live'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        await controller.playRemote(_queuedRemoteTrack('replacement-normal'));
-        await controller.playRemote(
-          _queuedRemoteTrack('second-live'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        await controller.playNext();
-        await _flushCompletion();
-        expect(player.playedRemote.last.id, 'replacement-normal');
-        expect(
-          player.playedRemote.where((t) => t.id == 'discarded-normal'),
-          hasLength(1),
-        );
-      },
-    );
-
-    test(
-      'a terminal failure in the last LIVE request returns to the normal queue',
-      () async {
-        final player = _FailingLiveRequestPlayerService();
-        final container = _container(player);
-        addTearDown(container.dispose);
-        await container.read(playerControllerProvider.future);
-        final controller = container.read(playerControllerProvider.notifier);
-        final normal = _queuedRemoteTrack('failure-normal');
-        await controller.playRemote(normal);
-        await _flushCompletion();
-        final intents = <bool>[];
-        final listener = container.listen(playerControllerProvider, (_, next) {
-          if (next.value != null) intents.add(next.value!.wantsToPlay);
-        });
-        addTearDown(listener.close);
-        await controller.playRemote(
-          _queuedRemoteTrack('permanent-live-failure'),
-          queueSourceId: PlayerController.liveQueueSourceId,
-        );
-        await _waitUntil(
-          () =>
-              !controller.isLiveQueueActive && player.playedRemote.length == 2,
-        );
-        await controller.waitForLiveQueueRestoration();
-        expect(player.playedRemote.last.id, normal.id);
-        expect(
-          container.read(playbackQueueProvider).entries.single.id,
-          normal.id,
-        );
-        expect(intents, isNotEmpty);
-        expect(intents, everyElement(isTrue));
-      },
-    );
-  });
-
   group('background playback continuity', () {
     test('native ready with playback intent is not a user pause', () async {
       final player = _FakePlayerService();
@@ -2593,62 +2158,55 @@ void main() {
     );
   }
 
-  test(
-    'a superseded final retry exits silently without advancing LIVE',
-    () async {
-      final player = _FakePlayerService();
-      final retryDelay = _ControlledRetryDelay();
-      final primary = _SequencedAudioResolver([
-        const SocketException('primary offline cycle 1'),
-        const SocketException('primary offline cycle 2'),
-        const SocketException('primary offline cycle 3'),
-      ]);
-      final fallback = _SequencedAudioResolver([
-        const SocketException('fallback offline cycle 1'),
-        const SocketException('fallback offline cycle 2'),
-        const AudioStreamResolverException(
-          'Audio stream resolution was superseded.',
-        ),
-      ]);
-      final container = _container(
-        player,
-        audioResolver: FallbackAudioResolver([primary, fallback]),
-        retryDelay: retryDelay.call,
-      );
-      addTearDown(container.dispose);
-      final track = _unresolvedRemoteTrack('superseded-final-retry');
-      final next = _unresolvedRemoteTrack('must-not-advance-after-superseded');
+  test('a superseded final retry exits silently without advancing', () async {
+    final player = _FakePlayerService();
+    final retryDelay = _ControlledRetryDelay();
+    final primary = _SequencedAudioResolver([
+      const SocketException('primary offline cycle 1'),
+      const SocketException('primary offline cycle 2'),
+      const SocketException('primary offline cycle 3'),
+    ]);
+    final fallback = _SequencedAudioResolver([
+      const SocketException('fallback offline cycle 1'),
+      const SocketException('fallback offline cycle 2'),
+      const AudioStreamResolverException(
+        'Audio stream resolution was superseded.',
+      ),
+    ]);
+    final container = _container(
+      player,
+      audioResolver: FallbackAudioResolver([primary, fallback]),
+      retryDelay: retryDelay.call,
+    );
+    addTearDown(container.dispose);
+    final track = _unresolvedRemoteTrack('superseded-final-retry');
+    final next = _unresolvedRemoteTrack('must-not-advance-after-superseded');
 
-      await container.read(playerControllerProvider.future);
-      final play = container
-          .read(playerControllerProvider.notifier)
-          .playRemote(
-            track,
-            queue: [track, next],
-            queueSourceId: PlayerController.liveQueueSourceId,
-          );
-      await _waitUntil(() => retryDelay.durations.length == 1);
-      retryDelay.releaseNext();
-      await _waitUntil(() => retryDelay.durations.length == 2);
-      retryDelay.releaseNext();
-      await play;
-      await _flushCompletion();
+    await container.read(playerControllerProvider.future);
+    final play = container
+        .read(playerControllerProvider.notifier)
+        .playRemote(track, queue: [track, next], queueSourceId: 'remote-retry');
+    await _waitUntil(() => retryDelay.durations.length == 1);
+    retryDelay.releaseNext();
+    await _waitUntil(() => retryDelay.durations.length == 2);
+    retryDelay.releaseNext();
+    await play;
+    await _flushCompletion();
 
-      expect(primary.resolveCalls, 3);
-      expect(fallback.resolveCalls, 3);
-      expect(retryDelay.durations, const [
-        Duration(seconds: 2),
-        Duration(seconds: 5),
-      ]);
-      expect(container.read(playerControllerProvider).hasError, isFalse);
-      expect(
-        container.read(playerControllerProvider).requireValue.errorMessage,
-        isNull,
-      );
-      expect(container.read(playbackQueueProvider).currentIndex, 0);
-      expect(player.playedRemote, isEmpty);
-    },
-  );
+    expect(primary.resolveCalls, 3);
+    expect(fallback.resolveCalls, 3);
+    expect(retryDelay.durations, const [
+      Duration(seconds: 2),
+      Duration(seconds: 5),
+    ]);
+    expect(container.read(playerControllerProvider).hasError, isFalse);
+    expect(
+      container.read(playerControllerProvider).requireValue.errorMessage,
+      isNull,
+    );
+    expect(container.read(playbackQueueProvider).currentIndex, 0);
+    expect(player.playedRemote, isEmpty);
+  });
 
   test(
     'a canceled network handoff remains transient and exhausts both backoffs',
@@ -2855,7 +2413,7 @@ void main() {
           .playRemote(
             track,
             queue: [track, next],
-            queueSourceId: PlayerController.liveQueueSourceId,
+            queueSourceId: 'remote-retry',
           );
 
       await _waitUntil(() => retryDelay.durations.length == 1);
@@ -2909,7 +2467,7 @@ void main() {
   );
 
   test(
-    'a failed snapshot from a pending retry preserves loading and does not advance LIVE',
+    'a failed snapshot from a pending retry preserves loading and does not advance',
     () async {
       final player = _PendingRetryFailurePlayerService();
       final retryDelay = _ControlledRetryDelay();
@@ -2937,7 +2495,7 @@ void main() {
           .playRemote(
             track,
             queue: [track, next],
-            queueSourceId: PlayerController.liveQueueSourceId,
+            queueSourceId: 'remote-retry',
           );
       await _waitUntil(() => retryDelay.durations.length == 1);
       final noticeBeforeRetry = container
@@ -2980,70 +2538,6 @@ void main() {
       expect(retryDelay.durations, const [Duration(seconds: 2)]);
       expect(container.read(playbackQueueProvider).currentIndex, 0);
       expect(player.playedRemote.single.id, track.id);
-    },
-  );
-
-  test(
-    'LIVE terminal failure advances once and a single-item LIVE queue does not loop',
-    () async {
-      final player = _FakePlayerService();
-      final retryDelay = _ControlledRetryDelay();
-      final resolver = _LiveRetryAudioResolver(successfulTrackId: 'live-next');
-      final container = _container(
-        player,
-        audioResolver: resolver,
-        retryDelay: retryDelay.call,
-      );
-      addTearDown(container.dispose);
-      final failed = _unresolvedRemoteTrack('live-failed');
-      final next = _unresolvedRemoteTrack('live-next');
-
-      await container.read(playerControllerProvider.future);
-      final controller = container.read(playerControllerProvider.notifier);
-      final firstPlay = controller.playRemote(
-        failed,
-        queue: [failed, next],
-        queueSourceId: PlayerController.liveQueueSourceId,
-      );
-      await _waitUntil(() => retryDelay.durations.length == 1);
-      retryDelay.releaseNext();
-      await _waitUntil(() => retryDelay.durations.length == 2);
-      retryDelay.releaseNext();
-      await firstPlay;
-      await _waitUntil(
-        () =>
-            container.read(playbackQueueProvider).currentIndex == 1 &&
-            player.playedRemote.map((track) => track.id).contains('live-next'),
-      );
-
-      expect(resolver.callsFor('live-failed'), 3);
-      expect(resolver.callsFor('live-next'), 1);
-      expect(player.playedRemote.map((track) => track.id), ['live-next']);
-
-      final lone = _unresolvedRemoteTrack('live-lone-failure');
-      final lonePlay = controller.playRemote(
-        lone,
-        queue: [lone],
-        queueSourceId: PlayerController.liveQueueSourceId,
-      );
-      await _waitUntil(() => retryDelay.durations.length == 3);
-      retryDelay.releaseNext();
-      await _waitUntil(() => retryDelay.durations.length == 4);
-      retryDelay.releaseNext();
-      await lonePlay;
-      await _flushCompletion();
-
-      expect(resolver.callsFor('live-lone-failure'), 3);
-      expect(container.read(playbackQueueProvider).currentIndex, -1);
-      expect(container.read(playbackQueueProvider).entries, isEmpty);
-      expect(controller.isLiveQueueActive, isFalse);
-      expect(player.playedRemote.map((track) => track.id), ['live-next']);
-      expect(retryDelay.durations, const [
-        Duration(seconds: 2),
-        Duration(seconds: 5),
-        Duration(seconds: 2),
-        Duration(seconds: 5),
-      ]);
     },
   );
 
@@ -4805,94 +4299,6 @@ void main() {
     },
   );
 
-  test('remote LIVE queue source is reported as active', () async {
-    final player = _FakePlayerService();
-    final container = _container(player);
-    addTearDown(container.dispose);
-    final tracks = [_queuedRemoteTrack('live-1'), _queuedRemoteTrack('live-2')];
-
-    await container.read(playerControllerProvider.future);
-    final controller = container.read(playerControllerProvider.notifier);
-    await controller.playRemote(
-      tracks.first,
-      queue: tracks,
-      queueSourceId: PlayerController.liveQueueSourceId,
-    );
-
-    expect(controller.isLiveQueueActive, isTrue);
-    expect(
-      container.read(playbackQueueProvider).entries.map((entry) => entry.id),
-      ['live-1', 'live-2'],
-    );
-    expect(
-      container
-          .read(playbackQueueProvider)
-          .entries
-          .every((entry) => entry.isRemote),
-      isTrue,
-    );
-    expect(container.read(playbackQueueProvider).currentIndex, 0);
-  });
-
-  test(
-    'syncing an active remote LIVE queue appends tracks without restarting',
-    () async {
-      final player = _FakePlayerService();
-      final container = _container(player);
-      addTearDown(container.dispose);
-      final first = _queuedRemoteTrack('live-1');
-      final expanded = [first, _queuedRemoteTrack('live-2')];
-
-      await container.read(playerControllerProvider.future);
-      final controller = container.read(playerControllerProvider.notifier);
-      await controller.playRemote(
-        first,
-        queue: [first],
-        queueSourceId: PlayerController.liveQueueSourceId,
-      );
-      final startsBeforeSync = player.playedRemote.length;
-
-      final updated = await controller.syncRemoteQueueSource(
-        PlayerController.liveQueueSourceId,
-        expanded,
-      );
-
-      expect(updated, isTrue);
-      expect(player.playedRemote, hasLength(startsBeforeSync));
-      expect(player.currentSnapshot.trackId, 'live-1');
-      expect(
-        container.read(playbackQueueProvider).entries.map((entry) => entry.id),
-        ['live-1', 'live-2'],
-      );
-      expect(container.read(playbackQueueProvider).currentIndex, 0);
-      expect(controller.isLiveQueueActive, isTrue);
-    },
-  );
-
-  test('clearing the active LIVE queue releases its source', () async {
-    final player = _FakePlayerService();
-    final container = _container(player);
-    addTearDown(container.dispose);
-    final track = _queuedRemoteTrack('live-1');
-
-    await container.read(playerControllerProvider.future);
-    final controller = container.read(playerControllerProvider.notifier);
-    await controller.playRemote(
-      track,
-      queue: [track],
-      queueSourceId: PlayerController.liveQueueSourceId,
-    );
-
-    final cleared = await controller.clearQueueSource(
-      PlayerController.liveQueueSourceId,
-    );
-
-    expect(cleared, isTrue);
-    expect(controller.isLiveQueueActive, isFalse);
-    expect(container.read(playbackQueueProvider).entries, isEmpty);
-    expect(container.read(playbackQueueProvider).currentIndex, -1);
-  });
-
   test(
     'shuffle with repeat off stops after every queued track has played',
     () async {
@@ -5173,7 +4579,7 @@ void main() {
   });
 
   test(
-    'controller-managed LIVE queue skips a failed gap and plays the next ready track',
+    'controller-managed queue skips a failed gap and plays the next ready track',
     () async {
       final player = _FakePlayerService();
       final container = _container(player);
@@ -6005,43 +5411,6 @@ class _ScriptedModeAwareAudioResolver
   Future<void> dispose() async {}
 }
 
-class _LiveRetryAudioResolver
-    implements AudioStreamResolver, FallbackAwareAudioStreamResolver {
-  _LiveRetryAudioResolver({required this.successfulTrackId});
-
-  final String successfulTrackId;
-  final Map<String, int> _calls = {};
-
-  int callsFor(String trackId) => _calls[trackId] ?? 0;
-
-  @override
-  Future<AudioStreamResolution> resolve(TrackInfo track) {
-    return resolveWithMode(track);
-  }
-
-  @override
-  Future<AudioStreamResolution> resolveWithMode(
-    TrackInfo track, {
-    AudioResolutionMode mode = AudioResolutionMode.primaryThenFallback,
-    AudioResolverFailureCallback? onResolverFailure,
-    AudioResolverContinuationCallback? shouldContinue,
-  }) async {
-    _calls.update(track.id, (value) => value + 1, ifAbsent: () => 1);
-    if (shouldContinue != null && !shouldContinue()) {
-      throw const AudioStreamResolverException(
-        'Audio stream resolution was superseded.',
-      );
-    }
-    if (track.id == successfulTrackId) {
-      return _fallbackInnerTubeResolution(track.id);
-    }
-    throw SocketException('offline for ${track.id}');
-  }
-
-  @override
-  Future<void> dispose() async {}
-}
-
 class _FakePlayerService implements PlayerService {
   _FakePlayerService({
     this.supportsLocalQueueReplacement = false,
@@ -6190,22 +5559,6 @@ class _FakePlayerService implements PlayerService {
 
   @override
   Future<void> togglePlayPause() async {}
-}
-
-class _FailingLiveRequestPlayerService extends _FakePlayerService {
-  @override
-  Future<void> playLocal(LocalTrack track) async {
-    if (track.id == 'track-99') throw StateError('Local decoder unavailable');
-    await super.playLocal(track);
-  }
-
-  @override
-  Future<void> playRemote(TrackInfo track) async {
-    if (track.id == 'permanent-live-failure') {
-      throw StateError('Sign in to confirm you are not a bot');
-    }
-    await super.playRemote(track);
-  }
 }
 
 class _PlaybackOptionsFailingPlayerService extends _FakePlayerService {

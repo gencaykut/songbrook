@@ -14,7 +14,6 @@ void main() {
     test('routes iOS through the supported mobile platform path', () {
       expect(AppPlatform.isMobileOn(AppPlatformType.ios), isTrue);
       expect(AppPlatform.isMobileTargetPlatform(TargetPlatform.iOS), isTrue);
-      expect(AppPlatform.supportsTikTokLiveOn(AppPlatformType.ios), isTrue);
       expect(AppPlatform.isMobileOn(AppPlatformType.macos), isFalse);
     });
 

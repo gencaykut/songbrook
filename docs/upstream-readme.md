@@ -3,7 +3,9 @@
 > **Note:** This is BStream Music's README as of upstream `7d54c36`, kept for
 > reference. Songbrook's own README is [../README.md](../README.md). Names,
 > bundle IDs, the App Group, the iOS minimum (now 15.0), and distribution
-> differ in Songbrook.
+> differ in Songbrook. Songbrook removed TikTok LIVE, including the Windows
+> LIVE overlay and the vendored `piratetok_live` package, so the LIVE
+> sections below no longer apply.
 
 ![Flutter 3.47.2](https://img.shields.io/badge/Flutter-3.47.2-02569B?logo=flutter&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20Linux%20%7C%20macOS-blue)
@@ -245,9 +247,7 @@ and a direct request to its local `/health` endpoint succeeds. These checks use
 bounded retries, never use an HTTP proxy, and release port `80` completely if
 startup cannot be verified.
 
-Windows compatibility and environmental limits for this local overlay are
-documented in [Windows LIVE overlay compatibility](windows_live_overlay_compatibility.md).
-In short, Windows 11 x64 is supported, Windows 10 22H2 x64 is retained as
+In upstream's Windows LIVE overlay compatibility notes, Windows 11 x64 is supported, Windows 10 22H2 x64 is retained as
 legacy compatibility, and Windows 11 ARM64 is experimental through x64
 emulation; this is not a guarantee for every Windows device or policy.
 

@@ -11,7 +11,6 @@ import 'package:bstream_music/features/music/presentation/pages/home_page.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/features/music/presentation/providers/youtube_music_auth_controller.dart';
 import 'package:bstream_music/features/music/presentation/widgets/settings_panel.dart';
-import 'package:bstream_music/services/live/tiktok_live_command_service.dart';
 import 'package:bstream_music/services/lyrics/lyrics_romanization_service.dart';
 import 'package:bstream_music/services/player/player_service.dart';
 import 'package:bstream_music/services/sharing/incoming_track_link_service.dart';
@@ -1458,8 +1457,8 @@ void main() {
       final crossfadeRect = tester.getRect(
         find.byKey(const ValueKey('settings-inline-crossfade')),
       );
-      final liveStorageRect = tester.getRect(
-        find.byKey(const ValueKey('settings-card-live-request-storage')),
+      final aboutRect = tester.getRect(
+        find.byKey(const ValueKey('settings-card-about')),
       );
       final languageRect = tester.getRect(
         find.byKey(const ValueKey('settings-card-language')),
@@ -1471,9 +1470,9 @@ void main() {
       expect(languageRect.width, greaterThan(760));
       expect(crossfadeRect.width, greaterThan(760));
       expect(crossfadeRect.width, closeTo(languageRect.width, 0.1));
-      expect(crossfadeRect.width, closeTo(liveStorageRect.width, 0.1));
-      expect(crossfadeRect.left, closeTo(liveStorageRect.left, 0.1));
-      expect(crossfadeRect.right, closeTo(liveStorageRect.right, 0.1));
+      expect(crossfadeRect.width, closeTo(aboutRect.width, 0.1));
+      expect(crossfadeRect.left, closeTo(aboutRect.left, 0.1));
+      expect(crossfadeRect.right, closeTo(aboutRect.right, 0.1));
       expect(timerRect.width, closeTo(520, 0.1));
       expect(tester.takeException(), isNull);
       debugDefaultTargetPlatformOverride = null;
@@ -2915,7 +2914,6 @@ List<Override> _providerOverrides({
       settingsControllerBuilder ?? _FixedSettingsController.new,
     ),
     appStringsProvider.overrideWithValue(const AppStrings(AppLanguage.spanish)),
-    tiktokLiveControllerProvider.overrideWith(_IdleTikTokLiveController.new),
     youtubeMusicSessionStoreProvider.overrideWithValue(
       const _AnonymousYouTubeMusicSessionStore(),
     ),
@@ -3101,15 +3099,6 @@ class _PreviewLyricsRomanizationService extends LyricsRomanizationService {
     List<String> lines,
     Set<LyricsRomanizationLanguage> languages,
   ) async => [for (final line in lines) 'Romanized: $line'];
-}
-
-class _IdleTikTokLiveController extends TikTokLiveController {
-  @override
-  Future<TikTokLiveState> build() async => const TikTokLiveState(
-    creatorInput: '',
-    status: TikTokLiveStatus.idle,
-    message: 'Listo para conectar.',
-  );
 }
 
 class _AnonymousYouTubeMusicSessionStore implements YouTubeMusicSessionStore {

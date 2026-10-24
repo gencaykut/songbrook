@@ -3,7 +3,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/platform/app_platform.dart';
 import '../../domain/entities/lyrics_romanization_language.dart';
 import 'lyrics_animation_style.dart';
-import 'live_widget_style.dart';
 import 'mini_player_background_mode.dart';
 import 'mini_player_mode.dart';
 import 'player_artwork_style.dart';
@@ -678,67 +677,13 @@ class AppStrings {
     'No descargada; requiere conexión',
     'Not downloaded; connection required',
   );
-  String get liveQueue => choose('LIVE', 'LIVE');
-  String get liveQueueTitle => choose('Cola LIVE', 'LIVE queue');
   String get playbackQueue => choose('Cola de reproducción', 'Playback queue');
   String get playbackQueueEmpty => choose(
     'No hay canciones en la cola actual.',
     'There are no songs in the current queue.',
   );
-  String get liveQueueEmpty => choose(
-    'Los pedidos !play aparecerán aquí.',
-    'Live !play requests will appear here.',
-  );
-  String get clearLiveQueue => choose('Limpiar cola LIVE', 'Clear LIVE queue');
-  String get requestedBy => choose('Pedido por', 'Requested by');
-  String get moderator => choose('Moderador', 'Moderator');
-  String get commandPermissions =>
-      choose('Quién puede usar los comandos', 'Who can use commands');
-  String get everyone => choose('Todos', 'Everyone');
-  String get follower => choose('Seguidor', 'Follower');
-  String get followers => choose('Seguidores', 'Followers');
-  String get moderators => choose('Moderadores', 'Moderators');
   String get subscriber => choose('Suscriptor', 'Subscriber');
   String get subscribers => choose('Suscriptores', 'Subscribers');
-  String get everyoneCommandPermissionsHint => choose(
-    'Comandos disponibles para cualquier espectador.',
-    'Commands available to any viewer.',
-  );
-  String get followerCommandPermissionsHint => choose(
-    'Permisos adicionales para seguidores.',
-    'Additional permissions for followers.',
-  );
-  String get moderatorCommandPermissionsHint => choose(
-    'Permisos adicionales para moderadores.',
-    'Additional permissions for moderators.',
-  );
-  String get subscriberCommandPermissionsHint => choose(
-    'Permisos adicionales para suscriptores.',
-    'Additional permissions for subscribers.',
-  );
-  String get commandAllowedForEveryone => choose(
-    'Ya está disponible para todos.',
-    'Already available to everyone.',
-  );
-  String get livePlayCommand => choose('!play <canción>', '!play <song>');
-  String get livePlayCommandDescription => choose(
-    'Añade una canción a la cola LIVE.',
-    'Adds a song to the LIVE queue.',
-  );
-  String get liveSkipCommand => choose('!skip / !next', '!skip / !next');
-  String get liveSkipCommandDescription => choose(
-    'Salta a la siguiente canción de la cola LIVE.',
-    'Skips to the next song in the LIVE queue.',
-  );
-  String get liveRevokeCommand =>
-      choose('!revoke / revoke!', '!revoke / revoke!');
-  String get liveRevokeCommandDescription => choose(
-    'Retira el último pedido de la cola LIVE.',
-    'Removes the last request from the LIVE queue.',
-  );
-  String get liveStopCommand => choose('!stop', '!stop');
-  String get liveStopCommandDescription =>
-      choose('Pausa la canción LIVE actual.', 'Pauses the current LIVE song.');
   String get reusedDownload => choose('Ya descargada', 'Already downloaded');
   String get playlist => choose('Playlist', 'Playlist');
   String get newPlaylist => choose('Nueva playlist', 'New playlist');
@@ -1210,165 +1155,16 @@ class AppStrings {
     'Ingresa una duración entre 1 y 720 minutos.',
     'Enter a duration between 1 and 720 minutes.',
   );
-  String get liveConnection => choose('Conexión LIVE', 'LIVE connection');
-  String get liveConnectionSummary => choose(
-    'Conecta un LIVE y configura quién puede pedir canciones.',
-    'Connect a LIVE and choose who can request songs.',
-  );
-  String get liveUnavailable => choose(
-    'Conexión LIVE no disponible en este dispositivo.',
-    'LIVE connection is not available on this device.',
-  );
   String get backupSummary => choose(
     'Exporta o restaura tu biblioteca y configuración.',
     'Export or restore your library and settings.',
   );
-  String get tiktokLive => choose('TikTok LIVE', 'TikTok LIVE');
-  String get tiktokLiveUser =>
-      choose('@usuario o link del live', '@user or live link');
-  String get saveLiveRequestsToLibrary => choose(
-    'Guardar pedidos LIVE en Biblioteca',
-    'Save LIVE requests to Library',
-  );
-  String get saveLiveRequestsToLibraryEnabled => choose(
-    'Descarga y guarda cada pedido en Biblioteca antes de reproducirlo.',
-    'Download and save each request to Library before playing it.',
-  );
-  String get saveLiveRequestsToLibraryDisabled => choose(
-    'Reproduce de forma remota con caché temporal, sin agregarlo a Biblioteca.',
-    'Play remotely with temporary cache, without adding it to Library.',
-  );
-  String get saveLiveRequestsToLibraryLocked => choose(
-    'Limpia la cola LIVE para cambiar esta opción.',
-    'Clear the LIVE queue to change this option.',
-  );
-  String get readyForRemotePlayback =>
-      choose('Lista para reproducción remota', 'Ready for remote playback');
   String get connect => choose('Conectar', 'Connect');
   String get disconnect => choose('Desconectar', 'Disconnect');
-  String get liveOverlay => choose('Overlay LIVE local', 'Local LIVE overlay');
-  String get liveWidget => choose('Widget Live', 'Live widget');
-  String get liveWidgetPreview => choose('Vista previa', 'Preview');
-  String get liveWidgetDescription => choose(
-    'Elige el diseño que aparece en tu transmisión. Usa el color de acento de la app.',
-    'Choose the design shown on your stream. It uses the app accent color.',
-  );
-  String liveWidgetStyleLabel(LiveWidgetStyle style) => switch (style) {
-    LiveWidgetStyle.classic => choose('Clásico', 'Classic'),
-    LiveWidgetStyle.wave => choose('Onda', 'Wave'),
-  };
-  String liveWidgetStyleDescription(LiveWidgetStyle style) => switch (style) {
-    LiveWidgetStyle.classic => choose(
-      'Tarjetas compactas con portada y progreso.',
-      'Compact cards with artwork and progress.',
-    ),
-    LiveWidgetStyle.wave => choose(
-      'Portada grande, onda animada y barra inferior.',
-      'Large artwork, animated wave, and a bottom progress bar.',
-    ),
-  };
-  String get liveOverlayResolving => choose('BUSCANDO', 'SEARCHING');
-  String get liveOverlayLoading => choose('CARGANDO', 'LOADING');
-  String get liveOverlayConnectFirst => choose(
-    'Activa la fuente web local cuando quieras; no necesitas conectar un LIVE.',
-    'Enable the local browser source whenever you want; no LIVE connection is required.',
-  );
-  String get liveOverlayInactive => choose(
-    'Activa una fuente web transparente con la cola activa. No necesitas estar conectado a un LIVE. '
-        'La primera vez Windows pedirá permiso para configurar su dominio local.',
-    'Enable a transparent browser source with the active queue. No LIVE connection is required. '
-        'The first time, Windows will request permission to configure its local domain.',
-  );
-  String liveOverlayActive(String url) => choose(
-    'Servidor activo en $url. Añádelo como fuente web en TikTok LIVE Studio.',
-    'Server active at $url. Add it as a browser source in TikTok LIVE Studio.',
-  );
-  String get liveOverlayStarting => choose(
-    'Preparando el dominio local para TikTok LIVE Studio...',
-    'Preparing the local domain for TikTok LIVE Studio...',
-  );
-  String get liveOverlayStopping =>
-      choose('Deteniendo la overlay local...', 'Stopping the local overlay...');
-  String get liveOverlayUnsupported => choose(
-    'Esta función está disponible únicamente en la versión para PC.',
-    'This feature is available only in the PC version.',
-  );
-  String get liveOverlayError => choose(
-    'No se pudo iniciar el servidor local de la overlay.',
-    'The local overlay server could not be started.',
-  );
-  String get liveOverlayPermissionError => choose(
-    'Windows no pudo configurar el dominio local. Inténtalo de nuevo y acepta '
-        'el permiso de administrador.',
-    'Windows could not configure the local domain. Try again and accept the '
-        'administrator permission.',
-  );
-  String get liveOverlayWindowsRequestTimeoutError => choose(
-    'Windows no mostró o no completó a tiempo la solicitud de permiso. '
-        'Vuelve a intentarlo y revisa si el aviso de Control de cuentas de '
-        'usuario (UAC) quedó detrás de otra ventana.',
-    'Windows did not show or complete the permission request in time. Try '
-        'again and check whether the User Account Control (UAC) prompt '
-        'appeared behind another window.',
-  );
-  String get liveOverlayPermissionCancelledError => choose(
-    'Se canceló el permiso de administrador. La overlay no realizó cambios.',
-    'The administrator permission was cancelled. The overlay made no changes.',
-  );
-  String get liveOverlayPolicyBlockedError => choose(
-    'Una política de seguridad de Windows bloqueó la configuración de la '
-        'overlay. En un equipo administrado debe autorizarla el administrador.',
-    'A Windows security policy blocked the overlay configuration. On a managed '
-        'PC, an administrator must allow it.',
-  );
-  String get liveOverlayPowerShellUnavailableError => choose(
-    'Windows PowerShell 5.1 no está disponible. Actívalo o solicita ayuda al '
-        'administrador para configurar la overlay.',
-    'Windows PowerShell 5.1 is unavailable. Enable it or ask the administrator '
-        'to configure the overlay.',
-  );
-  String liveOverlayHostsConflictError(String host) => choose(
-    'La configuración de la overlay tiene un conflicto en el archivo hosts. '
-        'Corrige la entrada de $host y vuelve a intentarlo.',
-    'The overlay configuration conflicts with the hosts file. Correct the '
-        '$host entry and try again.',
-  );
-  String get liveOverlayHostsVerificationError => choose(
-    'Windows no pudo confirmar el dominio local. Reinicia Songbrook y vuelve a '
-        'intentarlo.',
-    'Windows could not verify the local domain. Restart Songbrook and try again.',
-  );
-  String get liveOverlayEndpointVerificationError => choose(
-    'El dominio quedó configurado, pero Songbrook no pudo abrir la overlay por '
-        'DNS o HTTP. Revisa el proxy, VPN o antivirus y vuelve a intentarlo.',
-    'The domain was configured, but Songbrook could not open the overlay through '
-        'DNS or HTTP. Check the proxy, VPN, or antivirus and try again.',
-  );
-  String get liveOverlayPortInUseError => choose(
-    'Otra aplicación ya está usando el puerto 80. Ciérrala y vuelve a activar '
-        'la overlay.',
-    'Another application is already using port 80. Close it and enable the '
-        'overlay again.',
-  );
-  String get liveOverlayPortAccessError => choose(
-    'Windows bloqueó o reservó el puerto 80. Revisa las políticas o reservas '
-        'del sistema y vuelve a intentarlo.',
-    'Windows blocked or reserved port 80. Check system policies or reservations '
-        'and try again.',
-  );
-  String get liveOverlayPortUnavailableError => choose(
-    'El puerto 80 no está disponible. Cierra la aplicación que lo esté usando '
-        'y vuelve a intentarlo.',
-    'Port 80 is unavailable. Close the application using it and try again.',
-  );
-  String get copyOverlayUrl => choose('Copiar URL', 'Copy URL');
-  String get openOverlayPreview => choose('Abrir vista previa', 'Open preview');
   String get connected => choose('conectado', 'connected');
   String get disconnected => choose('desconectado', 'disconnected');
-  String get lastCommand => choose('Último comando', 'Last command');
   String get pendingRequests =>
       choose('Pedidos pendientes', 'Pending requests');
-  String get roomId => 'room_id';
   String get browseFolder => choose('Explorar carpeta', 'Browse folder');
   String get downloadFolderSaveFailed => choose(
     'No se pudo guardar la carpeta de descargas.',
@@ -1556,17 +1352,6 @@ class AppStrings {
     }
     return 'Cola de Reproducción - $count '
         '${count == 1 ? 'Canción' : 'Canciones'}';
-  }
-
-  String liveQueueSummary(int total, int ready, int pending) {
-    if (appLanguage != AppLanguage.spanish && !isEnglish) {
-      final english = '$total requests - $ready ready - $pending pending';
-      return translateAppString(english, appLanguage.code) ?? english;
-    }
-    if (isEnglish) {
-      return '$total requests - $ready ready - $pending pending';
-    }
-    return '$total pedidos - $ready listos - $pending pendientes';
   }
 
   String exitPressesRemaining(int remaining) {

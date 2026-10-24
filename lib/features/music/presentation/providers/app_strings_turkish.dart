@@ -289,38 +289,10 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Downloaded songs': 'İndirilen şarkılar',
   'Not downloaded; connection required':
       'İndirilmedi; internet bağlantısı gerekiyor',
-  'LIVE': 'CANLI',
-  'LIVE queue': 'CANLI yayın sırası',
   'Playback queue': 'Çalma sırası',
   'There are no songs in the current queue.': 'Çalma sırasında şarkı yok.',
-  'Live !play requests will appear here.':
-      'Canlı yayındaki !play istekleri burada görünecek.',
-  'Clear LIVE queue': 'CANLI yayın sırasını temizle',
-  'Requested by': 'İsteyen',
-  'Moderator': 'Moderatör',
-  'Who can use commands': 'Komutları kimler kullanabilir',
-  'Everyone': 'Herkes',
-  'Follower': 'Takipçi',
-  'Followers': 'Takipçiler',
-  'Moderators': 'Moderatörler',
   'Subscriber': 'Abone',
   'Subscribers': 'Aboneler',
-  'Commands available to any viewer.':
-      'Tüm izleyicilerin kullanabileceği komutlar.',
-  'Additional permissions for followers.': 'Takipçilere ek izinler.',
-  'Additional permissions for moderators.': 'Moderatörlere ek izinler.',
-  'Additional permissions for subscribers.': 'Abonelere ek izinler.',
-  'Already available to everyone.': 'Zaten herkes kullanabiliyor.',
-  '!play <song>': '!play <şarkı>',
-  'Adds a song to the LIVE queue.': 'CANLI yayın sırasına bir şarkı ekler.',
-  '!skip / !next': '!skip / !next',
-  'Skips to the next song in the LIVE queue.':
-      'CANLI yayın sırasındaki bir sonraki şarkıya geçer.',
-  '!revoke / revoke!': '!revoke / revoke!',
-  'Removes the last request from the LIVE queue.':
-      'CANLI yayın sırasındaki son isteği kaldırır.',
-  '!stop': '!stop',
-  'Pauses the current LIVE song.': 'Çalan CANLI yayın şarkısını duraklatır.',
   'Already downloaded': 'Zaten indirildi',
   'Playlist': 'Çalma listesi',
   'New playlist': 'Yeni çalma listesi',
@@ -555,74 +527,10 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Start': 'Başlat',
   'Enter a duration between 1 and 720 minutes.':
       '1 ile 720 dakika arasında bir süre gir.',
-  'LIVE connection': 'CANLI yayın bağlantısı',
-  'Connect a LIVE and choose who can request songs.':
-      'Bir CANLI yayına bağlan ve kimlerin şarkı isteyebileceğini seç.',
-  'LIVE connection is not available on this device.':
-      'CANLI yayın bağlantısı bu cihazda kullanılamıyor.',
-  'TikTok LIVE': 'TikTok LIVE',
-  '@user or live link': '@kullanıcı veya yayın bağlantısı',
-  'Save LIVE requests to Library': 'CANLI yayın isteklerini Kitaplığa kaydet',
-  'Download and save each request to Library before playing it.':
-      'Her isteği çalmadan önce indirip Kitaplığa kaydeder.',
-  'Play remotely with temporary cache, without adding it to Library.':
-      'Kitaplığa eklemeden, geçici önbellekle internetten çalar.',
-  'Clear the LIVE queue to change this option.':
-      'Bu seçeneği değiştirmek için CANLI yayın sırasını temizle.',
-  'Ready for remote playback': 'İnternetten çalmaya hazır',
   'Connect': 'Bağlan',
   'Disconnect': 'Bağlantıyı kes',
-  'Local LIVE overlay': 'Yerel CANLI yayın katmanı',
-  'Live widget': 'Canlı yayın widget\'ı',
-  'Choose the design shown on your stream. It uses the app accent color.':
-      'Yayınında görünecek tasarımı seç. Uygulamanın vurgu rengini kullanır.',
-  'Wave': 'Dalga',
-  'Compact cards with artwork and progress.':
-      'Kapak görseli ve ilerleme çubuğu olan küçük kartlar.',
-  'Large artwork, animated wave, and a bottom progress bar.':
-      'Büyük kapak, hareketli dalga ve altta ilerleme çubuğu.',
-  'SEARCHING': 'ARANIYOR',
-  'LOADING': 'YÜKLENİYOR',
-  'Enable the local browser source whenever you want; no LIVE connection is required.':
-      'Yerel tarayıcı kaynağını istediğin zaman etkinleştir; CANLI yayına bağlanman gerekmez.',
-  'Enable a transparent browser source with the active queue. No LIVE connection is required. The first time, Windows will request permission to configure its local domain.':
-      'Etkin çalma sırasını gösteren saydam bir tarayıcı kaynağı etkinleştir. CANLI yayına bağlanman gerekmez. İlk seferde Windows, yerel alan adını yapılandırmak için izin isteyecek.',
-  'Server active at ZXQPH0X. Add it as a browser source in TikTok LIVE Studio.':
-      'Sunucu ZXQPH0X adresinde çalışıyor. Bunu TikTok LIVE Studio\'ya tarayıcı kaynağı olarak ekle.',
-  'Preparing the local domain for TikTok LIVE Studio...':
-      'TikTok LIVE Studio için yerel alan adı hazırlanıyor...',
-  'Stopping the local overlay...': 'Yerel katman durduruluyor...',
-  'This feature is available only in the PC version.':
-      'Bu özellik yalnızca bilgisayar sürümünde kullanılabilir.',
-  'The local overlay server could not be started.':
-      'Yerel katman sunucusu başlatılamadı.',
-  'Windows could not configure the local domain. Try again and accept the administrator permission.':
-      'Windows yerel alan adını yapılandıramadı. Tekrar dene ve yönetici iznini onayla.',
-  'Windows did not show or complete the permission request in time. Try again and check whether the User Account Control (UAC) prompt appeared behind another window.':
-      'Windows izin isteğini zamanında göstermedi veya tamamlamadı. Tekrar dene ve Kullanıcı Hesabı Denetimi (UAC) penceresinin başka bir pencerenin arkasında kalıp kalmadığını kontrol et.',
-  'The administrator permission was cancelled. The overlay made no changes.':
-      'Yönetici izni iptal edildi. Katmanda hiçbir değişiklik yapılmadı.',
-  'A Windows security policy blocked the overlay configuration. On a managed PC, an administrator must allow it.':
-      'Bir Windows güvenlik ilkesi katman yapılandırmasını engelledi. Yönetilen bir bilgisayarda buna yöneticinin izin vermesi gerekir.',
-  'Windows PowerShell 5.1 is unavailable. Enable it or ask the administrator to configure the overlay.':
-      'Windows PowerShell 5.1 kullanılamıyor. Etkinleştir veya katmanı yapılandırması için yöneticiden yardım iste.',
-  'The overlay configuration conflicts with the hosts file. Correct the ZXQPH0X entry and try again.':
-      'Katman yapılandırması hosts dosyasıyla çakışıyor. ZXQPH0X kaydını düzeltip tekrar dene.',
-  'Windows could not verify the local domain. Restart Songbrook and try again.':
-      'Windows yerel alan adını doğrulayamadı. Songbrook\'u yeniden başlatıp tekrar dene.',
-  'The domain was configured, but Songbrook could not open the overlay through DNS or HTTP. Check the proxy, VPN, or antivirus and try again.':
-      'Alan adı yapılandırıldı, ancak Songbrook katmanı DNS veya HTTP üzerinden açamadı. Proxy, VPN veya virüsten koruma ayarlarını kontrol edip tekrar dene.',
-  'Another application is already using port 80. Close it and enable the overlay again.':
-      '80 numaralı bağlantı noktasını başka bir uygulama kullanıyor. O uygulamayı kapatıp katmanı yeniden etkinleştir.',
-  'Windows blocked or reserved port 80. Check system policies or reservations and try again.':
-      'Windows 80 numaralı bağlantı noktasını engelledi veya ayırdı. Sistem ilkelerini veya ayırmaları kontrol edip tekrar dene.',
-  'Port 80 is unavailable. Close the application using it and try again.':
-      '80 numaralı bağlantı noktası kullanılamıyor. Onu kullanan uygulamayı kapatıp tekrar dene.',
-  'Copy URL': 'URL\'yi kopyala',
-  'Open preview': 'Önizlemeyi aç',
   'connected': 'bağlı',
   'disconnected': 'bağlı değil',
-  'Last command': 'Son komut',
   'Pending requests': 'Bekleyen istekler',
   'Browse folder': 'Klasöre göz at',
   'The downloads folder could not be saved.': 'İndirme klasörü kaydedilemedi.',
@@ -677,7 +585,6 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Playlists could not be synchronized. Your local data was kept without destructive changes.':
       'Çalma listeleri eşitlenemedi. Yerel verilerin hiçbir şey silinmeden korundu.',
   'Song unavailable on YouTube Music': 'Şarkı YouTube Music\'te yok',
-  'Your favorite song': 'En sevdiğin şarkı',
   'Exit Lyrics': 'Şarkı sözlerinden çık',
   'Playback timeline': 'Çalma zaman çizelgesi',
   'Track artwork': 'Şarkının kapağı',
@@ -707,8 +614,6 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'ZXQPH0X Songs': 'ZXQPH0X Şarkı',
   'Playback Queue - ZXQPH0X Song': 'Çalma sırası - ZXQPH0X şarkı',
   'Playback Queue - ZXQPH0X Songs': 'Çalma sırası - ZXQPH0X şarkı',
-  'ZXQPH0X requests - ZXQPH1X ready - ZXQPH2X pending':
-      'ZXQPH0X istek - ZXQPH1X hazır - ZXQPH2X bekliyor',
   'Press once to exit.': 'Çıkmak için bir kez daha bas.',
   'Press ZXQPH0X more times to exit.': 'Çıkmak için ZXQPH0X kez daha bas.',
   'ZXQPH0X: ZXQPH1X': 'ZXQPH0X: ZXQPH1X',
