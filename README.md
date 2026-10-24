@@ -31,6 +31,16 @@ detail, is kept at [docs/upstream-readme.md](docs/upstream-readme.md).
   clipped to their real duration. See [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **Mobile player navigation.** The default player and the lyrics view have a
   collapse control, and the player can be pulled down to close it.
+- **Volume normalization.** Songs louder than YouTube's loudness target are
+  lowered to it, as on YouTube Music; quieter songs are never boosted. On by
+  default, with a switch in Playback settings.
+- **Search pages and playlists.** Search loads further result pages as you
+  scroll, up to 200 per category, and a Playlists tab finds YouTube Music
+  community playlists.
+- **Playback fallbacks on Apple platforms.** The challenge-based fallback
+  clients (EJS and Web PO tokens) never started on iOS and macOS; they now
+  run there. When the default client fails, the audio-only visionOS01 client
+  is tried before Android's client, which now serves only a 360p video stream.
 - **Own identity.** Bundle ID `io.github.gencaykut.songbrook` on every
   platform, with the App Group `group.io.github.gencaykut.songbrook` for the
   iOS widget.
@@ -58,9 +68,12 @@ The App Store and Google Play are not targets.
 Known limitations:
 
 - Stream resolution depends on a tokenless YouTube client profile. If YouTube
-  closes it, playback falls back to other profiles, some of which need
-  BotGuard PO tokens; those paths have not been tested live in this fork.
-  See [docs/innertube_playback.md](docs/innertube_playback.md).
+  closes it, playback falls back to other profiles. Tested live on iOS and
+  macOS on 2026-10-24: the tokenless fallbacks and the EJS-based
+  `webEmbedded` client play, while the two Web PO token clients are currently
+  rejected by YouTube's CDN. Android was not tested. See
+  [docs/innertube_playback.md](docs/innertube_playback.md).
+- TikTok LIVE requests are inherited from BStream Music and will be removed.
 - iOS cannot play WebM, so only AAC/M4A streams are selected there.
 
 ## Build
