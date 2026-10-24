@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bstream_music/core/platform/app_platform.dart';
 import 'package:bstream_music/services/youtube_music/playback/headless_inappwebview_runtime.dart';
@@ -88,6 +90,67 @@ void main() {
         HeadlessInAppWebViewJavaScriptRuntime.allowsNavigation(null),
         isFalse,
       );
+    });
+
+    test('sends typed-data arguments as plain lists for WebKit', () {
+      final converted = webKitCompatibleJavaScriptArguments(<String, dynamic>{
+        'identifierBytes': utf8.encode('abc'),
+        'nested': <String, Object?>{
+          'bytes': Uint8List.fromList(<int>[1, 2]),
+          'list': <Object?>[
+            Uint8List.fromList(<int>[3]),
+            'text',
+            null,
+          ],
+        },
+        'number': 7,
+      });
+
+      expect(converted['identifierBytes'], isNot(isA<TypedData>()));
+      expect(converted['identifierBytes'], <int>[97, 98, 99]);
+      final nested = converted['nested'] as Map;
+      expect(nested['bytes'], isNot(isA<TypedData>()));
+      expect(nested['bytes'], <int>[1, 2]);
+      expect((nested['list'] as List).first, isNot(isA<TypedData>()));
+      expect(nested['list'], <Object?>[
+        <int>[3],
+        'text',
+        null,
+      ]);
+      expect(converted['number'], 7);
+    });
+
+    test('allows only WebKit\'s load of the harness document itself', () {
+      final base = Uri.parse('https://www.youtube.com/');
+      bool allows(
+        String? url, {
+        bool isForMainFrame = true,
+        bool documentLoaded = false,
+      }) => HeadlessInAppWebViewJavaScriptRuntime.allowsInitialDocumentLoad(
+        url: url == null ? null : Uri.parse(url),
+        baseUrl: base,
+        isForMainFrame: isForMainFrame,
+        documentLoaded: documentLoaded,
+      );
+
+      expect(allows('https://www.youtube.com/'), isTrue);
+      expect(allows('https://www.youtube.com'), isTrue);
+      expect(allows('https://www.youtube.com/#top'), isTrue);
+      expect(
+        allows('https://www.youtube.com/', documentLoaded: true),
+        isFalse,
+        reason: 'A later reload is a document-initiated navigation.',
+      );
+      expect(
+        allows('https://www.youtube.com/', isForMainFrame: false),
+        isFalse,
+      );
+      expect(allows('https://www.youtube.com/watch'), isFalse);
+      expect(allows('https://www.youtube.com/?next=1'), isFalse);
+      expect(allows('http://www.youtube.com/'), isFalse);
+      expect(allows('https://evil.example/'), isFalse);
+      expect(allows('about:blank'), isFalse);
+      expect(allows(null), isFalse);
     });
 
     test(

@@ -202,6 +202,13 @@ the three JS-less tokenless profiles (`visionOS`, `androidSdkless`, and
 runtime. The runtime boundary remains injectable so Linux EJS/WebPO can be enabled after a stable
 WPE backend passes native build and smoke tests; it is not presented as current
 platform parity.
+On iOS and macOS, WebKit reports loading the harness document itself as a
+main-frame navigation to its base URL. The navigation delegate allows exactly
+that load, before the document finishes, and still cancels everything else;
+cancelling it left the document unloaded, so every EJS and WebPO client timed
+out on Apple platforms. WebKit also accepts only plist types as JavaScript
+arguments, so typed-data lists are sent as plain arrays on every platform.
+
 Every runtime document receives a CSP before its first script that denies
 connect, media, frame, worker, form, and navigation access; the native delegate
 also rejects navigation and popups. Cache, DOM/database storage, shared and

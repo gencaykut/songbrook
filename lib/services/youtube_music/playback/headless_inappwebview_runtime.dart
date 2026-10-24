@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -183,6 +184,28 @@ class HeadlessInAppWebViewJavaScriptRuntime
   @visibleForTesting
   static bool allowsNavigation(Uri? _) => false;
 
+  /// WebKit (iOS, macOS) reports loading the harness document itself as a
+  /// main-frame navigation to its base URL. Cancelling it leaves the document
+  /// unloaded, so startup would time out and every EJS and WebPO client
+  /// would fail. Only that load, before the document finishes, is allowed.
+  @visibleForTesting
+  static bool allowsInitialDocumentLoad({
+    required Uri? url,
+    required Uri baseUrl,
+    required bool isForMainFrame,
+    required bool documentLoaded,
+  }) {
+    if (url == null || !isForMainFrame || documentLoaded) {
+      return false;
+    }
+    String normalized(Uri uri) {
+      final path = uri.path.isEmpty ? '/' : uri.path;
+      return '${uri.scheme}://${uri.host}:${uri.port}$path?${uri.query}';
+    }
+
+    return normalized(url) == normalized(baseUrl);
+  }
+
   @override
   Future<void> initialize({
     String html = YoutubeJavaScriptRuntime.emptyDocument,
@@ -306,7 +329,10 @@ class HeadlessInAppWebViewJavaScriptRuntime
     CallAsyncJavaScriptResult? result;
     try {
       result = await backend
-          .callAsyncJavaScript(functionBody: functionBody, arguments: arguments)
+          .callAsyncJavaScript(
+            functionBody: functionBody,
+            arguments: webKitCompatibleJavaScriptArguments(arguments),
+          )
           .timeout(effectiveTimeout);
     } catch (error, stackTrace) {
       await _retire(generation, backend);
@@ -391,6 +417,33 @@ class HeadlessInAppWebViewJavaScriptRuntime
   }
 }
 
+/// Converts typed-data lists (such as `utf8.encode` output) to plain lists.
+///
+/// The platform channel sends a `Uint8List` as typed data, which Android and
+/// Windows accept but WebKit (iOS, macOS) rejects: its argument values may
+/// only be numbers, strings, null, dates, arrays, and dictionaries. Arrays
+/// arrive in JavaScript the same way on every platform.
+@visibleForTesting
+Map<String, dynamic> webKitCompatibleJavaScriptArguments(
+  Map<String, dynamic> arguments,
+) {
+  Object? convert(Object? value) => switch (value) {
+    final TypedData data when data is List<num> => List<num>.of(
+      data as List<num>,
+      growable: false,
+    ),
+    final Map<Object?, Object?> map => <Object?, Object?>{
+      for (final entry in map.entries) entry.key: convert(entry.value),
+    },
+    final List<Object?> list => [for (final item in list) convert(item)],
+    _ => value,
+  };
+
+  return <String, dynamic>{
+    for (final entry in arguments.entries) entry.key: convert(entry.value),
+  };
+}
+
 class _InAppWebViewBackend implements HeadlessJavaScriptRuntimeBackend {
   HeadlessInAppWebView? _webView;
   InAppWebViewController? _controller;
@@ -450,6 +503,14 @@ class _InAppWebViewBackend implements HeadlessJavaScriptRuntimeBackend {
       ),
       shouldOverrideUrlLoading: (_, navigationAction) async {
         final uri = navigationAction.request.url;
+        if (HeadlessInAppWebViewJavaScriptRuntime.allowsInitialDocumentLoad(
+          url: uri,
+          baseUrl: baseUrl,
+          isForMainFrame: navigationAction.isForMainFrame,
+          documentLoaded: loaded.isCompleted,
+        )) {
+          return NavigationActionPolicy.ALLOW;
+        }
         return HeadlessInAppWebViewJavaScriptRuntime.allowsNavigation(uri)
             ? NavigationActionPolicy.ALLOW
             : NavigationActionPolicy.CANCEL;

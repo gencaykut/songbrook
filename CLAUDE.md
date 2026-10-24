@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2678 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2680 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -54,7 +54,13 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 - **iOS'ta fragmented MP4 süresi:** AVFoundation, YouTube'un itag 140 m4a dosyalarının süresini 2 kat raporluyor. iOS'ta stream'ler ve indirilmiş dosyalar (dosyanın `moov` süresiyle) `ClippingAudioSource(end: streamDuration − 300 ms)` ile kırpılıyor. 300 ms pay zorunlu; kaldırılırsa AVPlayer sonsuza kadar "buffering"de kalıyor. Katalog süresi kullanılamaz (saniyeye yuvarlı). Ayrıntılar: [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **iOS'ta webm yok:** AVPlayer webm açamıyor. iOS `isAvFoundationCompatibleInnerTubeAudio` filtresiyle yalnızca AAC/MP4 seçiyor; testlerde de bu filtreyi kullan.
-- **Stream çözümleme kırılgan:** Token gerektirmeyen "visionOS" istemci profiline dayanıyor. Yedek sıra: `androidSdkless` ve `visionOS01` (ikisi de tokensiz), `webEmbedded` (EJS), sonra `mweb` ve `webMusic` (EJS + BotGuard PO token). EJS/PO yolları bu fork'ta canlı test edilmedi. Ayrıntılar: [docs/innertube_playback.md](docs/innertube_playback.md).
+- **Stream çözümleme kırılgan:** Token gerektirmeyen "visionOS" istemci profiline dayanıyor. Yedek sıra ve 24 Ekim 2026 canlı durumu (iOS simülatörü ve macOS):
+  - `androidSdkless`: çalışıyor ama yalnız ses formatları SABR'a geçmiş (URL'siz), sadece itag 18 (360p video+ses MP4) veriyor. visionOS kapanırsa iOS'ta ilk yedek bu: çalıyor ama ~4–5 kat veri harcıyor.
+  - `visionOS01`: çalışıyor, itag 140.
+  - `webEmbedded` (EJS): çalışıyor, itag 140. Üç tokensiz profil kapalıyken iOS'ta gerçek oynatıcıyla çaldı.
+  - `mweb`, `webMusic` (EJS + BotGuard): BotGuard tam token üretiyor ama CDN akışları 403 ile reddediyor (Mac'te 0/7 ve 1/7). Upstream'in ölçümleri de bu ikisini kapsamıyordu.
+  - iOS/macOS'ta başsız WebView, WebKit'in başlangıç belgesini gezinme saydığı ve kod bunu iptal ettiği için hiç açılmıyordu; BotGuard da `Uint8List` argümanında düşüyordu. İkisi düzeltildi (`allowsInitialDocumentLoad`, `webKitCompatibleJavaScriptArguments`). Bu upstream'de de var; PR için önce kullanıcıya sor.
+  - Tanı: `integration_test/claude_fallback_test.dart` (çalışma ortamı, ham formatlar, `CLAUDE_CLOSED_PROFILES` ile kapalı profillerle üretim sırası + gerçek çalma, profil başına hata ayrıntısı). Matris: `integration_test/innertube_profile_matrix_live_test.dart`. Ayrıntılar: [docs/innertube_playback.md](docs/innertube_playback.md).
 - `developer.log` çıktıları `flutter run` loguna düşmüyor.
 - **GitHub Actions (24 Ekim 2026 kararı):** `Release installers` yalnızca `v*` etiketlerinde ve elle çalışıyor; `Nightly native smoke` yalnızca elle (GitHub'ın Android emülatörü açılmıyor, upstream'de de aynı). Push'ta yalnızca `Dependency and security checks` çalışıyor. Yani format/analyze/test kapısı push'ta yok: push'tan önce yerelde `dart format --set-exit-if-changed .`, `flutter analyze`, `flutter test` çalıştır.
 - **Dokümanlar:** `README.md` Songbrook'un kendi README'si (İngilizce); upstream README'si referans olarak `docs/upstream-readme.md`'de. Fork değişiklikleri `CHANGELOG.md`'nin başındaki "Unreleased (Songbrook)" bölümünde. `test/core/constants/app_metadata_test.dart`, README'deki `Current version: **x+y**` satırını ve CHANGELOG'daki ilk `## x.y.z+n` başlığını `pubspec.yaml` ile karşılaştırıyor; sürüm değişince üçünü birlikte güncelle.
@@ -92,7 +98,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
    - Aşama 1: mevcut `_PlaybackQueuePanel` (şu an ayrı sayfa) oynatıcının altına çekilen panel olarak.
    - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
    - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
-6. **Yedek stream yolları:** BotGuard/PO token yollarını visionOS profili kapalıymış gibi zorlayarak canlı test et.
+6. ~~**Yedek stream yolları**~~ Tamamlandı (24 Ekim 2026); bulgular "Stream çözümleme kırılgan" maddesinde. Açık kalanlar: visionOS kapanınca iOS'ta androidSdkless'ın 360p video+ses akışı yerine visionOS01'in yalnız ses akışını tercih etmek (sıra değişikliği; upstream visionOS01'i kapsamı dar diye sona koymuş), mweb/webMusic 403'ü (protokol araştırması), Android'de aynı testler (derleme ortamı yok).
 7. **Markalama:** ~~Türkçe arayüz~~, ~~cihaz dili varsayılanı~~ tamamlandı. Kalanlar: uygulama içi "BStream Music" yazıları (başlık, mini oynatıcı; `AppConstants.appName` dikkat), "Yeni sürüm var" kontrolü upstream sürümlerine bakıyor, ~~README~~, TikTok LIVE'ı arayüzden gizle (13 dosyaya ve `player_controller.dart`'a yayılmış; silme), oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor, kendi sürüm numaralandırması.
 8. **Dağıtım ve paylaşım:**
    - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
