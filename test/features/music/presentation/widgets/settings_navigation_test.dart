@@ -861,7 +861,7 @@ void main() {
     expect(
       find.descendant(
         of: playerStyleSelector,
-        matching: find.text('BStream Music'),
+        matching: find.text('Songbrook'),
       ),
       findsOneWidget,
     );

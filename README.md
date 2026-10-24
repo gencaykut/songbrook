@@ -42,10 +42,10 @@ distributed by this fork.
 
 ## Status
 
-Songbrook is in development and has no published release yet. It still uses
-upstream's version number.
+Songbrook is in development. Its numbering restarts at 1.0.0; the build
+number continues above upstream's 129 so earlier test installs upgrade.
 
-Current version: **1.2.9+129**.
+Current version: **1.0.0+130**.
 
 | Platform | Minimum | Distribution |
 | --- | --- | --- |

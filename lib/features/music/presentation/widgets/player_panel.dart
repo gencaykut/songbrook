@@ -47,6 +47,7 @@ import 'spotify_canvas_video.dart';
 import 'track_change_transition.dart';
 import 'uniform_playback_slider_track_shape.dart';
 import 'wavy_playback_seek_bar.dart';
+import '../../../../core/constants/app_constants.dart';
 
 part 'classic_vinyl_player_layout.dart';
 
@@ -2001,7 +2002,7 @@ class _AppleMusicControls extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Text(
             key: const ValueKey('player-track-artist'),
-            snapshot.artist ?? 'BStream Music',
+            snapshot.artist ?? AppConstants.displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -2657,7 +2658,7 @@ class _PlayerHeader extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Text(
-                        snapshot.artist ?? 'BStream Music',
+                        snapshot.artist ?? AppConstants.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -4336,7 +4337,7 @@ class _PlayerControls extends ConsumerWidget {
                       onTap: onOpenArtist,
                       child: Text(
                         key: const ValueKey('player-track-artist'),
-                        snapshot.artist ?? 'BStream Music',
+                        snapshot.artist ?? AppConstants.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: artistStyle,
@@ -4388,7 +4389,7 @@ class _PlayerControls extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 3),
                       child: Text(
                         key: const ValueKey('player-track-artist'),
-                        snapshot.artist ?? 'BStream Music',
+                        snapshot.artist ?? AppConstants.displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: artistStyle,

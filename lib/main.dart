@@ -227,7 +227,7 @@ class BStreamMusicApp extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: AppConstants.appName,
+      title: AppConstants.displayName,
       locale: Locale(language.code),
       supportedLocales: const [
         Locale('es'),

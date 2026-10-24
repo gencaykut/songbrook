@@ -99,7 +99,7 @@ void main() {
     expect(find.text('Inicio'), findsWidgets);
     expect(
       tester.widget<Text>(find.byKey(const ValueKey('home-tab-title'))).data,
-      'BStream Music',
+      'Songbrook',
     );
     expect(find.byIcon(Icons.search_rounded), findsWidgets);
     expect(find.text('Reproductor'), findsNothing);
@@ -288,7 +288,7 @@ void main() {
 
     expect(
       tester.widget<Text>(find.byKey(const ValueKey('home-tab-title'))).data,
-      'BStream Music',
+      'Songbrook',
     );
     expect(find.text('Inicio'), findsWidgets);
   });
@@ -6825,7 +6825,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Información de la aplicación'), findsOneWidget);
     expect(find.text('Acerca de la aplicación'), findsOneWidget);
-    expect(find.text('Versión, apoyo y repositorio'), findsOneWidget);
+    expect(find.text('Versión, créditos y repositorio'), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-about-version')), findsNothing);
     final cardMaterial = find
         .descendant(of: card, matching: find.byType(Material))
@@ -6840,7 +6840,7 @@ void main() {
     final detail = find.byKey(const ValueKey('settings-detail-about'));
     final version = find.byKey(const ValueKey('settings-about-version'));
     final whatsNew = find.byKey(const ValueKey('settings-about-whats-new'));
-    final support = find.byKey(const ValueKey('settings-about-support'));
+    final support = find.byKey(const ValueKey('settings-about-upstream'));
     final github = find.byKey(const ValueKey('settings-about-github'));
     expect(detail, findsOneWidget);
     expect(card, findsNothing);
@@ -6852,7 +6852,7 @@ void main() {
       find.text('Novedades de ${AppConstants.appVersion}'),
       findsOneWidget,
     );
-    expect(find.text('Apoyar el desarrollo'), findsOneWidget);
+    expect(find.text('Basado en BStream Music'), findsOneWidget);
     expect(find.text('Repositorio de GitHub'), findsOneWidget);
     expect(find.text('Código fuente y contribuciones'), findsOneWidget);
     for (final row in [version, whatsNew, support, github]) {
@@ -6877,38 +6877,19 @@ void main() {
       find.byKey(const ValueKey('settings-about-whats-new-dialog')),
       findsOneWidget,
     );
+    for (final highlight in const [
+      'Interfaz en turco',
+      'nivel estable, como en YouTube Music',
+      'ahora encuentra playlists',
+      'las canciones terminan a tiempo',
+      'cuando YouTube cambia sus clientes',
+    ]) {
+      expect(find.textContaining(highlight), findsOneWidget, reason: highlight);
+    }
     expect(
       find.textContaining('widget del reproductor para la pantalla de inicio'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('imagen de tu galería'), findsOneWidget);
-    expect(
-      find.textContaining('cambiar la fuente de toda la aplicación'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('rendimiento de los artworks animados'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('álbumes, mixes y resultados de búsqueda'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(
-        'mejoras en la interfaz para ofrecer más rendimiento y fluidez',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining('fondos de álbumes, mixes y artistas ahora heredan'),
-      findsOneWidget,
-    );
-    expect(
-      find.textContaining(
-        'compatible con portugués, francés, coreano, chino y japonés',
-      ),
-      findsOneWidget,
+      findsNothing,
+      reason: "Upstream's release notes are not Songbrook's.",
     );
     expect(
       find.textContaining('Se agregó el reproductor Vinilo Clásico'),
@@ -6926,7 +6907,7 @@ void main() {
     await tester.pump();
 
     expect(launchedUrls, [
-      Uri.parse(AppConstants.supportDevelopmentUrl),
+      Uri.parse(AppConstants.upstreamRepositoryUrl),
       Uri.parse(AppConstants.githubRepositoryUrl),
     ]);
     await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
@@ -6942,7 +6923,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('support section reports when the browser cannot open', (
+  testWidgets('upstream credit reports when the browser cannot open', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(700, 1100);
@@ -6979,7 +6960,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(about);
     await tester.pumpAndSettle();
-    final button = find.byKey(const ValueKey('settings-about-support'));
+    final button = find.byKey(const ValueKey('settings-about-upstream'));
     await tester.scrollUntilVisible(
       button,
       350,
@@ -6990,7 +6971,10 @@ void main() {
     await tester.tap(button);
     await tester.pump();
 
-    expect(find.text('No se pudo abrir la página de apoyo.'), findsOneWidget);
+    expect(
+      find.text('No se pudo abrir el repositorio de GitHub.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -7058,7 +7042,7 @@ void main() {
     expect(find.text('Nueva versión disponible'), findsOneWidget);
     expect(
       find.text(
-        'La versión 1.3.0 de BStream Music está disponible. Actualmente tienes la versión ${AppConstants.appVersion}.',
+        'La versión 1.3.0 de Songbrook está disponible. Actualmente tienes la versión ${AppConstants.appVersion}.',
       ),
       findsOneWidget,
     );
@@ -7118,8 +7102,8 @@ void main() {
         releaseChecker: ({required currentVersion}) async =>
             AppReleaseCheckResult(
               currentVersion: currentVersion,
-              latestVersion: '1.2.5',
-              releaseTag: 'v1.2.5',
+              latestVersion: '0.9.0',
+              releaseTag: 'v0.9.0',
             ),
       ),
     );
@@ -7256,7 +7240,7 @@ void main() {
     const rowKeys = [
       'settings-about-version',
       'settings-about-whats-new',
-      'settings-about-support',
+      'settings-about-upstream',
       'settings-about-github',
     ];
     for (final key in rowKeys) {

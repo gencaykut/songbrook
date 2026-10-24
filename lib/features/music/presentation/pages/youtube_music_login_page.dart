@@ -284,7 +284,7 @@ class _YouTubeMusicLoginPageState extends ConsumerState<YouTubeMusicLoginPage> {
         message:
             'El inicio de sesión integrado está disponible en Android, '
             'iOS, Windows y macOS. '
-            'Puedes seguir usando BStream sin una cuenta.',
+            'Puedes seguir usando Songbrook sin una cuenta.',
       );
     }
     if (_tearingDown) {

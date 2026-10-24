@@ -7,6 +7,7 @@ import 'package:smtc_windows/smtc_windows.dart';
 
 import '../player/player_service.dart';
 import 'desktop_media_session.dart';
+import '../../core/constants/app_constants.dart';
 
 class WindowsSmtcMediaSession implements DesktopMediaSession {
   SMTCWindows? _smtc;
@@ -143,7 +144,7 @@ class WindowsSmtcMediaSession implements DesktopMediaSession {
             artist: snapshot.artist?.trim(),
             album: snapshot.album?.trim().isNotEmpty == true
                 ? snapshot.album!.trim()
-                : 'BStream Music',
+                : AppConstants.displayName,
             albumArtist: snapshot.artist?.trim(),
             thumbnail: _thumbnailUri(snapshot.thumbnailUrl),
           ),

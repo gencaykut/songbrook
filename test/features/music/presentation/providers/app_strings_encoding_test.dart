@@ -280,7 +280,7 @@ void main() {
     expect(spanish.surfaceBackgroundLiquidGlass, 'Liquid Glass Style');
     expect(spanish.player, 'Reproductor');
     expect(spanish.playerStyle, 'Estilo');
-    expect(spanish.playerStyleBStreamMusic, 'BStream Music');
+    expect(spanish.playerStyleBStreamMusic, 'Songbrook');
     expect(spanish.playerStyleAppleMusic, 'Apple Music Style');
     expect(spanish.playerStyleClassicVinyl, 'Vinilo Clásico');
     expect(spanish.animatedArtwork, 'Portadas en Movimiento');
@@ -310,7 +310,7 @@ void main() {
     expect(english.surfaceBackgroundLiquidGlass, 'Liquid Glass Style');
     expect(english.player, 'Player');
     expect(english.playerStyle, 'Style');
-    expect(english.playerStyleBStreamMusic, 'BStream Music');
+    expect(english.playerStyleBStreamMusic, 'Songbrook');
     expect(english.playerStyleAppleMusic, 'Apple Music Style');
     expect(english.playerStyleClassicVinyl, 'Classic Vinyl');
     expect(english.animatedArtwork, 'Artwork motion');
@@ -351,7 +351,7 @@ void main() {
       ),
       'Liquid Glass Style',
     );
-    expect(spanish.playerStyleLabel(PlayerStyle.bstreamMusic), 'BStream Music');
+    expect(spanish.playerStyleLabel(PlayerStyle.bstreamMusic), 'Songbrook');
     expect(
       english.playerStyleLabel(PlayerStyle.appleMusic),
       'Apple Music Style',

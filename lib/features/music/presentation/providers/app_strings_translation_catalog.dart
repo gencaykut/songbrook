@@ -253,12 +253,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '非官方集成',
     '非公式統合',
   ],
-  'The YouTube Music integration uses unofficial interfaces and is not affiliated with Google. BStream never stores your password. YouTube may change, block, or restrict this feature.': <String>[
-    'A integração do YouTube Music usa interfaces não oficiais e não é afiliada ao Google. BStream nunca armazena sua senha. O YouTube pode alterar, bloquear ou restringir esse recurso.',
-    'L\'intégration YouTube Music utilise des interfaces non officielles et n\'est pas affiliée à Google. BStream ne stocke jamais votre mot de passe. YouTube peut modifier, bloquer ou restreindre cette fonctionnalité.',
-    'YouTube Music 통합은 비공식 인터페이스를 사용하며 Google과 제휴하지 않습니다. BStream은 절대로 귀하의 비밀번호를 저장하지 않습니다. YouTube는 이 기능을 변경, 차단 또는 제한할 수 있습니다.',
-    'YouTube Music 集成使用非官方界面，不隶属于 Google。 BStream 永远不会存储您的密码。 YouTube 可能会更改、阻止或限制此功能。',
-    'YouTube Music の統合は非公式インターフェースを使用しており、Google とは提携していません。 BStream がパスワードを保存することはありません。 YouTube はこの機能を変更、ブロック、または制限する場合があります。',
+  'The YouTube Music integration uses unofficial interfaces and is not affiliated with Google. Songbrook never stores your password. YouTube may change, block, or restrict this feature.': <String>[
+    'A integração do YouTube Music usa interfaces não oficiais e não é afiliada ao Google. Songbrook nunca armazena sua senha. O YouTube pode alterar, bloquear ou restringir esse recurso.',
+    'L\'intégration YouTube Music utilise des interfaces non officielles et n\'est pas affiliée à Google. Songbrook ne stocke jamais votre mot de passe. YouTube peut modifier, bloquer ou restreindre cette fonctionnalité.',
+    'YouTube Music 통합은 비공식 인터페이스를 사용하며 Google과 제휴하지 않습니다. Songbrook은 절대로 귀하의 비밀번호를 저장하지 않습니다. YouTube는 이 기능을 변경, 차단 또는 제한할 수 있습니다.',
+    'YouTube Music 集成使用非官方界面，不隶属于 Google。 Songbrook 永远不会存储您的密码。 YouTube 可能会更改、阻止或限制此功能。',
+    'YouTube Music の統合は非公式インターフェースを使用しており、Google とは提携していません。 Songbrook がパスワードを保存することはありません。 YouTube はこの機能を変更、ブロック、または制限する場合があります。',
   ],
   'I understand, continue': <String>[
     'Eu entendo, continue',
@@ -298,15 +298,15 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
   'Your ZXQPH0X local playlists will stay': <String>[
     'Suas playlists locais ZXQPH0X permanecerão',
     'Vos playlists locales ZXQPH0X resteront',
-    'ZXQPH0X 로컬 재생목록은 BStream에 유지됩니다',
+    'ZXQPH0X 로컬 재생목록은 Songbrook에 유지됩니다',
     '您的 ZXQPH0X 本地播放列表将保留',
-    'あなたの ZXQPH0X ローカル プレイリストは BStream に残ります',
+    'あなたの ZXQPH0X ローカル プレイリストは Songbrook に残ります',
   ],
-  'ZXQPH0X in BStream. Favorites will sync with YouTube Music Liked Music; unlinked local playlists are created as private playlists and remote playlists are imported here. This first sync does not delete your local playlists.': <String>[
-    'ZXQPH0X no BStream. Os favoritos serão sincronizados com as músicas curtidas do YouTube Music; playlists locais desvinculadas são criadas como playlists privadas e playlists remotas são importadas aqui. Esta primeira sincronização não exclui suas listas de reprodução locais.',
-    'ZXQPH0X dans BStream. Les favoris seront synchronisés avec YouTube Music Liked Music ; les listes de lecture locales non liées sont créées sous forme de listes de lecture privées et les listes de lecture distantes sont importées ici. Cette première synchronisation ne supprime pas vos playlists locales.',
+  'ZXQPH0X in Songbrook. Favorites will sync with YouTube Music Liked Music; unlinked local playlists are created as private playlists and remote playlists are imported here. This first sync does not delete your local playlists.': <String>[
+    'ZXQPH0X no Songbrook. Os favoritos serão sincronizados com as músicas curtidas do YouTube Music; playlists locais desvinculadas são criadas como playlists privadas e playlists remotas são importadas aqui. Esta primeira sincronização não exclui suas listas de reprodução locais.',
+    'ZXQPH0X dans Songbrook. Les favoris seront synchronisés avec YouTube Music Liked Music ; les listes de lecture locales non liées sont créées sous forme de listes de lecture privées et les listes de lecture distantes sont importées ici. Cette première synchronisation ne supprime pas vos playlists locales.',
     'ZXQPH0X. 즐겨찾기는 YouTube Music이 좋아하는 음악과 동기화됩니다. 연결되지 않은 로컬 재생 목록은 비공개 재생 목록으로 생성되고 원격 재생 목록은 여기로 가져옵니다. 이 첫 번째 동기화는 로컬 재생 목록을 삭제하지 않습니다.',
-    'ZXQPH0X 在 BStream 中。收藏夹将与 YouTube Music 喜欢的音乐同步；未链接的本地播放列表将创建为私有播放列表，远程播放列表将在此处导入。第一次同步不会删除您的本地播放列表。',
+    'ZXQPH0X 在 Songbrook 中。收藏夹将与 YouTube Music 喜欢的音乐同步；未链接的本地播放列表将创建为私有播放列表，远程播放列表将在此处导入。第一次同步不会删除您的本地播放列表。',
     'ZXQPH0X。お気に入りは YouTube Music の「いいね！」した音楽と同期します。リンクされていないローカル プレイリストはプライベート プレイリストとして作成され、リモート プレイリストはここにインポートされます。この最初の同期では、ローカル プレイリストは削除されません。',
   ],
   'Keep and synchronize': <String>[
@@ -365,19 +365,19 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '解决冲突',
     '競合を解決',
   ],
-  'BStream paused these playlists to avoid repeating or overwriting uncertain changes. Choose which version to keep for each one.': <String>[
-    'BStream pausou essas listas de reprodução para evitar repetição ou substituição incerta mudanças. Escolha qual versão manter para cada um.',
-    'BStream a mis ces listes de lecture en pause pour éviter de répéter ou d\'écraser des modifications incertaines. Choisissez la version à conserver pour chacune.',
-    'BStream은 불확실한 변경 사항이 반복되거나 덮어쓰지 않도록 이 재생 목록을 일시 중지했습니다. 각 버전에 대해 유지할 버전을 선택하세요.',
-    'BStream 暂停了这些播放列表，以避免重复或覆盖不确定的更改。选择要为每个版本保留哪个版本。',
-    'BStream は、不確実な変更の繰り返しや上書きを避けるために、これらのプレイリストを一時停止しました。それぞれにどのバージョンを保持するかを選択してください。',
+  'Songbrook paused these playlists to avoid repeating or overwriting uncertain changes. Choose which version to keep for each one.': <String>[
+    'Songbrook pausou essas listas de reprodução para evitar repetição ou substituição incerta mudanças. Escolha qual versão manter para cada um.',
+    'Songbrook a mis ces listes de lecture en pause pour éviter de répéter ou d\'écraser des modifications incertaines. Choisissez la version à conserver pour chacune.',
+    'Songbrook은 불확실한 변경 사항이 반복되거나 덮어쓰지 않도록 이 재생 목록을 일시 중지했습니다. 각 버전에 대해 유지할 버전을 선택하세요.',
+    'Songbrook 暂停了这些播放列表，以避免重复或覆盖不确定的更改。选择要为每个版本保留哪个版本。',
+    'Songbrook は、不確実な変更の繰り返しや上書きを避けるために、これらのプレイリストを一時停止しました。それぞれにどのバージョンを保持するかを選択してください。',
   ],
-  'Keep BStream': <String>[
-    'Keep BStream',
-    'Conserver BStream',
-    'Keep BStream',
-    '保留 BStream',
-    'BStream を保持する',
+  'Keep Songbrook': <String>[
+    'Keep Songbrook',
+    'Conserver Songbrook',
+    'Keep Songbrook',
+    '保留 Songbrook',
+    'Songbrook を保持する',
   ],
   'Keep YouTube Music': <String>[
     'Keep YouTube Music',
@@ -415,12 +415,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '断开 YouTube Music',
     'YouTube Music の接続を解除します',
   ],
-  'Google blocked sign-in inside the app. For security, BStream cannot copy the session from your browser. You can keep using the app without an account.': <String>[
-    'O Google bloqueou o login dentro do aplicativo. Por segurança, o BStream não pode copiar a sessão do seu navegador. Você pode continuar usando o aplicativo sem uma conta.',
-    'Google a bloqué la connexion dans l\'application. Pour des raisons de sécurité, BStream ne peut pas copier la session depuis votre navigateur. Vous pouvez continuer à utiliser l\'application sans compte.',
-    'Google에서 앱 내부의 로그인을 차단했습니다. 보안을 위해 BStream은 브라우저에서 세션을 복사할 수 없습니다. 계정이 없어도 앱을 계속 사용할 수 있습니다.',
-    'Google 阻止了应用内的登录。为了安全起见，BStream 无法从您的浏览器复制会话。您可以在没有帐户的情况下继续使用该应用程序。',
-    'Google はアプリ内でのサインインをブロックしました。セキュリティのため、BStream はブラウザからセッションをコピーできません。アカウントなしでアプリを使い続けることができます。',
+  'Google blocked sign-in inside the app. For security, Songbrook cannot copy the session from your browser. You can keep using the app without an account.': <String>[
+    'O Google bloqueou o login dentro do aplicativo. Por segurança, o Songbrook não pode copiar a sessão do seu navegador. Você pode continuar usando o aplicativo sem uma conta.',
+    'Google a bloqué la connexion dans l\'application. Pour des raisons de sécurité, Songbrook ne peut pas copier la session depuis votre navigateur. Vous pouvez continuer à utiliser l\'application sans compte.',
+    'Google에서 앱 내부의 로그인을 차단했습니다. 보안을 위해 Songbrook은 브라우저에서 세션을 복사할 수 없습니다. 계정이 없어도 앱을 계속 사용할 수 있습니다.',
+    'Google 阻止了应用内的登录。为了安全起见，Songbrook 无法从您的浏览器复制会话。您可以在没有帐户的情况下继续使用该应用程序。',
+    'Google はアプリ内でのサインインをブロックしました。セキュリティのため、Songbrook はブラウザからセッションをコピーできません。アカウントなしでアプリを使い続けることができます。',
   ],
   'Continue listening': <String>[
     'Continue ouvindo',
@@ -545,12 +545,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '允许访问您的音乐',
     '音楽へのアクセスを許可する',
   ],
-  'BStream needs permission to show and play audio files on this device.': <String>[
-    'BStream precisa de permissão para mostrar e reproduzir arquivos de áudio neste dispositivo.',
-    'BStream a besoin d\'une autorisation pour afficher et lire des fichiers audio sur cet appareil.',
-    'BStream에 이 기기에서 오디오 파일을 표시하고 재생하려면 권한이 필요합니다.',
-    'BStream 需要权限才能在此设备上显示和播放音频文件设备。',
-    'BStream には、このデバイスでオーディオ ファイルを表示および再生する権限が必要です。',
+  'Songbrook needs permission to show and play audio files on this device.': <String>[
+    'Songbrook precisa de permissão para mostrar e reproduzir arquivos de áudio neste dispositivo.',
+    'Songbrook a besoin d\'une autorisation pour afficher et lire des fichiers audio sur cet appareil.',
+    'Songbrook에 이 기기에서 오디오 파일을 표시하고 재생하려면 권한이 필요합니다.',
+    'Songbrook 需要权限才能在此设备上显示和播放音频文件设备。',
+    'Songbrook には、このデバイスでオーディオ ファイルを表示および再生する権限が必要です。',
   ],
   'Allow access': <String>[
     'Permitir acesso',
@@ -1681,12 +1681,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '播放列表已删除。',
     'プレイリストを削除しました。',
   ],
-  'Remove only from BStream': <String>[
-    'Remover apenas do BStream',
-    'Supprimer uniquement de BStream',
-    'BStream에서만 제거',
-    '仅从 BStream 中删除',
-    'BStream からのみ削除',
+  'Remove only from Songbrook': <String>[
+    'Remover apenas do Songbrook',
+    'Supprimer uniquement de Songbrook',
+    'Songbrook에서만 제거',
+    '仅从 Songbrook 中删除',
+    'Songbrook からのみ削除',
   ],
   'Also delete from YouTube Music': <String>[
     'Excluir também do YouTube Music',
@@ -1695,27 +1695,27 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '同时从 YouTube Music 中删除',
     'YouTube Music からも削除します',
   ],
-  'This playlist is synced with YouTube Music. You can remove it only from BStream or also delete the playlist from your account. Downloaded songs will not be deleted.': <String>[
-    'Esta lista de reprodução é sincronizada com o YouTube Music. Você pode removê-lo apenas do BStream ou também excluir a playlist da sua conta. As músicas baixadas não serão excluídas.',
-    'Cette playlist est synchronisée avec YouTube Music. Vous pouvez le supprimer uniquement de BStream ou également supprimer la playlist de votre compte. Les chansons téléchargées ne seront pas supprimées.',
-    '이 재생목록은 YouTube Music과 동기화됩니다. BStream에서만 제거하거나 계정에서 재생 목록을 삭제할 수도 있습니다. 다운로드한 노래는 삭제되지 않습니다.',
-    '此播放列表与 YouTube Music 同步。您只能从 BStream 中删除它，也可以从您的帐户中删除播放列表。下载的歌曲不会被删除。',
-    'このプレイリストは YouTube Music と同期されています。 BStream からのみ削除することも、アカウントからプレイリストを削除することもできます。ダウンロードした曲は削除されません。',
+  'This playlist is synced with YouTube Music. You can remove it only from Songbrook or also delete the playlist from your account. Downloaded songs will not be deleted.': <String>[
+    'Esta lista de reprodução é sincronizada com o YouTube Music. Você pode removê-lo apenas do Songbrook ou também excluir a playlist da sua conta. As músicas baixadas não serão excluídas.',
+    'Cette playlist est synchronisée avec YouTube Music. Vous pouvez le supprimer uniquement de Songbrook ou également supprimer la playlist de votre compte. Les chansons téléchargées ne seront pas supprimées.',
+    '이 재생목록은 YouTube Music과 동기화됩니다. Songbrook에서만 제거하거나 계정에서 재생 목록을 삭제할 수도 있습니다. 다운로드한 노래는 삭제되지 않습니다.',
+    '此播放列表与 YouTube Music 同步。您只能从 Songbrook 中删除它，也可以从您的帐户中删除播放列表。下载的歌曲不会被删除。',
+    'このプレイリストは YouTube Music と同期されています。 Songbrook からのみ削除することも、アカウントからプレイリストを削除することもできます。ダウンロードした曲は削除されません。',
   ],
-  'This playlist is linked to YouTube Music, but the active account cannot delete it there. It will only be removed from BStream and will not be imported automatically again.': <String>[
-    'Esta playlist está vinculada ao YouTube Music, mas a conta ativa não pode excluí-la lá. Ela só será removida do BStream e não será importada automaticamente novamente.',
-    'Cette playlist est liée à YouTube Music, mais le compte actif ne peut pas la supprimer. Elle sera uniquement supprimée de BStream et ne sera plus importée automatiquement.',
-    '이 재생목록은 YouTube Music에 연결되어 있지만 활성 계정에서는 삭제할 수 없습니다. BStream에서만 제거되며 자동으로 다시 가져오지 않습니다.',
-    '此播放列表链接到 YouTube Music，但活动帐户无法在那里删除它。它只会从 BStream 中删除，不会再次自动导入。',
-    'このプレイリストは YouTube Music にリンクされていますが、アクティブなアカウントはそこから削除できません。 BStream から削除されるだけで、自動的に再度インポートされることはありません。',
+  'This playlist is linked to YouTube Music, but the active account cannot delete it there. It will only be removed from Songbrook and will not be imported automatically again.': <String>[
+    'Esta playlist está vinculada ao YouTube Music, mas a conta ativa não pode excluí-la lá. Ela só será removida do Songbrook e não será importada automaticamente novamente.',
+    'Cette playlist est liée à YouTube Music, mais le compte actif ne peut pas la supprimer. Elle sera uniquement supprimée de Songbrook et ne sera plus importée automatiquement.',
+    '이 재생목록은 YouTube Music에 연결되어 있지만 활성 계정에서는 삭제할 수 없습니다. Songbrook에서만 제거되며 자동으로 다시 가져오지 않습니다.',
+    '此播放列表链接到 YouTube Music，但活动帐户无法在那里删除它。它只会从 Songbrook 中删除，不会再次自动导入。',
+    'このプレイリストは YouTube Music にリンクされていますが、アクティブなアカウントはそこから削除できません。 Songbrook から削除されるだけで、自動的に再度インポートされることはありません。',
   ],
-  'The playlist was removed from BStream. Its YouTube Music deletion is scheduled for the next sync.':
+  'The playlist was removed from Songbrook. Its YouTube Music deletion is scheduled for the next sync.':
       <String>[
-        'A playlist foi removida do BStream. Sua exclusão do YouTube Music está agendada para a próxima sincronização.',
-        'La playlist a été supprimée de BStream. Sa suppression sur YouTube Music est programmée pour la prochaine synchronisation.',
-        '재생 목록이 BStream에서 제거되었습니다. 다음 동기화 시 YouTube Music 삭제가 예정되어 있습니다.',
-        '播放列表已从 BStream 中删除。其 YouTube 音乐删除计划在下次同步时进行。',
-        'プレイリストは BStream から削除されました。 YouTube Music の削除は次回の同期にスケジュールされています。',
+        'A playlist foi removida do Songbrook. Sua exclusão do YouTube Music está agendada para a próxima sincronização.',
+        'La playlist a été supprimée de Songbrook. Sa suppression sur YouTube Music est programmée pour la prochaine synchronisation.',
+        '재생 목록이 Songbrook에서 제거되었습니다. 다음 동기화 시 YouTube Music 삭제가 예정되어 있습니다.',
+        '播放列表已从 Songbrook 中删除。其 YouTube 音乐删除计划在下次同步时进行。',
+        'プレイリストは Songbrook から削除されました。 YouTube Music の削除は次回の同期にスケジュールされています。',
       ],
   'This does not delete downloaded songs.': <String>[
     'Isso não exclui músicas baixadas.',
@@ -2237,13 +2237,14 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '推荐历史',
     '推奨履歴',
   ],
-  'BStream learns from the songs you listen to in order to personalize Home.': <String>[
-    'BStream aprende com as músicas que você ouve para personalizar a página inicial.',
-    'BStream apprend à partir des chansons que vous écoutez afin de personnaliser la maison.',
-    'BStream은 홈을 개인화하기 위해 사용자가 듣는 노래를 학습합니다.',
-    'BStream 从您收听的歌曲中学习，以便对主页进行个性化设置。',
-    'BStreamは、ホームをカスタマイズするために、あなたが聞いた曲から学習します。',
-  ],
+  'Songbrook learns from the songs you listen to in order to personalize Home.':
+      <String>[
+        'Songbrook aprende com as músicas que você ouve para personalizar a página inicial.',
+        'Songbrook apprend à partir des chansons que vous écoutez afin de personnaliser la maison.',
+        'Songbrook은 홈을 개인화하기 위해 사용자가 듣는 노래를 학습합니다.',
+        'Songbrook 从您收听的歌曲中学习，以便对主页进行个性化设置。',
+        'Songbrookは、ホームをカスタマイズするために、あなたが聞いた曲から学習します。',
+      ],
   'New plays will not be used to personalize Home.': <String>[
     'Novas peças não será usado para personalizar a página inicial.',
     'Nouvelles pièces ne sera pas utilisé pour personnaliser l\'accueil.',
@@ -2273,13 +2274,13 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '清除历史记录和推荐？',
     '履歴と推奨事項を消去しますか?',
   ],
-  'BStream will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.':
+  'Songbrook will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.':
       <String>[
-        'O BStream esquecerá o que aprendeu ao ouvir. Downloads, favoritos e listas de reprodução permanecerão intactos.',
-        'BStream oubliera ce qu\'il a appris de votre écoute. Les téléchargements, les favoris et les listes de lecture resteront intacts.',
-        'BStream은 귀하의 청취를 통해 배운 내용을 잊어버릴 것입니다. 다운로드, 즐겨찾기 및 재생 목록은 그대로 유지됩니다.',
-        'BStream 会忘记它从您的聆听中学到的内容。下载、收藏夹和播放列表将保持不变。',
-        'BStreamは、聞いて学んだことを忘れてしまいます。ダウンロード、お気に入り、プレイリストはそのまま残ります。',
+        'O Songbrook esquecerá o que aprendeu ao ouvir. Downloads, favoritos e listas de reprodução permanecerão intactos.',
+        'Songbrook oubliera ce qu\'il a appris de votre écoute. Les téléchargements, les favoris et les listes de lecture resteront intacts.',
+        'Songbrook은 귀하의 청취를 통해 배운 내용을 잊어버릴 것입니다. 다운로드, 즐겨찾기 및 재생 목록은 그대로 유지됩니다.',
+        'Songbrook 会忘记它从您的聆听中学到的内容。下载、收藏夹和播放列表将保持不变。',
+        'Songbrookは、聞いて学んだことを忘れてしまいます。ダウンロード、お気に入り、プレイリストはそのまま残ります。',
       ],
   'History and recommendations cleared.': <String>[
     'Histórico e recomendações apagados.',
@@ -2402,12 +2403,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '打开支持的链接',
     'サポートされているリンクを開く',
   ],
-  'Choose BStream to open YouTube and YouTube Music links.': <String>[
-    'Escolha BStream para abrir links do YouTube e do YouTube Music.',
-    'Choisissez BStream pour ouvrir les liens YouTube et YouTube Music.',
-    'YouTube 및 YouTube Music 링크를 열려면 BStream을 선택하세요.',
-    '选择 BStream 打开 YouTube 和 YouTube Music 链接。',
-    'BStream を選択してくださいYouTube と YouTube Music のリンクを開くことができます。',
+  'Choose Songbrook to open YouTube and YouTube Music links.': <String>[
+    'Escolha Songbrook para abrir links do YouTube e do YouTube Music.',
+    'Choisissez Songbrook pour ouvrir les liens YouTube et YouTube Music.',
+    'YouTube 및 YouTube Music 링크를 열려면 Songbrook을 선택하세요.',
+    '选择 Songbrook 打开 YouTube 和 YouTube Music 链接。',
+    'Songbrook を選択してくださいYouTube と YouTube Music のリンクを開くことができます。',
   ],
   'Could not open the supported links settings.': <String>[
     'Não foi possível abrir as configurações de links suportados.',
@@ -2468,6 +2469,71 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
         '降低母带音量高于 YouTube 参考值的歌曲，使播放音量保持稳定。',
         'YouTube の基準より大きくマスタリングされた曲の音量を下げ、再生音量を一定に保ちます。',
       ],
+  'Turkish interface that follows the device language until you choose one.': <String>[
+    'Interface em turco, que segue o idioma do dispositivo até você escolher um.',
+    'Interface en turc, qui suit la langue de l’appareil jusqu’à ce que vous en choisissiez une.',
+    '기기 언어를 따르는 터키어 인터페이스(직접 선택하기 전까지).',
+    '土耳其语界面，在你选择语言之前跟随设备语言。',
+    '端末の言語に従うトルコ語インターフェース(言語を選ぶまで)。',
+  ],
+  'Loud songs are lowered to a steady level, like on YouTube Music.': <String>[
+    'Músicas mais altas são reduzidas a um nível estável, como no YouTube Music.',
+    'Les chansons trop fortes sont ramenées à un niveau stable, comme sur YouTube Music.',
+    '큰 소리의 노래는 YouTube Music처럼 일정한 수준으로 낮춰집니다.',
+    '音量过大的歌曲会像 YouTube Music 一样降到稳定的水平。',
+    '音の大きい曲は YouTube Music のように一定のレベルに下げられます。',
+  ],
+  'Search loads more results as you scroll and now finds playlists.': <String>[
+    'A pesquisa carrega mais resultados ao rolar e agora encontra playlists.',
+    'La recherche charge plus de résultats en faisant défiler et trouve désormais des playlists.',
+    '검색 시 스크롤하면 결과가 더 로드되며 이제 재생목록도 찾습니다.',
+    '搜索在滚动时会加载更多结果，现在还能找到播放列表。',
+    '検索はスクロールするとさらに結果を読み込み、プレイリストも見つかるようになりました。',
+  ],
+  'On iOS, songs now end on time and the player closes with a downward swipe.':
+      <String>[
+        'No iOS, as músicas agora terminam na hora certa e o player fecha ao deslizar para baixo.',
+        'Sur iOS, les chansons se terminent désormais à l’heure et le lecteur se ferme d’un glissement vers le bas.',
+        'iOS에서 노래가 제시간에 끝나며, 아래로 밀어 플레이어를 닫을 수 있습니다.',
+        '在 iOS 上，歌曲现在会准时结束，向下轻扫即可关闭播放器。',
+        'iOS で曲が時間どおりに終わり、下にスワイプするとプレーヤーが閉じます。',
+      ],
+  'Playback is more reliable when YouTube changes its clients.': <String>[
+    'A reprodução é mais confiável quando o YouTube muda seus clientes.',
+    'La lecture est plus fiable lorsque YouTube modifie ses clients.',
+    'YouTube가 클라이언트를 변경해도 재생이 더 안정적입니다.',
+    '当 YouTube 更改其客户端时，播放更加可靠。',
+    'YouTube がクライアントを変更しても再生がより安定します。',
+  ],
+  'Based on BStream Music': <String>[
+    'Baseado no BStream Music',
+    'Basé sur BStream Music',
+    'BStream Music 기반',
+    '基于 BStream Music',
+    'BStream Music がベース',
+  ],
+  'Songbrook is a fork of the open-source project by Bryam Contreras.':
+      <String>[
+        'O Songbrook é um fork do projeto de código aberto de Bryam Contreras.',
+        'Songbrook est un fork du projet open source de Bryam Contreras.',
+        'Songbrook은 Bryam Contreras의 오픈 소스 프로젝트를 포크한 앱입니다.',
+        'Songbrook 是 Bryam Contreras 开源项目的分支。',
+        'Songbrook は Bryam Contreras のオープンソースプロジェクトのフォークです。',
+      ],
+  'Version, credits, and repository': <String>[
+    'Versão, créditos e repositório',
+    'Version, crédits et dépôt',
+    '버전, 크레딧 및 저장소',
+    '版本、致谢和代码库',
+    'バージョン、クレジット、リポジトリ',
+  ],
+  'Turkish, steady volume, search, and more': <String>[
+    'Turco, volume estável, pesquisa e mais',
+    'Turc, volume stable, recherche et plus',
+    '터키어, 일정한 볼륨, 검색 등',
+    '土耳其语、稳定音量、搜索等',
+    'トルコ語、一定の音量、検索など',
+  ],
   'Apply': <String>['Aplicar', 'Appliquer', 'Apply', '应用', '適用'],
   'Timer duration': <String>[
     'Duração do temporizador',
@@ -2702,19 +2768,20 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
         '覆盖配置与主机文件冲突。更正 ZXQPH0X 条目并重试。',
         'オーバーレイ構成はホスト ファイルと競合します。 ZXQPH0X エントリを修正して、再試行してください。',
       ],
-  'Windows could not verify the local domain. Restart BStream and try again.': <String>[
-    'O Windows não conseguiu verificar o domínio local. Reinicie o BStream e tente novamente.',
-    'Windows n\'a pas pu vérifier le domaine local. Redémarrez BStream et réessayez.',
-    'Windows에서 로컬 도메인을 확인할 수 없습니다. BStream을 다시 시작하고 다시 시도하세요.',
-    'Windows 无法验证本地域。重新启动 BStream 并重试。',
-    'Windows はローカル ドメインを確認できませんでした。 BStream を再起動して、もう一度お試しください。',
-  ],
-  'The domain was configured, but BStream could not open the overlay through DNS or HTTP. Check the proxy, VPN, or antivirus and try again.': <String>[
-    'O domínio foi configurado, mas o BStream não conseguiu abrir a sobreposição por meio de DNS ou HTTP. Verifique o proxy, VPN ou antivírus e tente novamente.',
-    'Le domaine a été configuré, mais BStream n\'a pas pu ouvrir la superposition via DNS ou HTTP. Vérifiez le proxy, le VPN ou l\'antivirus et réessayez.',
-    '도메인이 구성되었지만 BStream이 DNS 또는 HTTP를 통해 오버레이를 열 수 없습니다. 프록시, VPN 또는 바이러스 백신을 확인하고 다시 시도하세요.',
-    '域已配置，但 BStream 无法通过 DNS 或 HTTP 打开覆盖。检查代理、VPN 或防病毒软件，然后重试。',
-    'ドメインは構成されましたが、BStream は DNS または HTTP 経由でオーバーレイを開くことができませんでした。プロキシ、VPN、またはウイルス対策ソフトウェアを確認して、再試行してください。',
+  'Windows could not verify the local domain. Restart Songbrook and try again.':
+      <String>[
+        'O Windows não conseguiu verificar o domínio local. Reinicie o Songbrook e tente novamente.',
+        'Windows n\'a pas pu vérifier le domaine local. Redémarrez Songbrook et réessayez.',
+        'Windows에서 로컬 도메인을 확인할 수 없습니다. Songbrook을 다시 시작하고 다시 시도하세요.',
+        'Windows 无法验证本地域。重新启动 Songbrook 并重试。',
+        'Windows はローカル ドメインを確認できませんでした。 Songbrook を再起動して、もう一度お試しください。',
+      ],
+  'The domain was configured, but Songbrook could not open the overlay through DNS or HTTP. Check the proxy, VPN, or antivirus and try again.': <String>[
+    'O domínio foi configurado, mas o Songbrook não conseguiu abrir a sobreposição por meio de DNS ou HTTP. Verifique o proxy, VPN ou antivírus e tente novamente.',
+    'Le domaine a été configuré, mais Songbrook n\'a pas pu ouvrir la superposition via DNS ou HTTP. Vérifiez le proxy, le VPN ou l\'antivirus et réessayez.',
+    '도메인이 구성되었지만 Songbrook이 DNS 또는 HTTP를 통해 오버레이를 열 수 없습니다. 프록시, VPN 또는 바이러스 백신을 확인하고 다시 시도하세요.',
+    '域已配置，但 Songbrook 无法通过 DNS 或 HTTP 打开覆盖。检查代理、VPN 或防病毒软件，然后重试。',
+    'ドメインは構成されましたが、Songbrook は DNS または HTTP 経由でオーバーレイを開くことができませんでした。プロキシ、VPN、またはウイルス対策ソフトウェアを確認して、再試行してください。',
   ],
   'Another application is already using port 80. Close it and enable the overlay again.':
       <String>[
@@ -2896,13 +2963,13 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '可用新版本',
     '新しいバージョンが利用可能',
   ],
-  'BStream Music version ZXQPH0X is available. You currently have version ZXQPH1X.':
+  'Songbrook version ZXQPH0X is available. You currently have version ZXQPH1X.':
       <String>[
-        'BStream Music versão ZXQPH0X está disponível. Atualmente você tem a versão ZXQPH1X.',
-        'BStream Music version ZXQPH0X est disponible. Vous disposez actuellement de la version ZXQPH1X.',
-        'BStream Music 버전 ZXQPH0X를 사용할 수 있습니다. 현재 ZXQPH1X 버전이 있습니다.',
-        'BStream 音乐版本 ZXQPH0X 可用。您当前使用的是ZXQPH1X版本。',
-        'BStream MusicバージョンZXQPH0Xが利用可能です。現在のバージョンは ZXQPH1X です。',
+        'Songbrook versão ZXQPH0X está disponível. Atualmente você tem a versão ZXQPH1X.',
+        'Songbrook version ZXQPH0X est disponible. Vous disposez actuellement de la version ZXQPH1X.',
+        'Songbrook 버전 ZXQPH0X를 사용할 수 있습니다. 현재 ZXQPH1X 버전이 있습니다.',
+        'Songbrook版本 ZXQPH0X 可用。您当前使用的是ZXQPH1X版本。',
+        'SongbrookバージョンZXQPH0Xが利用可能です。現在のバージョンは ZXQPH1X です。',
       ],
   'You already have the latest version.': <String>[
     'Você já tem a versão mais recente.',
@@ -2932,12 +2999,12 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '支持开发',
     'サポート開発',
   ],
-  'Help maintain BStream Music and keep adding features.': <String>[
-    'Ajude a manter o BStream Music e continue adicionando recursos.',
-    'Aide à maintenir BStream Music et continuer à ajouter des fonctionnalités.',
-    'BStream Music을 유지 관리하고 기능을 계속 추가하도록 도와주세요.',
-    '帮助维护BStream Music并不断添加功能。',
-    'BStream Music の保守と機能の追加を支援します。',
+  'Help maintain Songbrook and keep adding features.': <String>[
+    'Ajude a manter o Songbrook e continue adicionando recursos.',
+    'Aide à maintenir Songbrook et continuer à ajouter des fonctionnalités.',
+    'Songbrook을 유지 관리하고 기능을 계속 추가하도록 도와주세요.',
+    '帮助维护Songbrook并不断添加功能。',
+    'Songbrook の保守と機能の追加を支援します。',
   ],
   'The support page could not be opened.': <String>[
     'A página de suporte não pôde ser aberto.',

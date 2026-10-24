@@ -2689,7 +2689,7 @@ class _SideNavigationBrand extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              AppConstants.appName,
+              AppConstants.displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               strutStyle: const StrutStyle(
@@ -3243,7 +3243,7 @@ class _HomeView extends ConsumerWidget {
           Expanded(
             child: Text(
               key: const ValueKey('home-tab-title'),
-              'BStream Music',
+              AppConstants.displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: appTabTitleStyle(context),

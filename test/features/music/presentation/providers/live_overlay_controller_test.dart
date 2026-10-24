@@ -518,7 +518,7 @@ void main() {
         error: const LocalLiveOverlayVerificationException(
           'private endpoint detail',
         ),
-        expected: 'BStream no pudo abrir la overlay por DNS o HTTP',
+        expected: 'Songbrook no pudo abrir la overlay por DNS o HTTP',
       ),
       (
         error: const LocalLiveOverlayPortInUseException(

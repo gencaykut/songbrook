@@ -423,8 +423,8 @@ final incomingYouTubeMusicLinkProvider = StreamProvider<YouTubeMusicLink>((
 final lyricsServiceProvider = Provider<LyricsService>((ref) {
   final service = LrclibLyricsService(
     userAgent:
-        '${AppConstants.appName}/${AppConstants.appVersion} '
-        '(https://github.com/BryamContreras/BStream-Music)',
+        '${AppConstants.displayName}/${AppConstants.appVersion} '
+        '(${AppConstants.githubRepositoryUrl})',
     // This short cache exists only in RAM. It avoids querying LRCLIB again when
     // returning to the lyrics screen, keeps only a small recent working set,
     // and is discarded when the app closes.

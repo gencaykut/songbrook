@@ -77,7 +77,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - 24 Ekim 2026'da toplu push yapıldı; sonraki commit'ler yine yerelde birikir (`git status -sb`).
 - iPhone'da (UDID `00008140-0018303E2128401C`, iPhone17,2) Türkçe sürüm kurulu; son iki değişiklik (cihaz dili varsayılanı, `hl=en`) henüz telefonda ve dmg'de yok.
 - Mac: `dist/Songbrook-1.2.9.dmg` notarize edilmiş ve staple'lı (cihaz dili değişikliğinden önceki sürüm). `songbrook-notary` profili anahtar zincirinde kayıtlı.
-- Uygulama sürümü hâlâ upstream'in `1.2.9+129` numarası (`pubspec.yaml`).
+- Uygulama sürümü `1.0.0+130` (24 Ekim 2026). Derleme numarası upstream'in 129'unun üstünde tutuldu ki eski Songbrook kurulumları yükseltilebilsin. Sürüm değişince `pubspec.yaml`, README'deki `Current version`, CHANGELOG'un ilk başlığı, `AppConstants.appVersion` ve `packaging/windows/BStreamMusic.iss` birlikte güncellenir (`app_metadata_test.dart` denetler).
 
 ### Kullanıcıdan bekleyen kararlar
 
@@ -88,7 +88,8 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 1. ~~Upstream `7d54c36`'yı al~~ Tamamlandı.
 2. ~~Ad, bundle ID ve App Group~~ Tamamlandı. Ad **Songbrook**; bundle ID `io.github.gencaykut.songbrook` (iOS, macOS, Android `applicationId`), widget `…songbrook.NowPlayingWidget`, App Group `group.io.github.gencaykut.songbrook`.
    - Bilerek değiştirilmeyenler (upstream farkını küçük tutmak için): Dart paket adı `bstream_music`, Android `namespace` ve Kotlin paketleri, method channel ve DispatchQueue adları, `bstreammusic://` URL şeması, macOS `PRODUCT_NAME` (`bstream_music.app`; dmg içinde `Songbrook.app` olarak adlandırılıyor).
-   - `AppConstants.appName` hâlâ "BStream Music": yedek dosyaları bu adla doğrulanıyor (`backup_service.dart`). Değiştirirken eski yedekleri de kabul et.
+   - Görünen ad `AppConstants.displayName` ("Songbrook"): başlık, pencere, medya oturumu, Android bildirim kanalı adı, oynatıcı yedek metinleri. `AppConstants.appName` bilerek "BStream Music" kaldı: yedekler bu adla doğrulanıyor (`backup_service.dart`). Medya klasörü `BStream-Music`, CSV biçim adı "BStream Music" ve log etiketleri de bilerek değişmedi.
+   - Arayüz metinlerinde "BStream" → "Songbrook" (çeviri katalog anahtarları ve Türkçe servis mesajı anahtarları birlikte). Güncelleme kontrolü, GitHub ve indirme bağlantısı `AppConstants.githubRepository` (`gencaykut/yt-music-app`; repo private iken açılıştaki kontrol sessizce başarısız olur). Hakkında'daki Ko-fi kartı yerine upstream'e atıf kartı; "Yenilikler" `AppStrings.releaseHighlights`.
 3. ~~İndirilmiş m4a'larda iOS'taki 2 kat süre~~ Tamamlandı (docs/ios-duration-fix.md §3).
 4. ~~Gerçek iPhone testi~~ Tamamlandı. Team `9K8FGUA9A3` projede.
    - Doğrulananlar: süre kırpması, arama, kilit ekranı kartı, otomatik geçiş, widget.
@@ -99,7 +100,8 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
    - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
    - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
 6. ~~**Yedek stream yolları**~~ Tamamlandı (24 Ekim 2026); bulgular "Stream çözümleme kırılgan" maddesinde. visionOS01 artık androidSdkless'tan önce (upstream kapsamı dar diye sona koymuştu; bir videoyu çözemezse androidSdkless'a düşülür). Açık kalanlar: mweb/webMusic 403'ü (protokol araştırması), Android'de aynı testler (derleme ortamı yok).
-7. **Markalama:** ~~Türkçe arayüz~~, ~~cihaz dili varsayılanı~~ tamamlandı. Kalanlar: uygulama içi "BStream Music" yazıları (başlık, mini oynatıcı; `AppConstants.appName` dikkat), "Yeni sürüm var" kontrolü upstream sürümlerine bakıyor, ~~README~~, TikTok LIVE'ı arayüzden gizle (13 dosyaya ve `player_controller.dart`'a yayılmış; silme), oynatıcının sağ üst menü simgesi koyu arka planda neredeyse görünmüyor, kendi sürüm numaralandırması.
+7. ~~**Markalama**~~ Tamamlandı (24 Ekim 2026): görünen ad, güncelleme kontrolü, sürüm 1.0.0, Hakkında. Menü simgesi sorunu simülatörde üç stilde de (açık tema) üretilemedi; mobilde oynatıcı her zaman koyu temayla sarılıyor. Tekrar görülürse hangi stil/tema/kapakta olduğu not edilmeli.
+   - **TikTok LIVE kaldırılacak** (kullanıcı onayladı; gizlemek yerine silmek): `lib/services/live/`, `third_party/piratetok_live/`, Windows overlay, ayarlar, metinler, testler; asıl risk `player_controller.dart`'taki LIVE kuyruk dalları. Türkçe arayüzde LIVE kartının alt yazısı İspanyolca kalmıştı; silinince gider.
 8. **Dağıtım ve paylaşım:**
    - ~~macOS notarize dmg~~ (`macos/package_dmg.sh`); yeni sürümde yeniden üret.
    - Android APK (yukarıdaki karara bağlı), iOS ipa (AltStore/Sideloadly).

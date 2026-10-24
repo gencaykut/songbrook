@@ -15,6 +15,7 @@ import 'fragmented_mp4_duration.dart';
 import 'loudness_normalization.dart';
 import 'notification_artwork_service.dart';
 import 'player_service.dart';
+import '../../core/constants/app_constants.dart';
 
 typedef JustAudioOperationDeadline = Future<void> Function(Duration duration);
 typedef JustAudioPlayerFactory = AudioPlayer Function();
@@ -2903,7 +2904,7 @@ class JustAudioPlayerService
     final artworkSource = track.thumbnailUrl?.trim();
     return MediaItem(
       id: track.id.isEmpty ? track.url : track.id,
-      album: track.album ?? 'BStream Music',
+      album: track.album ?? AppConstants.displayName,
       title: track.title,
       artist: track.artist,
       artUri: _notificationArtUri(artworkSource),
@@ -2922,7 +2923,7 @@ class JustAudioPlayerService
     final artworkSource = (track.thumbnailPath ?? track.thumbnailUrl)?.trim();
     return MediaItem(
       id: track.id,
-      album: track.album ?? 'BStream Music',
+      album: track.album ?? AppConstants.displayName,
       title: track.title,
       artist: track.artist,
       artUri: _notificationArtUri(artworkSource),

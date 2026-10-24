@@ -9,6 +9,7 @@ import '../../core/theme/app_colors.dart';
 import '../player/notification_artwork_service.dart';
 import '../player/player_service.dart';
 import 'desktop_media_session.dart';
+import '../../core/constants/app_constants.dart';
 
 @visibleForTesting
 PlaybackState buildAudioServicePlaybackState(DesktopMediaSessionState state) {
@@ -159,7 +160,7 @@ class AudioServiceDesktopMediaSession implements DesktopMediaSession {
         },
         config: const AudioServiceConfig(
           androidNotificationChannelId: 'com.bstream.bstream_music.audio',
-          androidNotificationChannelName: 'BStream Music',
+          androidNotificationChannelName: AppConstants.displayName,
           androidNotificationChannelDescription: 'BStream Music playback',
           notificationColor: AppColors.brandGreen,
           androidNotificationIcon: 'drawable/ic_stat_bstream_music',
@@ -264,11 +265,11 @@ class AudioServiceDesktopMediaSession implements DesktopMediaSession {
             id: snapshot.trackId ?? snapshot.sourceUrl ?? trackKey,
             title: snapshot.title?.trim().isNotEmpty == true
                 ? snapshot.title!.trim()
-                : 'BStream Music',
+                : AppConstants.displayName,
             artist: snapshot.artist?.trim(),
             album: snapshot.album?.trim().isNotEmpty == true
                 ? snapshot.album!.trim()
-                : 'BStream Music',
+                : AppConstants.displayName,
             duration: snapshot.duration,
             artUri: _artUri(snapshot.thumbnailUrl),
           ),
@@ -286,7 +287,7 @@ class AudioServiceDesktopMediaSession implements DesktopMediaSession {
                   artist: item.artist,
                   album: item.album?.trim().isNotEmpty == true
                       ? item.album!.trim()
-                      : 'BStream Music',
+                      : AppConstants.displayName,
                   artUri: _artUri(item.thumbnailUrl),
                 ),
               )

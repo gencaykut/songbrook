@@ -191,7 +191,7 @@ class PlaylistSyncEngine {
       final conflict = const PlaylistSyncConflict(
         kind: PlaylistSyncConflictKind.ambiguousMutation,
         message:
-            'No se pudo confirmar el borrado anterior; BStream no lo '
+            'No se pudo confirmar el borrado anterior; Songbrook no lo '
             'repetirá automáticamente.',
       );
       await _store.recordConflict(

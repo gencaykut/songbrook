@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../core/constants/app_constants.dart';
+
 typedef GitHubLatestReleaseFetcher =
     Future<Map<String, Object?>> Function(Uri endpoint);
 
@@ -21,7 +23,7 @@ class AppReleaseCheckResult {
 
 class GitHubReleaseChecker {
   GitHubReleaseChecker({
-    this.repository = 'BryamContreras/BStream-Music',
+    this.repository = AppConstants.githubRepository,
     GitHubLatestReleaseFetcher? fetchLatestRelease,
   }) : _fetchLatestRelease = fetchLatestRelease ?? _fetchFromGitHub;
 
@@ -57,7 +59,7 @@ class GitHubReleaseChecker {
           .timeout(const Duration(seconds: 10));
       request.headers
         ..set(HttpHeaders.acceptHeader, 'application/vnd.github+json')
-        ..set(HttpHeaders.userAgentHeader, 'BStream-Music-update-check')
+        ..set(HttpHeaders.userAgentHeader, 'Songbrook-update-check')
         ..set('X-GitHub-Api-Version', '2022-11-28');
       final response = await request.close().timeout(
         const Duration(seconds: 10),

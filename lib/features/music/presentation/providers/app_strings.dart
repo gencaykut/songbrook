@@ -193,10 +193,10 @@ class AppStrings {
       choose('Integración no oficial', 'Unofficial integration');
   String get youtubeMusicUnofficialDisclosure => choose(
     'La integración con YouTube Music utiliza interfaces no oficiales y no '
-        'está afiliada con Google. BStream no guarda tu contraseña. YouTube '
+        'está afiliada con Google. Songbrook no guarda tu contraseña. YouTube '
         'puede cambiar, bloquear o restringir esta función.',
     'The YouTube Music integration uses unofficial interfaces and is not '
-        'affiliated with Google. BStream never stores your password. YouTube '
+        'affiliated with Google. Songbrook never stores your password. YouTube '
         'may change, block, or restrict this feature.',
   );
   String get understandAndContinue =>
@@ -219,11 +219,11 @@ class AppStrings {
                 : 'Your $localPlaylistCount local playlists will stay',
           );
     return choose(
-      '$localPreservation en BStream. Favoritos se vinculará con "Me gusta" '
+      '$localPreservation en Songbrook. Favoritos se vinculará con "Me gusta" '
           'de YouTube Music; las playlists locales aún no vinculadas se crearán '
           'como privadas y las remotas se importarán aquí. Esta primera '
           'sincronización no elimina tus playlists locales.',
-      '$localPreservation in BStream. Favorites will sync with YouTube Music '
+      '$localPreservation in Songbrook. Favorites will sync with YouTube Music '
           'Liked Music; unlinked local playlists are created as private playlists '
           'and remote playlists are imported here. This first sync does not '
           'delete your local playlists.',
@@ -252,12 +252,13 @@ class AppStrings {
   String get resolvePlaylistSyncConflicts =>
       choose('Resolver conflictos', 'Resolve conflicts');
   String get playlistSyncConflictWarning => choose(
-    'BStream detuvo estas playlists para no repetir ni sobrescribir cambios '
+    'Songbrook detuvo estas playlists para no repetir ni sobrescribir cambios '
         'inciertos. Elige qué versión conservar en cada una.',
-    'BStream paused these playlists to avoid repeating or overwriting '
+    'Songbrook paused these playlists to avoid repeating or overwriting '
         'uncertain changes. Choose which version to keep for each one.',
   );
-  String get keepBStreamPlaylist => choose('Conservar BStream', 'Keep BStream');
+  String get keepBStreamPlaylist =>
+      choose('Conservar Songbrook', 'Keep Songbrook');
   String get keepYouTubeMusicPlaylist =>
       choose('Conservar YouTube Music', 'Keep YouTube Music');
   String get noPlaylistSyncConflicts => choose(
@@ -275,9 +276,9 @@ class AppStrings {
       choose('Desconectar YouTube Music', 'Disconnect YouTube Music');
   String get youtubeMusicLoginBlocked => choose(
     'Google bloqueó el inicio de sesión dentro de la app. Por seguridad, '
-        'BStream no puede copiar la sesión de tu navegador. Puedes seguir '
+        'Songbrook no puede copiar la sesión de tu navegador. Puedes seguir '
         'usando la app sin cuenta.',
-    'Google blocked sign-in inside the app. For security, BStream cannot copy '
+    'Google blocked sign-in inside the app. For security, Songbrook cannot copy '
         'the session from your browser. You can keep using the app without an '
         'account.',
   );
@@ -330,8 +331,8 @@ class AppStrings {
   String get localMusicPermissionTitle =>
       choose('Permite el acceso a tu música', 'Allow access to your music');
   String get localMusicPermissionBody => choose(
-    'BStream necesita permiso para mostrar y reproducir los archivos de audio del dispositivo.',
-    'BStream needs permission to show and play audio files on this device.',
+    'Songbrook necesita permiso para mostrar y reproducir los archivos de audio del dispositivo.',
+    'Songbrook needs permission to show and play audio files on this device.',
   );
   String get allowMusicAccess => choose('Permitir acceso', 'Allow access');
   String get localMusicLoadError => choose(
@@ -782,31 +783,31 @@ class AppStrings {
   String get playlistDeleted =>
       choose('Playlist eliminada.', 'Playlist deleted.');
   String get removePlaylistFromBStream =>
-      choose('Quitar sólo de BStream', 'Remove only from BStream');
+      choose('Quitar sólo de Songbrook', 'Remove only from Songbrook');
   String get deletePlaylistFromYouTubeMusic => choose(
     'Eliminar también de YouTube Music',
     'Also delete from YouTube Music',
   );
   String get confirmDeleteSyncedPlaylist => choose(
     'Esta playlist está sincronizada con YouTube Music. Puedes quitarla sólo '
-        'de BStream o eliminar también la playlist de tu cuenta. Las canciones '
+        'de Songbrook o eliminar también la playlist de tu cuenta. Las canciones '
         'descargadas no se borrarán.',
     'This playlist is synced with YouTube Music. You can remove it only from '
-        'BStream or also delete the playlist from your account. Downloaded '
+        'Songbrook or also delete the playlist from your account. Downloaded '
         'songs will not be deleted.',
   );
   String get confirmDeleteReadOnlySyncedPlaylist => choose(
     'Esta playlist está vinculada con YouTube Music, pero la cuenta activa no '
-        'puede eliminarla allí. Sólo se quitará de BStream y no se volverá a '
+        'puede eliminarla allí. Sólo se quitará de Songbrook y no se volverá a '
         'importar automáticamente.',
     'This playlist is linked to YouTube Music, but the active account cannot '
-        'delete it there. It will only be removed from BStream and will not be '
+        'delete it there. It will only be removed from Songbrook and will not be '
         'imported automatically again.',
   );
   String get youtubeMusicPlaylistDeletionScheduled => choose(
-    'La playlist se quitó de BStream. Su eliminación en YouTube Music quedó '
+    'La playlist se quitó de Songbrook. Su eliminación en YouTube Music quedó '
         'programada para la próxima sincronización.',
-    'The playlist was removed from BStream. Its YouTube Music deletion is '
+    'The playlist was removed from Songbrook. Its YouTube Music deletion is '
         'scheduled for the next sync.',
   );
   String get confirmDeletePlaylist => choose(
@@ -1026,7 +1027,7 @@ class AppStrings {
   String get audioQualityMono => 'Mono';
   String audioQualityChannels(int channels) =>
       choose('$channels canales', '$channels channels');
-  String get playerStyleBStreamMusic => 'BStream Music';
+  String get playerStyleBStreamMusic => 'Songbrook';
   String get playerStyleAppleMusic =>
       choose('Apple Music Style', 'Apple Music Style');
   String get playerStyleClassicVinyl =>
@@ -1092,8 +1093,8 @@ class AppStrings {
   String get recommendationHistory =>
       choose('Historial de recomendaciones', 'Recommendation history');
   String get recommendationHistoryEnabled => choose(
-    'BStream aprende de las canciones que escuchas para personalizar Inicio.',
-    'BStream learns from the songs you listen to in order to personalize Home.',
+    'Songbrook aprende de las canciones que escuchas para personalizar Inicio.',
+    'Songbrook learns from the songs you listen to in order to personalize Home.',
   );
   String get recommendationHistoryDisabled => choose(
     'Las nuevas reproducciones no se usarán para personalizar Inicio.',
@@ -1112,8 +1113,8 @@ class AppStrings {
     'Clear history and recommendations?',
   );
   String get clearRecommendationHistoryMessage => choose(
-    'BStream olvidará lo aprendido de tus escuchas. Tus descargas, favoritos y playlists permanecerán intactos.',
-    'BStream will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.',
+    'Songbrook olvidará lo aprendido de tus escuchas. Tus descargas, favoritos y playlists permanecerán intactos.',
+    'Songbrook will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.',
   );
   String get recommendationHistoryCleared => choose(
     'Historial y recomendaciones eliminados.',
@@ -1171,8 +1172,8 @@ class AppStrings {
   String get supportedLinks =>
       choose('Abrir enlaces compatibles', 'Open supported links');
   String get supportedLinksSummary => choose(
-    'Elige BStream para abrir enlaces de YouTube y YouTube Music.',
-    'Choose BStream to open YouTube and YouTube Music links.',
+    'Elige Songbrook para abrir enlaces de YouTube y YouTube Music.',
+    'Choose Songbrook to open YouTube and YouTube Music links.',
   );
   String get supportedLinksOpenFailed => choose(
     'No se pudo abrir la configuración de enlaces compatibles.',
@@ -1333,14 +1334,14 @@ class AppStrings {
         '$host entry and try again.',
   );
   String get liveOverlayHostsVerificationError => choose(
-    'Windows no pudo confirmar el dominio local. Reinicia BStream y vuelve a '
+    'Windows no pudo confirmar el dominio local. Reinicia Songbrook y vuelve a '
         'intentarlo.',
-    'Windows could not verify the local domain. Restart BStream and try again.',
+    'Windows could not verify the local domain. Restart Songbrook and try again.',
   );
   String get liveOverlayEndpointVerificationError => choose(
-    'El dominio quedó configurado, pero BStream no pudo abrir la overlay por '
+    'El dominio quedó configurado, pero Songbrook no pudo abrir la overlay por '
         'DNS o HTTP. Revisa el proxy, VPN o antivirus y vuelve a intentarlo.',
-    'The domain was configured, but BStream could not open the overlay through '
+    'The domain was configured, but Songbrook could not open the overlay through '
         'DNS or HTTP. Check the proxy, VPN, or antivirus and try again.',
   );
   String get liveOverlayPortInUseError => choose(
@@ -1456,8 +1457,8 @@ class AppStrings {
   String get aboutApplication =>
       choose('Acerca de la aplicación', 'About the app');
   String get aboutApplicationSummary => choose(
-    'Versión, apoyo y repositorio',
-    'Version, support, and repository',
+    'Versión, créditos y repositorio',
+    'Version, credits, and repository',
   );
   String get versionLabel => choose('Versión', 'Version');
   String get updateAvailableTitle =>
@@ -1466,8 +1467,8 @@ class AppStrings {
     required String latestVersion,
     required String currentVersion,
   }) => choose(
-    'La versión $latestVersion de BStream Music está disponible. Actualmente tienes la versión $currentVersion.',
-    'BStream Music version $latestVersion is available. You currently have version $currentVersion.',
+    'La versión $latestVersion de Songbrook está disponible. Actualmente tienes la versión $currentVersion.',
+    'Songbrook version $latestVersion is available. You currently have version $currentVersion.',
   );
   String get appIsUpToDate => choose(
     'Ya tienes la versión más reciente.',
@@ -1482,16 +1483,40 @@ class AppStrings {
     'The download page could not be opened.',
   );
 
-  String get supportDevelopmentTitle =>
-      choose('Apoyar el desarrollo', 'Support development');
-  String get supportDevelopmentBody => choose(
-    'Ayuda a mantener BStream Music y a seguir agregando funciones.',
-    'Help maintain BStream Music and keep adding features.',
+  String get upstreamProjectTitle =>
+      choose('Basado en BStream Music', 'Based on BStream Music');
+  String get upstreamProjectBody => choose(
+    'Songbrook es un fork del proyecto de código abierto de Bryam Contreras.',
+    'Songbrook is a fork of the open-source project by Bryam Contreras.',
   );
-  String get supportDevelopmentOpenFailed => choose(
-    'No se pudo abrir la página de apoyo.',
-    'The support page could not be opened.',
+  String get releaseHighlightsSummary => choose(
+    'Turco, volumen estable, búsqueda y más',
+    'Turkish, steady volume, search, and more',
   );
+
+  /// Songbrook's release highlights, newest release only.
+  List<String> get releaseHighlights => <String>[
+    choose(
+      'Interfaz en turco, que sigue el idioma del dispositivo hasta que elijas uno.',
+      'Turkish interface that follows the device language until you choose one.',
+    ),
+    choose(
+      'Las canciones más fuertes se bajan a un nivel estable, como en YouTube Music.',
+      'Loud songs are lowered to a steady level, like on YouTube Music.',
+    ),
+    choose(
+      'La búsqueda carga más resultados al desplazarte y ahora encuentra playlists.',
+      'Search loads more results as you scroll and now finds playlists.',
+    ),
+    choose(
+      'En iOS, las canciones terminan a tiempo y el reproductor se cierra deslizándolo hacia abajo.',
+      'On iOS, songs now end on time and the player closes with a downward swipe.',
+    ),
+    choose(
+      'La reproducción es más fiable cuando YouTube cambia sus clientes.',
+      'Playback is more reliable when YouTube changes its clients.',
+    ),
+  ];
   String get githubRepositoryTitle =>
       choose('Repositorio de GitHub', 'GitHub repository');
   String get githubRepositoryBody =>

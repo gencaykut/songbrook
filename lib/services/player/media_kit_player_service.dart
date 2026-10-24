@@ -68,7 +68,7 @@ class _MediaKitPlayerBackend implements MediaKitPlayerBackend {
   final _errors = StreamController<String>.broadcast();
 
   Player _createPlayer() => Player(
-    configuration: const PlayerConfiguration(title: AppConstants.appName),
+    configuration: const PlayerConfiguration(title: AppConstants.displayName),
   );
 
   Future<void>? _headlessInitialization(Player player) =>
@@ -1470,7 +1470,10 @@ class MediaKitPlayerService
       try {
         // PipeWire's native mpv backend uses this option instead of the
         // PulseAudio application properties set by the GTK runner.
-        await platform.setProperty('audio-client-name', AppConstants.appName);
+        await platform.setProperty(
+          'audio-client-name',
+          AppConstants.displayName,
+        );
       } catch (_) {
         // Playback must remain functional if an older libmpv ignores this
         // optional metadata property.

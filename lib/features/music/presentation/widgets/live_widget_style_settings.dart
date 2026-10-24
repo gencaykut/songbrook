@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../providers/app_strings.dart';
 import '../providers/live_widget_style.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class LiveWidgetStyleSettings extends StatelessWidget {
   const LiveWidgetStyleSettings({
@@ -174,7 +175,7 @@ class LiveWidgetPreview extends StatelessWidget {
         ),
         SizedBox(height: artistGap),
         Text(
-          'BStream Music',
+          AppConstants.displayName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: artistSize, color: Colors.white70),

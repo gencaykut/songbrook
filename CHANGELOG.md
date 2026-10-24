@@ -1,14 +1,20 @@
 # Changelog
 
-## Unreleased (Songbrook)
+## 1.0.0+130 — 2026-10-24
 
-Changes in the Songbrook fork since BStream Music 1.2.9+129 (upstream
-`7d54c36`).
+First Songbrook version: the changes in the Songbrook fork since BStream Music
+1.2.9+129 (upstream `7d54c36`). The build number continues above upstream's.
 
 ### Added
 
 - Added Turkish as an interface language. A Turkish interface requests
   search and catalog results from YouTube Music in Turkish.
+- Added volume normalization: songs louder than YouTube's loudness target are
+  lowered to it, as on YouTube Music. Quieter songs are never boosted. On by
+  default, with a switch in Playback settings.
+- Search now loads further result pages as the list nears its end, up to 200
+  results per category, and offers a retry when a page fails.
+- Added a Playlists search tab for YouTube Music community playlists.
 - Added a collapse control to the default player header and a back control to
   the mobile lyrics header. The player can be pulled down to close it when its
   content is scrolled to the top.
@@ -24,6 +30,12 @@ Changes in the Songbrook fork since BStream Music 1.2.9+129 (upstream
   preferred supported language and falls back to English. An English interface
   requests YouTube Music content in English.
 - Raised the iOS minimum to 15.0.
+- When the default playback client fails, the audio-only visionOS01 client is
+  tried before Android's client, which now serves only a 360p video stream.
+- The update check, download page, and GitHub link point to Songbrook's
+  repository. About credits BStream Music instead of linking its donation page.
+- The app shows the name Songbrook in its header, window title, and media
+  controls.
 
 ### Fixed
 
@@ -32,6 +44,9 @@ Changes in the Songbrook fork since BStream Music 1.2.9+129 (upstream
   now clipped to their real duration.
 - Fixed the duration showing `--:--` on iOS after an automatic transition to a
   song without a catalog duration.
+- Fixed every challenge-based playback fallback (EJS and Web PO token clients)
+  failing on iOS and macOS: WebKit's load of the headless harness document was
+  cancelled, and BotGuard passed typed-data arguments WebKit rejects.
 
 ## 1.2.9+129 — 2026-10-12
 

@@ -25,6 +25,7 @@ import 'playback_progress_line.dart';
 import 'playlist_artwork.dart';
 import 'source_image.dart';
 import 'track_change_transition.dart';
+import '../../../../core/constants/app_constants.dart';
 
 double miniPlayerHeightFor(
   BuildContext context, {
@@ -251,7 +252,9 @@ class MiniPlayer extends ConsumerWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  compactErrorText ?? presentation.artist ?? 'BStream Music',
+                  compactErrorText ??
+                      presentation.artist ??
+                      AppConstants.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

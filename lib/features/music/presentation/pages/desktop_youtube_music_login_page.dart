@@ -288,7 +288,7 @@ class _DesktopYouTubeMusicLoginPageState
       icon: Icons.open_in_browser_outlined,
       message:
           'Completa el inicio de sesión en la ventana del navegador.\n\n'
-          'BStream detectará cuando regreses a YouTube Music. La ventana usa '
+          'Songbrook detectará cuando regreses a YouTube Music. La ventana usa '
           'un perfil temporal que se eliminará al terminar o cancelar.',
       primaryActionLabel: 'Mostrar navegador',
       onPrimaryAction: _bringBrowserToForeground,

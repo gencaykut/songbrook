@@ -27,7 +27,7 @@ void main() {
       r'#define MyAppVersion "([0-9]+\.[0-9]+\.[0-9]+)"',
     ).firstMatch(windowsInstaller)?.group(1);
 
-    expect(pubspecVersion, '1.2.9+129');
+    expect(pubspecVersion, '1.0.0+130');
     expect(readmeVersion, pubspecVersion);
     expect(changelogVersion, pubspecVersion);
     expect(runtimeVersion, AppConstants.appVersion);
@@ -39,14 +39,24 @@ void main() {
     );
   });
 
-  test('uses the requested search size and official project URLs', () {
+  test('uses the requested search size and Songbrook project URLs', () {
     expect(AppConstants.defaultSearchLimit, 20);
+    expect(AppConstants.displayName, 'Songbrook');
     expect(
-      AppConstants.supportDevelopmentUrl,
-      'https://ko-fi.com/soybryam06c/donate',
+      AppConstants.appName,
+      'BStream Music',
+      reason: 'Backups are validated against the upstream identity.',
     );
     expect(
       AppConstants.githubRepositoryUrl,
+      'https://github.com/gencaykut/yt-music-app',
+    );
+    expect(
+      AppConstants.appDownloadUrl,
+      'https://github.com/gencaykut/yt-music-app/releases/latest',
+    );
+    expect(
+      AppConstants.upstreamRepositoryUrl,
       'https://github.com/BryamContreras/BStream-Music',
     );
   });

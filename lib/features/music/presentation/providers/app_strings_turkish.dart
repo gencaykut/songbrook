@@ -56,7 +56,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'YouTube Music': 'YouTube Music',
   'Sign in to YouTube Music': 'YouTube Music\'te oturum aç',
   'Unofficial integration': 'Resmî olmayan entegrasyon',
-  'The YouTube Music integration uses unofficial interfaces and is not affiliated with Google. BStream never stores your password. YouTube may change, block, or restrict this feature.':
+  'The YouTube Music integration uses unofficial interfaces and is not affiliated with Google. Songbrook never stores your password. YouTube may change, block, or restrict this feature.':
       'YouTube Music entegrasyonu resmî olmayan arayüzler kullanır ve Google ile bağlantılı değildir. Songbrook şifreni asla saklamaz. YouTube bu özelliği değiştirebilir, engelleyebilir veya kısıtlayabilir.',
   'I understand, continue': 'Anladım, devam et',
   'Sync now': 'Şimdi eşitle',
@@ -66,7 +66,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Your local playlist will stay': 'Yerel çalma listen Songbrook\'ta korunacak',
   'Your ZXQPH0X local playlists will stay':
       'ZXQPH0X yerel çalma listen Songbrook\'ta korunacak',
-  'ZXQPH0X in BStream. Favorites will sync with YouTube Music Liked Music; unlinked local playlists are created as private playlists and remote playlists are imported here. This first sync does not delete your local playlists.':
+  'ZXQPH0X in Songbrook. Favorites will sync with YouTube Music Liked Music; unlinked local playlists are created as private playlists and remote playlists are imported here. This first sync does not delete your local playlists.':
       'ZXQPH0X. Favoriler, YouTube Music\'teki Beğenilen müziklerle eşitlenecek; henüz bağlanmamış yerel çalma listeleri gizli liste olarak oluşturulacak, YouTube Music\'teki listeler de buraya aktarılacak. Bu ilk eşitleme yerel çalma listelerinden hiçbirini silmez.',
   'Keep and synchronize': 'Koru ve eşitle',
   'Not now': 'Şimdi değil',
@@ -79,9 +79,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Imported ZXQPH0X playlists from YouTube Music.':
       'YouTube Music\'ten ZXQPH0X çalma listesi aktarıldı.',
   'Resolve conflicts': 'Çakışmaları çöz',
-  'BStream paused these playlists to avoid repeating or overwriting uncertain changes. Choose which version to keep for each one.':
+  'Songbrook paused these playlists to avoid repeating or overwriting uncertain changes. Choose which version to keep for each one.':
       'Songbrook, belirsiz değişiklikleri tekrarlamamak veya üzerine yazmamak için bu çalma listelerini durdurdu. Her biri için hangi sürümün kalacağını seç.',
-  'Keep BStream': 'Songbrook\'takini koru',
+  'Keep Songbrook': 'Songbrook\'takini koru',
   'Keep YouTube Music': 'YouTube Music\'tekini koru',
   'There are no unresolved playlist conflicts.':
       'Çözülmemiş çalma listesi çakışması yok.',
@@ -89,7 +89,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
       'Çakışma kapatılamadı. Belirsiz bir yazma işlemini tekrarlamamak için çalma listesi durdurulmuş olarak kalıyor.',
   'Switch channel': 'Kanal değiştir',
   'Disconnect YouTube Music': 'YouTube Music bağlantısını kes',
-  'Google blocked sign-in inside the app. For security, BStream cannot copy the session from your browser. You can keep using the app without an account.':
+  'Google blocked sign-in inside the app. For security, Songbrook cannot copy the session from your browser. You can keep using the app without an account.':
       'Google uygulama içinden oturum açmayı engelledi. Güvenlik nedeniyle Songbrook oturumu tarayıcından kopyalayamaz. Uygulamayı hesapsız kullanmaya devam edebilirsin.',
   'Continue listening': 'Dinlemeye devam et',
   'Because you listened…': 'Dinlediklerine göre…',
@@ -114,7 +114,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Add audio files to the device or review the storage filters.':
       'Cihaza ses dosyası ekle veya depolama filtrelerini kontrol et.',
   'Allow access to your music': 'Müziklerine erişim izni ver',
-  'BStream needs permission to show and play audio files on this device.':
+  'Songbrook needs permission to show and play audio files on this device.':
       'Songbrook\'un bu cihazdaki ses dosyalarını gösterip çalabilmesi için izin gerekiyor.',
   'Allow access': 'Erişime izin ver',
   'Device music could not be read.': 'Cihazdaki müzikler okunamadı.',
@@ -349,13 +349,13 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Song renamed.': 'Şarkının adı değiştirildi.',
   'Playlist renamed.': 'Çalma listesinin adı değiştirildi.',
   'Playlist deleted.': 'Çalma listesi silindi.',
-  'Remove only from BStream': 'Yalnızca Songbrook\'tan kaldır',
+  'Remove only from Songbrook': 'Yalnızca Songbrook\'tan kaldır',
   'Also delete from YouTube Music': 'YouTube Music\'ten de sil',
-  'This playlist is synced with YouTube Music. You can remove it only from BStream or also delete the playlist from your account. Downloaded songs will not be deleted.':
+  'This playlist is synced with YouTube Music. You can remove it only from Songbrook or also delete the playlist from your account. Downloaded songs will not be deleted.':
       'Bu çalma listesi YouTube Music ile eşitleniyor. Listeyi yalnızca Songbrook\'tan kaldırabilir veya hesabından da silebilirsin. İndirilen şarkılar silinmez.',
-  'This playlist is linked to YouTube Music, but the active account cannot delete it there. It will only be removed from BStream and will not be imported automatically again.':
+  'This playlist is linked to YouTube Music, but the active account cannot delete it there. It will only be removed from Songbrook and will not be imported automatically again.':
       'Bu çalma listesi YouTube Music\'e bağlı, ancak etkin hesap onu orada silemiyor. Liste yalnızca Songbrook\'tan kaldırılacak ve bir daha otomatik olarak aktarılmayacak.',
-  'The playlist was removed from BStream. Its YouTube Music deletion is scheduled for the next sync.':
+  'The playlist was removed from Songbrook. Its YouTube Music deletion is scheduled for the next sync.':
       'Çalma listesi Songbrook\'tan kaldırıldı. YouTube Music\'ten silinmesi bir sonraki eşitlemede yapılacak.',
   'This does not delete downloaded songs.':
       'Bu işlem indirilen şarkıları silmez.',
@@ -485,7 +485,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Album': 'Albüm',
   'Privacy and recommendations': 'Gizlilik ve öneriler',
   'Recommendation history': 'Öneri geçmişi',
-  'BStream learns from the songs you listen to in order to personalize Home.':
+  'Songbrook learns from the songs you listen to in order to personalize Home.':
       'Songbrook, Ana sayfayı sana göre düzenlemek için dinlediğin şarkılardan öğrenir.',
   'New plays will not be used to personalize Home.':
       'Yeni dinlemelerin Ana sayfayı kişiselleştirmek için kullanılmayacak.',
@@ -493,7 +493,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Deletes local signals and the personalized cache without removing downloads, favorites, or playlists.':
       'İndirmeleri, favorileri ve çalma listelerini silmeden yerel dinleme verilerini ve kişisel öneri önbelleğini siler.',
   'Clear history and recommendations?': 'Geçmiş ve öneriler temizlensin mi?',
-  'BStream will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.':
+  'Songbrook will forget what it learned from your listening. Downloads, favorites, and playlists will remain intact.':
       'Songbrook dinlediklerinden öğrendiklerini unutacak. İndirmelerin, favorilerin ve çalma listelerin olduğu gibi kalacak.',
   'History and recommendations cleared.': 'Geçmiş ve öneriler temizlendi.',
   'Sleep timer': 'Uyku zamanlayıcısı',
@@ -519,7 +519,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
       'Kitaplığını ve ayarlarını yedekle veya geri yükle.',
   'Integrations': 'Entegrasyonlar',
   'Open supported links': 'Desteklenen bağlantıları aç',
-  'Choose BStream to open YouTube and YouTube Music links.':
+  'Choose Songbrook to open YouTube and YouTube Music links.':
       'YouTube ve YouTube Music bağlantılarını Songbrook ile açmayı seç.',
   'Could not open the supported links settings.':
       'Desteklenen bağlantılar ayarları açılamadı.',
@@ -534,6 +534,22 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Normalize volume': 'Ses seviyesini dengele',
   "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":
       "YouTube'un referansından yüksek kaydedilmiş şarkıların sesini kısar; ses seviyesi dengeli kalır.",
+  'Turkish interface that follows the device language until you choose one.':
+      'Türkçe arayüz; sen bir dil seçene kadar cihazın dilini izler.',
+  'Loud songs are lowered to a steady level, like on YouTube Music.':
+      "Yüksek sesli şarkılar YouTube Music'teki gibi dengeli bir seviyeye indirilir.",
+  'Search loads more results as you scroll and now finds playlists.':
+      'Arama kaydırdıkça daha fazla sonuç yükler ve artık çalma listelerini de bulur.',
+  'On iOS, songs now end on time and the player closes with a downward swipe.':
+      "iOS'ta şarkılar artık zamanında biter; oynatıcı aşağı kaydırılarak kapanır.",
+  'Playback is more reliable when YouTube changes its clients.':
+      'YouTube istemcilerini değiştirdiğinde çalma daha güvenilirdir.',
+  'Based on BStream Music': 'BStream Music tabanlı',
+  'Songbrook is a fork of the open-source project by Bryam Contreras.':
+      "Songbrook, Bryam Contreras'ın açık kaynak projesinin bir fork'udur.",
+  'Version, credits, and repository': 'Sürüm, emeği geçenler ve depo',
+  'Turkish, steady volume, search, and more':
+      'Türkçe, dengeli ses, arama ve dahası',
   'Apply': 'Uygula',
   'Timer duration': 'Zamanlayıcı süresi',
   'Start': 'Başlat',
@@ -592,9 +608,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
       'Windows PowerShell 5.1 kullanılamıyor. Etkinleştir veya katmanı yapılandırması için yöneticiden yardım iste.',
   'The overlay configuration conflicts with the hosts file. Correct the ZXQPH0X entry and try again.':
       'Katman yapılandırması hosts dosyasıyla çakışıyor. ZXQPH0X kaydını düzeltip tekrar dene.',
-  'Windows could not verify the local domain. Restart BStream and try again.':
+  'Windows could not verify the local domain. Restart Songbrook and try again.':
       'Windows yerel alan adını doğrulayamadı. Songbrook\'u yeniden başlatıp tekrar dene.',
-  'The domain was configured, but BStream could not open the overlay through DNS or HTTP. Check the proxy, VPN, or antivirus and try again.':
+  'The domain was configured, but Songbrook could not open the overlay through DNS or HTTP. Check the proxy, VPN, or antivirus and try again.':
       'Alan adı yapılandırıldı, ancak Songbrook katmanı DNS veya HTTP üzerinden açamadı. Proxy, VPN veya virüsten koruma ayarlarını kontrol edip tekrar dene.',
   'Another application is already using port 80. Close it and enable the overlay again.':
       '80 numaralı bağlantı noktasını başka bir uygulama kullanıyor. O uygulamayı kapatıp katmanı yeniden etkinleştir.',
@@ -627,13 +643,13 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Version, support, and repository': 'Sürüm, destek ve kaynak kodu',
   'Version': 'Sürüm',
   'New version available': 'Yeni sürüm var',
-  'BStream Music version ZXQPH0X is available. You currently have version ZXQPH1X.':
+  'Songbrook version ZXQPH0X is available. You currently have version ZXQPH1X.':
       'Songbrook\'un ZXQPH0X sürümü çıktı. Şu an ZXQPH1X sürümünü kullanıyorsun.',
   'You already have the latest version.': 'En son sürümü kullanıyorsun.',
   'Could not check for a new version.': 'Yeni sürüm denetlenemedi.',
   'The download page could not be opened.': 'İndirme sayfası açılamadı.',
   'Support development': 'Geliştirmeye destek ol',
-  'Help maintain BStream Music and keep adding features.':
+  'Help maintain Songbrook and keep adding features.':
       'Songbrook\'un bakımına ve yeni özellikler eklenmesine katkıda bulun.',
   'The support page could not be opened.': 'Destek sayfası açılamadı.',
   'GitHub repository': 'GitHub deposu',

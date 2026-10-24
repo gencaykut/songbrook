@@ -100,7 +100,7 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
       'Oturum açmak için gizli bir oturum hazırlanamadı.',
   'Cerrar': 'Kapat',
   'Iniciar sesión': 'Oturum aç',
-  'El inicio de sesión integrado está disponible en Android, iOS, Windows y macOS. Puedes seguir usando BStream sin una cuenta.':
+  'El inicio de sesión integrado está disponible en Android, iOS, Windows y macOS. Puedes seguir usando Songbrook sin una cuenta.':
       'Uygulama içinden oturum açma Android, iOS, Windows ve macOS\'ta kullanılabilir. Songbrook\'u hesapsız kullanmaya devam edebilirsin.',
   'Cerrando y limpiando la sesión temporal…':
       'Geçici oturum kapatılıp temizleniyor…',
@@ -124,7 +124,7 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
       'Oturum açmak için gizli bir tarayıcı penceresi açılıyor…',
   'Verificando de forma segura tu sesión de YouTube Music…':
       'YouTube Music oturumun güvenli bir şekilde doğrulanıyor…',
-  'Completa el inicio de sesión en la ventana del navegador.\n\nBStream detectará cuando regreses a YouTube Music. La ventana usa un perfil temporal que se eliminará al terminar o cancelar.':
+  'Completa el inicio de sesión en la ventana del navegador.\n\nSongbrook detectará cuando regreses a YouTube Music. La ventana usa un perfil temporal que se eliminará al terminar o cancelar.':
       'Tarayıcı penceresinde oturum açma işlemini tamamla.\n\nYouTube Music\'e döndüğünde Songbrook bunu algılayacak. Pencere, iş bittiğinde veya iptal edildiğinde silinecek geçici bir profil kullanır.',
   'Cancelar': 'İptal',
   'No se pudo mostrar la ventana del navegador.':
@@ -230,7 +230,7 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
       'Çözüm olarak korunabilecek bir YouTube Music kopyası yok.',
   'La playlist cambió durante la verificación del borrado.':
       'Silme doğrulanırken çalma listesi değişti.',
-  'No se pudo confirmar el borrado anterior; BStream no lo repetirá automáticamente.':
+  'No se pudo confirmar el borrado anterior; Songbrook no lo repetirá automáticamente.':
       'Önceki silme işlemi doğrulanamadı; Songbrook bunu otomatik olarak tekrarlamayacak.',
   'La playlist remota desapareció; no se recreó automáticamente.':
       'YouTube Music\'teki çalma listesi kayboldu; otomatik olarak yeniden oluşturulmadı.',
@@ -421,7 +421,7 @@ const Map<String, String> turkishRuntimeMessages = <String, String>{
   'No se pudo iniciar ZXQPH0X porque Windows denegó o reservó el puerto ZXQPH1X.':
       'ZXQPH0X başlatılamadı, çünkü Windows ZXQPH1X numaralı bağlantı noktasını engelledi veya ayırdı.',
   'No se pudo iniciar ZXQPH0X.': 'ZXQPH0X başlatılamadı.',
-  'Windows configuró el dominio local, pero BStream no pudo verificar de forma segura http://ZXQPH0X/health.':
+  'Windows configuró el dominio local, pero Songbrook no pudo verificar de forma segura http://ZXQPH0X/health.':
       'Windows yerel alan adını yapılandırdı, ancak Songbrook http://ZXQPH0X/health adresini güvenli bir şekilde doğrulayamadı.',
   'No hay una URL reproducible. Obtén la información del track primero.':
       'Çalınabilecek bir URL yok. Önce parçanın bilgilerini al.',

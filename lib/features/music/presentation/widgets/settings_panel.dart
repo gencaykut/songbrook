@@ -550,7 +550,7 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
         strings: strings,
         checkingForUpdates: _releaseCheckBusy,
         onVersion: _checkForAppUpdate,
-        onSupport: _openSupportDevelopment,
+        onUpstream: _openUpstreamRepository,
         onGitHub: _openGitHubRepository,
       ),
       _SettingsRoute.root => const SizedBox.shrink(),
@@ -930,10 +930,10 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
     }
   }
 
-  Future<void> _openSupportDevelopment() async {
+  Future<void> _openUpstreamRepository() async {
     await _openExternalPage(
-      url: AppConstants.supportDevelopmentUrl,
-      failureMessage: ref.read(appStringsProvider).supportDevelopmentOpenFailed,
+      url: AppConstants.upstreamRepositoryUrl,
+      failureMessage: ref.read(appStringsProvider).githubRepositoryOpenFailed,
     );
   }
 
@@ -1881,14 +1881,14 @@ class _AboutApplicationSettings extends StatelessWidget {
     required this.strings,
     required this.checkingForUpdates,
     required this.onVersion,
-    required this.onSupport,
+    required this.onUpstream,
     required this.onGitHub,
   });
 
   final AppStrings strings;
   final bool checkingForUpdates;
   final VoidCallback onVersion;
-  final VoidCallback onSupport;
+  final VoidCallback onUpstream;
   final VoidCallback onGitHub;
 
   @override
@@ -1918,19 +1918,16 @@ class _AboutApplicationSettings extends StatelessWidget {
             'Novedades de ${AppConstants.appVersion}',
             "What's new in ${AppConstants.appVersion}",
           ),
-          subtitle: strings.choose(
-            'Widget, personalización, rendimiento, idiomas y más',
-            'Widget, customization, performance, languages, and more',
-          ),
+          subtitle: strings.releaseHighlightsSummary,
           onTap: () => _showWhatsNew(context),
         ),
         const SizedBox(height: appCardGap),
         _SettingsEntryCard(
-          key: const ValueKey('settings-about-support'),
-          icon: Icons.favorite_outline_rounded,
-          title: strings.supportDevelopmentTitle,
-          subtitle: strings.supportDevelopmentBody,
-          onTap: onSupport,
+          key: const ValueKey('settings-about-upstream'),
+          icon: Icons.call_split_rounded,
+          title: strings.upstreamProjectTitle,
+          subtitle: strings.upstreamProjectBody,
+          onTap: onUpstream,
         ),
         const SizedBox(height: appCardGap),
         _SettingsEntryCard(
@@ -1945,42 +1942,7 @@ class _AboutApplicationSettings extends StatelessWidget {
   }
 
   Future<void> _showWhatsNew(BuildContext context) async {
-    final legacyHighlights = strings.isEnglish
-        ? const <String>[
-            'The player widget is now available for your home screen.',
-            'Personalize the app background with an image from your gallery.',
-            'You can now change the font throughout the app.',
-            'Animated artwork performance has been optimized.',
-            'Select multiple songs in albums, mixes, and search results to add them to a playlist or download them.',
-            'Interface performance and smoothness have been improved.',
-            'Album, mix, and artist pages now inherit colors from their cover art.',
-            'Portuguese, French, Korean, Chinese, and Japanese are now supported.',
-          ]
-        : const <String>[
-            'Ya está disponible el widget del reproductor para la pantalla de inicio.',
-            'Personaliza el fondo de la aplicación con una imagen de tu galería.',
-            'Ahora puedes cambiar la fuente de toda la aplicación.',
-            'Se optimizó el rendimiento de los artworks animados.',
-            'Selecciona varias canciones en álbumes, mixes y resultados de búsqueda para añadirlas a una playlist o descargarlas.',
-            'Se hicieron mejoras en la interfaz para ofrecer más rendimiento y fluidez.',
-            'Los fondos de álbumes, mixes y artistas ahora heredan los tonos de sus portadas.',
-            'La aplicación ahora es compatible con portugués, francés, coreano, chino y japonés.',
-          ];
-    const englishHighlights = <String>[
-      'The player widget is now available for your home screen.',
-      'Personalize the app background with an image from your gallery.',
-      'You can now change the font throughout the app.',
-      'Animated artwork performance has been optimized.',
-      'Select multiple songs in albums, mixes, and search results to add them to a playlist or download them.',
-      'Interface performance and smoothness have been improved.',
-      'Album, mix, and artist pages now inherit colors from their cover art.',
-      'Portuguese, French, Korean, Chinese, and Japanese are now supported.',
-    ];
-    final highlights = List<String>.generate(
-      englishHighlights.length,
-      (index) =>
-          strings.choose(legacyHighlights[index], englishHighlights[index]),
-    );
+    final highlights = strings.releaseHighlights;
     await showAppDialog<void>(
       context: context,
       builder: (dialogContext) => AppAlertDialog(
