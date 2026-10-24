@@ -2,7 +2,7 @@
   <defs>
     <clipPath id="below"><rect x="0" y="268" width="512" height="244"/></clipPath>
   </defs>
-  <rect width="512" height="512" fill="#FF0000"/>
+  <rect width="512" height="512" fill="#13263D"/>
   <path d="M0 268 Q128 220 256 268 T512 268 V512 H0 Z" fill="#CFEAE8"/>
   <path d="M0 340 Q128 300 256 340 T512 340 V512 H0 Z" fill="#B6DFDC"/>
   <path d="M196 150 L366 256 L196 362 Z" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linejoin="round"/>
