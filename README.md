@@ -122,6 +122,16 @@ a keystore kept outside the repository, then:
 flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64,android-x64
 ```
 
+### Icons
+
+The app icon is drawn in `assets/icons/source/songbrook_icon.svg`; the
+Android status-bar mark is `songbrook_notification.svg`. Regenerate every
+platform variant on macOS with:
+
+```bash
+swift scripts/generate_app_icons.swift
+```
+
 ## Quality
 
 ```bash

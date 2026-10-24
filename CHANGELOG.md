@@ -23,6 +23,9 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 
 ### Changed
 
+- Replaced the BStream Music icon with the Songbrook icon on every platform,
+  including the Android status-bar mark. The icon is generated from an SVG
+  source by `scripts/generate_app_icons.swift`.
 - Renamed the app to Songbrook with the bundle ID
   `io.github.gencaykut.songbrook` and the App Group
   `group.io.github.gencaykut.songbrook`.
