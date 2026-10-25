@@ -864,7 +864,9 @@ class _ChannelAudioResolver implements AudioStreamResolver {
       streamUrl: 'https://media.example/${track.id}.m4a',
       streamExtension: 'm4a',
       videoId: track.id,
-      streamDuration: const Duration(minutes: 4),
+      streamDuration: track.id.startsWith('song')
+          ? const Duration(minutes: 3, seconds: 37, milliseconds: 412)
+          : const Duration(minutes: 4, seconds: 57),
       channelName: channels[track.id],
     );
   }
@@ -957,6 +959,8 @@ void songVersionTests() {
     expect(resolved.id, 'videoVerme1');
     expect(resolved.title, 'Verme');
     expect(resolved.streamUrl, 'https://media.example/songVerme01.m4a');
+    expect(resolved.streamVideoId, 'songVerme01');
+    expect(resolved.duration, const Duration(minutes: 3, seconds: 37));
     expect(resolver.resolvedIds, ['videoVerme1', 'songVerme01']);
   });
 

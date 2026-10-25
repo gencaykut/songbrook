@@ -60,6 +60,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## SponsorBlock data
+
+Songbrook skips the non-music parts of music videos (the `music_offtopic`
+category) using segments from SponsorBlock, a community database by Ajay
+Ramachandran and contributors. The data is licensed under the Creative
+Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+(CC BY-NC-SA 4.0). Songbrook requests it by the first four characters of the
+video's SHA-256 hash and does not redistribute it.
+
+Source: <https://sponsor.ajay.app>
+
+License: <https://creativecommons.org/licenses/by-nc-sa/4.0/>
+
 ## EJS 0.8.0
 
 BStream Music directly consumes Base64-encoded copies of the checksum-pinned

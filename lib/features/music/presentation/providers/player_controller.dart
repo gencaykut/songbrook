@@ -299,6 +299,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
         }
         _observePlaybackHistory(decorated);
         state = AsyncData(decorated);
+        _maybeSkipOffTopicSegment(decorated);
       }
       if (queueIndexChanged && decorated.isRemote) {
         _remotePrefetch.invalidate();
@@ -415,6 +416,77 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
                   _shufflePlayedIndices.length < _queue.length
             : _queueIndex + 1 < _queue.length) ||
         (_autoplayEnabled && _recommendationExtension.sourceId != null);
+  }
+
+  String? _offTopicKey;
+  List<SponsorBlockSegment> _offTopicSegments = const [];
+  final Set<int> _skippedOffTopicSegments = {};
+
+  /// Skips the parts of a playing music video that SponsorBlock contributors
+  /// marked as not music (intros, skits, talking). Each part is skipped once
+  /// per play, so seeking back into one plays it. Segments are timed for the
+  /// video itself: a song version, or a stream of unknown origin, is left
+  /// alone.
+  void _maybeSkipOffTopicSegment(PlayerSnapshot snapshot) {
+    final enabled =
+        ref
+            .read(settingsControllerProvider)
+            .asData
+            ?.value
+            .skipOffTopicSegments ??
+        true;
+    final track = _playingRemoteTrack;
+    if (!enabled ||
+        track == null ||
+        snapshot.status != PlayerStatus.playing ||
+        !_snapshotBelongsToTrack(snapshot, track)) {
+      return;
+    }
+    final videoId = track.streamVideoId;
+    if (videoId == null || videoId != track.id) return;
+    final key = '$_playRequestId:$videoId';
+    if (key != _offTopicKey) {
+      _offTopicKey = key;
+      _offTopicSegments = const [];
+      _skippedOffTopicSegments.clear();
+      unawaited(
+        ref
+            .read(sponsorBlockClientProvider)
+            .musicOffTopicSegments(videoId)
+            .then(
+              (segments) {
+                if (!_disposed && _offTopicKey == key) {
+                  _offTopicSegments = segments;
+                }
+              },
+              onError: (Object error) {
+                debugPrint('[SponsorBlock] No segments for $videoId: $error');
+              },
+            ),
+      );
+      return;
+    }
+    final position = snapshot.position;
+    for (var index = 0; index < _offTopicSegments.length; index++) {
+      final segment = _offTopicSegments[index];
+      if (_skippedOffTopicSegments.contains(index) ||
+          position < segment.start ||
+          position >= segment.end - const Duration(milliseconds: 500)) {
+        continue;
+      }
+      _skippedOffTopicSegments.add(index);
+      final duration = snapshot.duration;
+      debugPrint(
+        '[SponsorBlock] Skipping ${segment.start}-${segment.end} of $videoId.',
+      );
+      if (duration != null &&
+          segment.end >= duration - const Duration(seconds: 1)) {
+        unawaited(playNext(automatic: true));
+      } else {
+        unawaited(seek(segment.end));
+      }
+      return;
+    }
   }
 
   /// The queue's related radio stays attached while Autoplay is off, so it

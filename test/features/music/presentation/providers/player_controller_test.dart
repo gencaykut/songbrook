@@ -19,6 +19,7 @@ import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
 import 'package:bstream_music/services/downloader/fallback_audio_resolver.dart';
 import 'package:bstream_music/services/media_session/desktop_media_session.dart';
 import 'package:bstream_music/services/player/player_service.dart';
+import 'package:bstream_music/services/sponsorblock/sponsorblock_client.dart';
 import 'package:bstream_music/services/storage/local_database_service.dart';
 import 'package:bstream_music/services/storage/local_library_reconciler.dart';
 import 'package:flutter/material.dart';
@@ -974,6 +975,88 @@ void main() {
       expect(player.playedRemote.map((track) => track.id), ['because-3']);
     },
   );
+
+  test('non-music parts of a music video are skipped once per play', () async {
+    final player = _FakePlayerService();
+    final sponsorBlock = _FixedSponsorBlockClient({
+      'offtopicVid': const [
+        SponsorBlockSegment(start: Duration.zero, end: Duration(seconds: 20)),
+        SponsorBlockSegment(
+          start: Duration(seconds: 100),
+          end: Duration(seconds: 130),
+        ),
+      ],
+    });
+    final container = _container(
+      player,
+      extraOverrides: [
+        sponsorBlockClientProvider.overrideWithValue(sponsorBlock),
+      ],
+    );
+    addTearDown(container.dispose);
+    final video = _queuedRemoteTrack(
+      'offtopicVid',
+    ).copyWith(streamVideoId: 'offtopicVid');
+
+    await container.read(playerControllerProvider.future);
+    final controller = container.read(playerControllerProvider.notifier);
+    await controller.playRemote(video, queue: [video]);
+    await _flushCompletion();
+    Future<void> at(int seconds) async {
+      player.emit(
+        player.currentSnapshot.copyWith(
+          status: PlayerStatus.playing,
+          position: Duration(seconds: seconds),
+          duration: const Duration(minutes: 4),
+        ),
+      );
+      await _flushCompletion();
+    }
+
+    await at(1);
+    expect(player.lastSeekPosition, const Duration(seconds: 20));
+    await at(50);
+    // Seeking back into a skipped intro plays it.
+    await at(5);
+    expect(player.lastSeekPosition, const Duration(seconds: 20));
+    await at(101);
+    expect(player.lastSeekPosition, const Duration(seconds: 130));
+    expect(sponsorBlock.requested, ['offtopicVid']);
+  });
+
+  test("a song version is not skipped with its video's segments", () async {
+    final player = _FakePlayerService();
+    final sponsorBlock = _FixedSponsorBlockClient({
+      'offtopicVid': const [
+        SponsorBlockSegment(start: Duration.zero, end: Duration(seconds: 20)),
+      ],
+    });
+    final container = _container(
+      player,
+      extraOverrides: [
+        sponsorBlockClientProvider.overrideWithValue(sponsorBlock),
+      ],
+    );
+    addTearDown(container.dispose);
+    final video = _queuedRemoteTrack(
+      'offtopicVid',
+    ).copyWith(streamVideoId: 'songVersion');
+
+    await container.read(playerControllerProvider.future);
+    await container
+        .read(playerControllerProvider.notifier)
+        .playRemote(video, queue: [video]);
+    player.emit(
+      player.currentSnapshot.copyWith(
+        status: PlayerStatus.playing,
+        position: const Duration(seconds: 1),
+      ),
+    );
+    await _flushCompletion();
+
+    expect(player.lastSeekPosition, isNull);
+    expect(sponsorBlock.requested, isEmpty);
+  });
 
   test(
     'a song inserted after the current one plays and keeps the queue',
@@ -6760,5 +6843,20 @@ class _CountingHomeRecommendationsController
   Future<List<HomeRecommendationSection>> build() async {
     onBuild();
     return const <HomeRecommendationSection>[];
+  }
+}
+
+class _FixedSponsorBlockClient extends SponsorBlockClient {
+  _FixedSponsorBlockClient(this.segments);
+
+  final Map<String, List<SponsorBlockSegment>> segments;
+  final requested = <String>[];
+
+  @override
+  Future<List<SponsorBlockSegment>> musicOffTopicSegments(
+    String videoId,
+  ) async {
+    requested.add(videoId);
+    return segments[videoId] ?? const [];
   }
 }

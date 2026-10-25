@@ -33,6 +33,10 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   lyric re-uploads that name the artist are matched by title, artist and
   length; live, remix and cover versions are left alone. On by default, with
   a switch in Playback settings.
+- Music videos that keep playing as videos skip their non-music parts
+  (intros, skits, talking) using SponsorBlock's community data
+  (CC BY-NC-SA 4.0). The request names only a four-character prefix of the
+  video's hash. On by default, with a switch in Playback settings.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
 

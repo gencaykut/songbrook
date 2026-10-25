@@ -614,6 +614,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       .read(settingsControllerProvider.notifier)
                       .setPreferSongVersions,
                 ),
+                const SizedBox(height: appCardGap),
+                _PlaybackSwitchSettings(
+                  key: const ValueKey('settings-inline-offtopic'),
+                  switchKey: const ValueKey('settings-offtopic-switch'),
+                  enabled: state.skipOffTopicSegments,
+                  icon: Icons.content_cut_rounded,
+                  title: strings.skipOffTopicSegments,
+                  summary: strings.skipOffTopicSegmentsSummary,
+                  onEnabledChanged: ref
+                      .read(settingsControllerProvider.notifier)
+                      .setSkipOffTopicSegments,
+                ),
               ],
             ),
             _SettingsGroup(

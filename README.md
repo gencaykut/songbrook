@@ -36,6 +36,9 @@ detail, is kept at [docs/upstream-readme.md](docs/upstream-readme.md).
 - **Volume normalization.** Songs louder than YouTube's loudness target are
   lowered to it, as on YouTube Music; quieter songs are never boosted. On by
   default, with a switch in Playback settings.
+- **Songs over music videos.** A music video plays its song version from
+  YouTube Music when there is one; otherwise its non-music parts are skipped
+  using SponsorBlock.
 - **Search pages and playlists.** Search loads further result pages as you
   scroll, up to 200 per category, and a Playlists tab finds YouTube Music
   community playlists.

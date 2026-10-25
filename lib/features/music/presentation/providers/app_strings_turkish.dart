@@ -507,6 +507,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Autoplay': 'Otomatik oynatma',
   'Similar': 'Benzer',
   'Prefer song versions': 'Şarkı sürümünü tercih et',
+  'Skip non-music parts': 'Müzik olmayan bölümleri atla',
+  "Skips intros and talking in music videos using SponsorBlock's community data (CC BY-NC-SA 4.0).":
+      'Müzik videolarındaki giriş ve konuşma bölümlerini SponsorBlock topluluk verileriyle (CC BY-NC-SA 4.0) atlar.',
   'When a music video plays, use its song version from YouTube Music if there is one.':
       'Müzik videosu çalınınca, YouTube Music\'te varsa şarkı sürümünü çalar.',
   'When the queue ends, keep playing similar songs.':

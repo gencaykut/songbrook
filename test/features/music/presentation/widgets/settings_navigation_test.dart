@@ -1457,8 +1457,8 @@ void main() {
       final crossfadeRect = tester.getRect(
         find.byKey(const ValueKey('settings-inline-crossfade')),
       );
-      final aboutRect = tester.getRect(
-        find.byKey(const ValueKey('settings-card-about')),
+      final loudnessRect = tester.getRect(
+        find.byKey(const ValueKey('settings-inline-loudness')),
       );
       final languageRect = tester.getRect(
         find.byKey(const ValueKey('settings-card-language')),
@@ -1470,9 +1470,9 @@ void main() {
       expect(languageRect.width, greaterThan(760));
       expect(crossfadeRect.width, greaterThan(760));
       expect(crossfadeRect.width, closeTo(languageRect.width, 0.1));
-      expect(crossfadeRect.width, closeTo(aboutRect.width, 0.1));
-      expect(crossfadeRect.left, closeTo(aboutRect.left, 0.1));
-      expect(crossfadeRect.right, closeTo(aboutRect.right, 0.1));
+      expect(crossfadeRect.width, closeTo(loudnessRect.width, 0.1));
+      expect(crossfadeRect.left, closeTo(loudnessRect.left, 0.1));
+      expect(crossfadeRect.right, closeTo(loudnessRect.right, 0.1));
       expect(timerRect.width, closeTo(520, 0.1));
       expect(tester.takeException(), isNull);
       debugDefaultTargetPlatformOverride = null;
@@ -1956,12 +1956,16 @@ void main() {
     expect(find.byKey(const ValueKey('settings-card-timer')), findsNothing);
     expect(find.byKey(const ValueKey('storage-import-backup')), findsNothing);
     expect(navigationController.canPop, isFalse);
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
@@ -2463,8 +2467,10 @@ void main() {
           .first,
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
@@ -2551,8 +2557,10 @@ void main() {
         tester,
         find.byKey(const ValueKey('settings-card-storage')),
       );
-      await tester.ensureVisible(
+      await tester.scrollUntilVisible(
         find.byKey(const ValueKey('settings-card-storage')),
+        200,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
@@ -2636,8 +2644,10 @@ void main() {
       tester,
       find.byKey(const ValueKey('settings-card-storage')),
     );
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));

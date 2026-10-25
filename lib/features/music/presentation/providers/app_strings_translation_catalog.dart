@@ -2337,6 +2337,21 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '自動再生',
   ],
   'Similar': <String>['Semelhantes', 'Similaires', '비슷한 곡', '相似歌曲', '似た曲'],
+  'Skip non-music parts': <String>[
+    'Pular partes sem música',
+    'Ignorer les passages non musicaux',
+    '음악이 아닌 부분 건너뛰기',
+    '跳过非音乐片段',
+    '音楽以外の部分をスキップ',
+  ],
+  "Skips intros and talking in music videos using SponsorBlock's community data (CC BY-NC-SA 4.0).":
+      <String>[
+        'Pula introduções e falas dos videoclipes com os dados da comunidade do SponsorBlock (CC BY-NC-SA 4.0).',
+        'Ignore les intros et les dialogues des clips grâce aux données communautaires de SponsorBlock (CC BY-NC-SA 4.0).',
+        'SponsorBlock 커뮤니티 데이터(CC BY-NC-SA 4.0)로 뮤직비디오의 인트로와 대화 부분을 건너뜁니다.',
+        '使用 SponsorBlock 社区数据（CC BY-NC-SA 4.0）跳过音乐视频中的片头和对白。',
+        'SponsorBlock のコミュニティデータ（CC BY-NC-SA 4.0）で、ミュージックビデオのイントロや会話を飛ばします。',
+      ],
   'Prefer song versions': <String>[
     'Preferir a versão da música',
     'Préférer la version audio',

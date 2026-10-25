@@ -1143,6 +1143,12 @@ class AppStrings {
       choose('Normalizar volumen', 'Normalize volume');
   String get autoplay => choose('Reproducción automática', 'Autoplay');
   String get similar => choose('Similares', 'Similar');
+  String get skipOffTopicSegments =>
+      choose('Saltar partes sin música', 'Skip non-music parts');
+  String get skipOffTopicSegmentsSummary => choose(
+    'Salta introducciones y diálogos de los videoclips con los datos de la comunidad de SponsorBlock (CC BY-NC-SA 4.0).',
+    "Skips intros and talking in music videos using SponsorBlock's community data (CC BY-NC-SA 4.0).",
+  );
   String get preferSongVersions =>
       choose('Preferir la versión de la canción', 'Prefer song versions');
   String get preferSongVersionsSummary => choose(

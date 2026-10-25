@@ -130,6 +130,7 @@ class SettingsState {
     this.loudnessNormalizationEnabled = true,
     this.autoplayEnabled = true,
     this.preferSongVersions = true,
+    this.skipOffTopicSegments = true,
   });
 
   final String downloadDirectory;
@@ -174,6 +175,9 @@ class SettingsState {
   /// without the video's intro, skits or different mix.
   final bool preferSongVersions;
 
+  /// Skips the non-music parts of music videos using SponsorBlock.
+  final bool skipOffTopicSegments;
+
   SettingsState copyWith({
     String? downloadDirectory,
     AppLanguage? language,
@@ -204,6 +208,7 @@ class SettingsState {
     bool? loudnessNormalizationEnabled,
     bool? autoplayEnabled,
     bool? preferSongVersions,
+    bool? skipOffTopicSegments,
   }) {
     return SettingsState(
       downloadDirectory: downloadDirectory ?? this.downloadDirectory,
@@ -249,6 +254,7 @@ class SettingsState {
           loudnessNormalizationEnabled ?? this.loudnessNormalizationEnabled,
       autoplayEnabled: autoplayEnabled ?? this.autoplayEnabled,
       preferSongVersions: preferSongVersions ?? this.preferSongVersions,
+      skipOffTopicSegments: skipOffTopicSegments ?? this.skipOffTopicSegments,
     );
   }
 }
@@ -300,6 +306,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       'settings.loudnessNormalizationEnabled';
   static const _autoplayEnabledKey = 'settings.autoplayEnabled';
   static const _preferSongVersionsKey = 'settings.preferSongVersions';
+  static const _skipOffTopicSegmentsKey = 'settings.skipOffTopicSegments';
   static const _mediaRootDirectoryName = 'BStream-Music';
   Future<void> _lyricsTextAlignmentWriteTail = Future<void>.value();
   Future<void> _animatedArtworkWriteTail = Future<void>.value();
@@ -313,6 +320,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   Future<void> _loudnessNormalizationWriteTail = Future<void>.value();
   Future<void> _autoplayWriteTail = Future<void>.value();
   Future<void> _preferSongVersionsWriteTail = Future<void>.value();
+  Future<void> _skipOffTopicSegmentsWriteTail = Future<void>.value();
   Future<void> _appBackgroundWriteTail = Future<void>.value();
 
   @override
@@ -433,6 +441,8 @@ class SettingsController extends AsyncNotifier<SettingsState> {
         prefs.getBool(_loudnessNormalizationEnabledKey) ?? true;
     final autoplayEnabled = prefs.getBool(_autoplayEnabledKey) ?? true;
     final preferSongVersions = prefs.getBool(_preferSongVersionsKey) ?? true;
+    final skipOffTopicSegments =
+        prefs.getBool(_skipOffTopicSegmentsKey) ?? true;
     final storedDirectory = prefs.getString(_downloadDirectoryKey);
     final encodedMigrationJournal = prefs.getString(
       _downloadDirectoryMigrationJournalKey,
@@ -616,6 +626,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       loudnessNormalizationEnabled: loudnessNormalizationEnabled,
       autoplayEnabled: autoplayEnabled,
       preferSongVersions: preferSongVersions,
+      skipOffTopicSegments: skipOffTopicSegments,
     );
   }
 
@@ -1299,6 +1310,22 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       await prefs.setBool(_preferSongVersionsKey, enabled);
     });
     _preferSongVersionsWriteTail = write.catchError((_) {});
+    await write;
+  }
+
+  Future<void> setSkipOffTopicSegments(bool enabled) async {
+    final current = state.asData?.value ?? await future;
+    if (current.skipOffTopicSegments == enabled) {
+      return;
+    }
+    state = AsyncData(current.copyWith(skipOffTopicSegments: enabled));
+    final write = _skipOffTopicSegmentsWriteTail.catchError((_) {}).then((
+      _,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_skipOffTopicSegmentsKey, enabled);
+    });
+    _skipOffTopicSegmentsWriteTail = write.catchError((_) {});
     await write;
   }
 

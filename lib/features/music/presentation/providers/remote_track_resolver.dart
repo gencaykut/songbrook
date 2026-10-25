@@ -73,6 +73,9 @@ TrackInfo _mergeTrackInfo(TrackInfo base, TrackInfo resolved) {
     streamClientProfileKey: hasResolvedTransport
         ? resolved.streamClientProfileKey
         : base.streamClientProfileKey,
+    streamVideoId: hasResolvedTransport
+        ? resolved.streamVideoId
+        : base.streamVideoId,
     streamDuration: hasResolvedTransport
         ? resolved.streamDuration
         : base.streamDuration,
@@ -281,13 +284,22 @@ class RemoteTrackResolver {
           'Audio stream resolution was superseded.',
         );
       }
+      final videoResolution = resolved;
       resolved = await _preferSongVersion(track, resolved, resolve);
       if (shouldContinue != null && !shouldContinue()) {
         throw const AudioStreamResolverException(
           'Audio stream resolution was superseded.',
         );
       }
-      final merged = _mergeTrackInfo(track, _trackFromResolution(resolved));
+      var merged = _mergeTrackInfo(track, _trackFromResolution(resolved));
+      // The queue keeps the video's metadata, but the song version has its
+      // own length; the player's progress follows it.
+      final songLength = resolved.streamDuration;
+      if (!identical(resolved, videoResolution) && songLength != null) {
+        merged = merged.copyWith(
+          duration: Duration(seconds: songLength.inMilliseconds ~/ 1000),
+        );
+      }
       if (_hasPlayableStream(merged) && _isCurrentGeneration(key, generation)) {
         final entry = _entries[key]!..streamExpiresAt = resolved.expiresAt;
         if (!entry.isExpired) {
@@ -373,6 +385,7 @@ class RemoteTrackResolver {
       streamSampleRate: resolution.sampleRate,
       streamChannels: resolution.channels,
       streamClientProfileKey: resolution.clientProfileKey,
+      streamVideoId: resolution.videoId,
       streamDuration: resolution.streamDuration,
       loudnessDb: resolution.loudnessDb,
       httpHeaders: resolution.httpHeaders,
@@ -628,6 +641,7 @@ class RemoteTrackResolver {
       streamSampleRate: track.streamSampleRate,
       streamChannels: track.streamChannels,
       streamClientProfileKey: track.streamClientProfileKey,
+      streamVideoId: track.streamVideoId,
       streamDuration: track.streamDuration,
       loudnessDb: track.loudnessDb,
       extractor: track.extractor,

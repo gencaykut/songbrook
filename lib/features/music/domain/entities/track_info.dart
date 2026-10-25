@@ -19,6 +19,7 @@ class TrackInfo {
     this.streamSampleRate,
     this.streamChannels,
     this.streamClientProfileKey,
+    this.streamVideoId,
     this.streamDuration,
     this.loudnessDb,
     this.extractor,
@@ -59,6 +60,10 @@ class TrackInfo {
 
   /// Exact InnerTube client profile that produced [streamUrl].
   final String? streamClientProfileKey;
+
+  /// YouTube video whose media [streamUrl] plays. It differs from [id] when a
+  /// music video plays its song version, whose timings are not the video's.
+  final String? streamVideoId;
 
   /// Millisecond-precise duration of the media behind [streamUrl].
   ///
@@ -102,6 +107,7 @@ class TrackInfo {
     int? streamSampleRate,
     int? streamChannels,
     String? streamClientProfileKey,
+    String? streamVideoId,
     Duration? streamDuration,
     double? loudnessDb,
     String? extractor,
@@ -132,6 +138,7 @@ class TrackInfo {
       streamChannels: streamChannels ?? this.streamChannels,
       streamClientProfileKey:
           streamClientProfileKey ?? this.streamClientProfileKey,
+      streamVideoId: streamVideoId ?? this.streamVideoId,
       streamDuration: streamDuration ?? this.streamDuration,
       loudnessDb: loudnessDb ?? this.loudnessDb,
       extractor: extractor ?? this.extractor,

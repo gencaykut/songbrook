@@ -6568,6 +6568,11 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 200));
 
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.byKey(const ValueKey('settings-card-storage')), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-card-downloads')), findsNothing);
     expect(find.byKey(const ValueKey('settings-card-backup')), findsNothing);
@@ -6577,12 +6582,16 @@ void main() {
     );
     expect(find.byKey(const ValueKey('backup-actions')), findsNothing);
 
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
@@ -6663,8 +6672,10 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 200));
 
-    await tester.ensureVisible(
+    await tester.scrollUntilVisible(
       find.byKey(const ValueKey('settings-card-storage')),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
 
     await tester.pumpAndSettle();

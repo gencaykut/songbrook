@@ -19,6 +19,7 @@ class TrackInfoModel extends TrackInfo {
     super.streamSampleRate,
     super.streamChannels,
     super.streamClientProfileKey,
+    super.streamVideoId,
     super.streamDuration,
     super.loudnessDb,
     super.extractor,
@@ -81,6 +82,7 @@ class TrackInfoModel extends TrackInfo {
           _positiveIntValue((selectedFormat ?? json)['audio_channels']) ??
           _positiveIntValue((selectedFormat ?? json)['audioChannels']),
       streamClientProfileKey: _stringValue(json['stream_client_profile_key']),
+      streamVideoId: _stringValue(json['stream_video_id']),
       streamDuration: _millisecondsDuration(json['stream_duration_ms']),
       loudnessDb: _finiteDoubleValue(json['loudness_db']),
       extractor:
@@ -126,6 +128,7 @@ class TrackInfoModel extends TrackInfo {
       'stream_sample_rate': streamSampleRate,
       'stream_channels': streamChannels,
       'stream_client_profile_key': streamClientProfileKey,
+      'stream_video_id': streamVideoId,
       'stream_duration_ms': streamDuration?.inMilliseconds,
       'loudness_db': loudnessDb,
       'extractor': extractor,
