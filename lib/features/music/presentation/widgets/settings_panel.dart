@@ -590,6 +590,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       .read(settingsControllerProvider.notifier)
                       .setLoudnessNormalizationEnabled,
                 ),
+                const SizedBox(height: appCardGap),
+                _PlaybackSwitchSettings(
+                  key: const ValueKey('settings-inline-autoplay'),
+                  switchKey: const ValueKey('settings-autoplay-switch'),
+                  enabled: state.autoplayEnabled,
+                  icon: Icons.all_inclusive_rounded,
+                  title: strings.autoplay,
+                  summary: strings.autoplaySummary,
+                  onEnabledChanged: ref
+                      .read(settingsControllerProvider.notifier)
+                      .setAutoplayEnabled,
+                ),
               ],
             ),
             _SettingsGroup(

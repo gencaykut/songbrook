@@ -70,6 +70,40 @@ void main() {
     }
   });
 
+  test('Autoplay defaults on and persists when turned off', () async {
+    SharedPreferences.setMockInitialValues({});
+    final first = ProviderContainer(
+      overrides: [
+        settingsControllerProvider.overrideWith(
+          () => SettingsController.forPlatform(AppPlatformType.ios),
+        ),
+      ],
+    );
+    addTearDown(first.dispose);
+    expect(
+      (await first.read(settingsControllerProvider.future)).autoplayEnabled,
+      isTrue,
+    );
+    await first
+        .read(settingsControllerProvider.notifier)
+        .setAutoplayEnabled(false);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('settings.autoplayEnabled'), isFalse);
+
+    final restored = ProviderContainer(
+      overrides: [
+        settingsControllerProvider.overrideWith(
+          () => SettingsController.forPlatform(AppPlatformType.ios),
+        ),
+      ],
+    );
+    addTearDown(restored.dispose);
+    expect(
+      (await restored.read(settingsControllerProvider.future)).autoplayEnabled,
+      isFalse,
+    );
+  });
+
   test(
     'audio quality visibility defaults off and preserves an explicit saved value',
     () async {

@@ -121,6 +121,18 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       },
       fireImmediately: true,
     );
+    ref.listen<bool?>(
+      settingsControllerProvider.select(
+        (settings) => settings.asData?.value.autoplayEnabled,
+      ),
+      (previous, next) {
+        // Turning Autoplay back on near the end of a radio queue resumes it
+        // now, not after the next track change.
+        if (previous == false && next == true) {
+          unawaited(_maybeExtendRecommendationQueue());
+        }
+      },
+    );
     final initialSnapshot = _decorateSnapshot(service.currentSnapshot);
     final historySink = ref.read(playbackHistorySinkProvider);
     final historyTracker = QualifiedPlaybackHistoryTracker(
@@ -402,8 +414,14 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
             ? _shufflePlan.isNotEmpty ||
                   _shufflePlayedIndices.length < _queue.length
             : _queueIndex + 1 < _queue.length) ||
-        _recommendationExtension.sourceId != null;
+        (_autoplayEnabled && _recommendationExtension.sourceId != null);
   }
+
+  /// The queue's related radio stays attached while Autoplay is off, so it
+  /// can continue from the same point when Autoplay is turned back on.
+  bool get _autoplayEnabled =>
+      ref.read(settingsControllerProvider).asData?.value.autoplayEnabled ??
+      true;
 
   void _observeNativePlaybackIntent(PlayerSnapshot snapshot) {
     if (_userPaused || _explicitlyStopped) return;
@@ -814,7 +832,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<bool> _maybeExtendRecommendationQueue({bool atQueueEnd = false}) {
-    if (_queueIndex < 0 || _queueIndex >= _queue.length) {
+    if (!_autoplayEnabled || _queueIndex < 0 || _queueIndex >= _queue.length) {
       return Future<bool>.value(false);
     }
     final sourceId = _recommendationExtension.sourceId;

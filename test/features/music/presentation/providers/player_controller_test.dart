@@ -976,6 +976,66 @@ void main() {
   );
 
   test(
+    'with Autoplay off a recommendation queue ends, and resumes when it is on',
+    () async {
+      final player = _FakePlayerService();
+      final settings = _CrossfadeSettingsController(
+        const SettingsState(
+          downloadDirectory: '/tmp/bstream-player-test',
+          language: AppLanguage.spanish,
+          recommendationHistoryEnabled: true,
+          autoplayEnabled: false,
+        ),
+      );
+      final container = _container(player, settingsController: settings);
+      addTearDown(container.dispose);
+      final seed = _queuedRemoteTrack('autoplay-seed');
+      final related = _queuedRemoteTrack('autoplay-related');
+      var extensionCalls = 0;
+
+      await container.read(settingsControllerProvider.future);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      await controller.playRecommendation(
+        RecommendationPlaybackItem(track: seed),
+        queue: [RecommendationPlaybackItem(track: seed)],
+        queueSourceId: 'personalized-home:becauseYouListened',
+        queueExtender: () async {
+          extensionCalls++;
+          return [
+            RecommendationPlaybackItem(track: seed),
+            RecommendationPlaybackItem(track: related),
+          ];
+        },
+      );
+      await _flushCompletion();
+      expect(extensionCalls, 0);
+
+      // The only song ends: playback stops instead of starting radio.
+      player.emit(
+        player.currentSnapshot.copyWith(status: PlayerStatus.completed),
+      );
+      await _flushCompletion();
+      expect(extensionCalls, 0);
+      expect(container.read(playbackQueueProvider).currentIndex, 0);
+      expect(player.playedRemote.map((track) => track.id), ['autoplay-seed']);
+      expect(
+        container.read(playerControllerProvider).value?.playWhenReady,
+        isFalse,
+      );
+
+      await container
+          .read(settingsControllerProvider.notifier)
+          .setAutoplayEnabled(true);
+      await _waitUntil(() => extensionCalls == 1);
+      expect(
+        container.read(playbackQueueProvider).entries.map((entry) => entry.id),
+        ['autoplay-seed', 'autoplay-related'],
+      );
+    },
+  );
+
+  test(
     'Next at the end waits for personalized growth instead of wrapping',
     () async {
       final player = _FakePlayerService();
@@ -5746,6 +5806,13 @@ class _CrossfadeSettingsController extends SettingsController {
   Future<void> setSkipSilenceEnabled(bool enabled) {
     final current = state.asData?.value ?? initialState;
     state = AsyncData(current.copyWith(skipSilenceEnabled: enabled));
+    return Future<void>.value();
+  }
+
+  @override
+  Future<void> setAutoplayEnabled(bool enabled) {
+    final current = state.asData?.value ?? initialState;
+    state = AsyncData(current.copyWith(autoplayEnabled: enabled));
     return Future<void>.value();
   }
 

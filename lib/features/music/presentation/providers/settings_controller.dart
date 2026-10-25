@@ -128,6 +128,7 @@ class SettingsState {
     this.crossfadeDuration = defaultCrossfadeDuration,
     this.skipSilenceEnabled = false,
     this.loudnessNormalizationEnabled = true,
+    this.autoplayEnabled = true,
   });
 
   final String downloadDirectory;
@@ -164,6 +165,10 @@ class SettingsState {
   /// Attenuates tracks louder than YouTube's target, like YouTube Music.
   final bool loudnessNormalizationEnabled;
 
+  /// Continues a recommendation queue with related radio when it runs out,
+  /// like YouTube Music's Autoplay.
+  final bool autoplayEnabled;
+
   SettingsState copyWith({
     String? downloadDirectory,
     AppLanguage? language,
@@ -192,6 +197,7 @@ class SettingsState {
     Duration? crossfadeDuration,
     bool? skipSilenceEnabled,
     bool? loudnessNormalizationEnabled,
+    bool? autoplayEnabled,
   }) {
     return SettingsState(
       downloadDirectory: downloadDirectory ?? this.downloadDirectory,
@@ -235,6 +241,7 @@ class SettingsState {
       skipSilenceEnabled: skipSilenceEnabled ?? this.skipSilenceEnabled,
       loudnessNormalizationEnabled:
           loudnessNormalizationEnabled ?? this.loudnessNormalizationEnabled,
+      autoplayEnabled: autoplayEnabled ?? this.autoplayEnabled,
     );
   }
 }
@@ -284,6 +291,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   static const _skipSilenceEnabledKey = 'settings.skipSilenceEnabled';
   static const _loudnessNormalizationEnabledKey =
       'settings.loudnessNormalizationEnabled';
+  static const _autoplayEnabledKey = 'settings.autoplayEnabled';
   static const _mediaRootDirectoryName = 'BStream-Music';
   Future<void> _lyricsTextAlignmentWriteTail = Future<void>.value();
   Future<void> _animatedArtworkWriteTail = Future<void>.value();
@@ -295,6 +303,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   Future<void> _crossfadeWriteTail = Future<void>.value();
   Future<void> _skipSilenceWriteTail = Future<void>.value();
   Future<void> _loudnessNormalizationWriteTail = Future<void>.value();
+  Future<void> _autoplayWriteTail = Future<void>.value();
   Future<void> _appBackgroundWriteTail = Future<void>.value();
 
   @override
@@ -413,6 +422,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
     final skipSilenceEnabled = prefs.getBool(_skipSilenceEnabledKey) ?? false;
     final loudnessNormalizationEnabled =
         prefs.getBool(_loudnessNormalizationEnabledKey) ?? true;
+    final autoplayEnabled = prefs.getBool(_autoplayEnabledKey) ?? true;
     final storedDirectory = prefs.getString(_downloadDirectoryKey);
     final encodedMigrationJournal = prefs.getString(
       _downloadDirectoryMigrationJournalKey,
@@ -594,6 +604,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       crossfadeDuration: crossfadeDuration,
       skipSilenceEnabled: skipSilenceEnabled,
       loudnessNormalizationEnabled: loudnessNormalizationEnabled,
+      autoplayEnabled: autoplayEnabled,
     );
   }
 
@@ -1247,6 +1258,20 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       await prefs.setBool(_loudnessNormalizationEnabledKey, enabled);
     });
     _loudnessNormalizationWriteTail = write.catchError((_) {});
+    await write;
+  }
+
+  Future<void> setAutoplayEnabled(bool enabled) async {
+    final current = state.asData?.value ?? await future;
+    if (current.autoplayEnabled == enabled) {
+      return;
+    }
+    state = AsyncData(current.copyWith(autoplayEnabled: enabled));
+    final write = _autoplayWriteTail.catchError((_) {}).then((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_autoplayEnabledKey, enabled);
+    });
+    _autoplayWriteTail = write.catchError((_) {});
     await write;
   }
 

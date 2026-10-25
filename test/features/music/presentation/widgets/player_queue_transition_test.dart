@@ -268,6 +268,10 @@ void main() {
       expect(sheet, findsOneWidget);
       expect(find.byKey(const ValueKey('queue-sheet-handle')), findsOneWidget);
       expect(find.text('Siguiente cancion'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('queue-autoplay-switch')),
+        findsOneWidget,
+      );
       // The sheet leaves the top of the player visible, as a panel would.
       expect(tester.getTopLeft(sheet).dy, greaterThan(40));
 

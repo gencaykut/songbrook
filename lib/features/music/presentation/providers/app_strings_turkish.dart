@@ -504,6 +504,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Automatically shortens detected silence so songs start and transition without waiting.':
       'Algılanan sessizlikleri otomatik olarak kısaltır; şarkılar beklemeden başlar ve birbirine geçer.',
   'Normalize volume': 'Ses seviyesini dengele',
+  'Autoplay': 'Otomatik oynatma',
+  'When the queue ends, keep playing similar songs.':
+      'Sıra bitince benzer şarkılarla devam eder.',
   "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":
       "YouTube'un referansından yüksek kaydedilmiş şarkıların sesini kısar; ses seviyesi dengeli kalır.",
   'Turkish interface that follows the device language until you choose one.':

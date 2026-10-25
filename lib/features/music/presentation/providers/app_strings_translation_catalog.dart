@@ -2329,6 +2329,20 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '音量标准化',
     '音量を均一化',
   ],
+  'Autoplay': <String>[
+    'Reprodução automática',
+    'Lecture automatique',
+    '자동 재생',
+    '自动播放',
+    '自動再生',
+  ],
+  'When the queue ends, keep playing similar songs.': <String>[
+    'Quando a fila terminar, continua com músicas parecidas.',
+    'À la fin de la file, continue avec des titres similaires.',
+    '대기열이 끝나면 비슷한 곡을 계속 재생합니다.',
+    '队列结束后，继续播放相似的歌曲。',
+    'キューが終わったら、似た曲を続けて再生します。',
+  ],
   "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":
       <String>[
         'Reduz as músicas masterizadas acima da referência do YouTube para manter um volume estável.',

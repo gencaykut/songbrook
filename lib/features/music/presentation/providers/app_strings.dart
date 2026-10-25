@@ -1141,6 +1141,11 @@ class AppStrings {
   );
   String get loudnessNormalization =>
       choose('Normalizar volumen', 'Normalize volume');
+  String get autoplay => choose('Reproducción automática', 'Autoplay');
+  String get autoplaySummary => choose(
+    'Cuando termina la cola, sigue con canciones similares.',
+    'When the queue ends, keep playing similar songs.',
+  );
   String get loudnessNormalizationSummary => choose(
     'Baja las canciones masterizadas por encima de la referencia de YouTube para mantener un volumen estable.',
     "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.",

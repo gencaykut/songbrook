@@ -3323,11 +3323,15 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
               Expanded(
                 child: queue.entries.isEmpty
                     ? _QueueEmptyMessage(
+                        header: _QueueAutoplaySwitch(strings: strings),
                         message: strings.playbackQueueEmpty,
                         scrollController: widget.sheetScrollController,
                       )
                     : ReorderableListView.builder(
                         scrollController: _queueScrollController,
+                        // Scrolls with the songs so a short or text-scaled
+                        // panel keeps its list room.
+                        header: _QueueAutoplaySwitch(strings: strings),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         itemCount: queue.entries.length,
                         itemBuilder: (context, index) {
@@ -3521,24 +3525,75 @@ class _MobilePlaybackQueueSheet extends ConsumerWidget {
   }
 }
 
-class _QueueEmptyMessage extends StatelessWidget {
-  const _QueueEmptyMessage({required this.message, this.scrollController});
+class _QueueAutoplaySwitch extends ConsumerWidget {
+  const _QueueAutoplaySwitch({required this.strings});
 
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(
+      settingsControllerProvider.select(
+        (settings) => settings.asData?.value.autoplayEnabled,
+      ),
+    );
+    // The panel paints its own translucent surface, so the tile needs a
+    // Material of its own for its ink.
+    return Material(
+      type: MaterialType.transparency,
+      child: SwitchListTile.adaptive(
+        key: const ValueKey('queue-autoplay-switch'),
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        value: enabled ?? true,
+        onChanged: enabled == null
+            ? null
+            : ref.read(settingsControllerProvider.notifier).setAutoplayEnabled,
+        title: Text(
+          strings.autoplay,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: AppColors.contentHeadingFor(context),
+          ),
+        ),
+        subtitle: Text(
+          strings.autoplaySummary,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.contentSubtitleFor(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QueueEmptyMessage extends StatelessWidget {
+  const _QueueEmptyMessage({
+    required this.header,
+    required this.message,
+    this.scrollController,
+  });
+
+  final Widget header;
   final String message;
   final ScrollController? scrollController;
 
   @override
   Widget build(BuildContext context) {
-    final text = Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.contentSubtitleFor(context)),
-      ),
+    return ListView(
+      controller: scrollController,
+      children: [
+        header,
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.contentSubtitleFor(context)),
+          ),
+        ),
+      ],
     );
-    if (scrollController == null) return Center(child: text);
-    return ListView(controller: scrollController, children: [text]);
   }
 }
 

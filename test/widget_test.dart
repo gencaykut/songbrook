@@ -7221,10 +7221,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     final card = find.byKey(const ValueKey('settings-card-about'));
+    // At text scale 3 every settings card is several screens tall.
     await tester.scrollUntilVisible(
       card,
       220,
       scrollable: find.byType(Scrollable).first,
+      maxScrolls: 100,
     );
     await tester.ensureVisible(card);
     await tester.pumpAndSettle();

@@ -21,6 +21,9 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 - On phones the playback queue opens as a panel over the player instead of a
   separate page. Pull the player up, or use the queue button, to open it; pull
   the panel down to close it.
+- Added an Autoplay switch to the queue panel and Playback settings. When it
+  is off, a queue started from Home or Search ends with its last song instead
+  of continuing with related radio. On by default.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
 
