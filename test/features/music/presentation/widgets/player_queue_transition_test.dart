@@ -248,11 +248,72 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  for (final style in PlayerStyle.values) {
+    testWidgets('mobile $style opens the queue as a sheet over the player', (
+      tester,
+    ) async {
+      _configureView(tester, const Size(390, 844));
+      await tester.pumpWidget(
+        _playerHarness(platform: TargetPlatform.iOS, style: style),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      final sheet = find.byKey(const ValueKey('mobile-playback-queue-sheet'));
+      expect(sheet, findsNothing);
+      await tester.tap(find.byKey(const ValueKey('player-queue-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(sheet, findsOneWidget);
+      expect(find.byKey(const ValueKey('queue-sheet-handle')), findsOneWidget);
+      expect(find.text('Siguiente cancion'), findsOneWidget);
+      // The sheet leaves the top of the player visible, as a panel would.
+      expect(tester.getTopLeft(sheet).dy, greaterThan(40));
+
+      await tester.tap(find.byKey(const ValueKey('queue-close')));
+      await tester.pumpAndSettle();
+      expect(sheet, findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('mobile $style opens the queue when the player is pulled up', (
+      tester,
+    ) async {
+      _configureView(tester, const Size(390, 844));
+      await tester.pumpWidget(
+        _playerHarness(platform: TargetPlatform.iOS, style: style),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      final sheet = find.byKey(const ValueKey('mobile-playback-queue-sheet'));
+      // A short drag is not a pull.
+      await tester.dragFrom(const Offset(8, 500), const Offset(0, -12));
+      await tester.pumpAndSettle();
+      expect(sheet, findsNothing);
+
+      // Start in the side margin, which is empty in every player style.
+      await tester.flingFrom(const Offset(8, 500), const Offset(0, -160), 1200);
+      await tester.pumpAndSettle();
+      expect(sheet, findsOneWidget);
+
+      // Flinging the sheet down by its handle closes it again.
+      await tester.fling(
+        find.byKey(const ValueKey('queue-sheet-handle')),
+        const Offset(0, 300),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      expect(sheet, findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
-void _configureView(WidgetTester tester) {
+void _configureView(WidgetTester tester, [Size size = const Size(960, 600)]) {
   tester.view
-    ..physicalSize = const Size(960, 600)
+    ..physicalSize = size
     ..devicePixelRatio = 1;
   addTearDown(() {
     tester.view

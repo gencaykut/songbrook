@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2446 test geçer (TikTok LIVE testleri silinince 2682'den düştü); macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2452 test geçer; macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -106,7 +106,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 ## İş sırası (kalanlar, kullanıcının onayladığı sırayla)
 
 1. **"Sıradakiler" paneli (kullanıcı isteği):** Oynatıcının altında yukarı çekilen panel.
-   - Aşama 1: mevcut `_PlaybackQueuePanel` (şu an ayrı sayfa) oynatıcının altına çekilen panel olarak.
+   - Aşama 1 (25 Ekim, tamam): mobilde `_PlaybackQueuePanel` artık `showModalBottomSheet` + `DraggableScrollableSheet` (%92 yükseklik, en küçük %40; aşağı savurunca kapanır, oynatıcı başlığı açıkta kalır). Açma: başlıktaki kuyruk düğmesi ya da oynatıcıyı yukarı çekmek (`_PlayerPullGestures`, dört stilde; içerik dibine ≤120 pt kalmışsa önce o kadar kaydırıp bir çekme daha). Masaüstü sağ rayı değişmedi. Testler `player_queue_transition_test.dart`'ta.
    - Aşama 2: otomatik oynatma açma/kapama (şu an radyo uzatması `related_radio_queue_extender.dart` hep açık).
    - Aşama 3: tek bir **"Benzer"** başlığı (kullanıcının fikri; YouTube'un Tümü/Popüler/Keşif çipleri yerine). Kaynak: radyonun kuyruğa henüz eklenmemiş şarkıları + sanatçı araması (limit 20), kuyruktakiler ve tekrarlar çıkarılır; sanatçı araması sanatçı başına önbelleklenir. Canlı denemede yalnızca şarkı adıyla arama gürültülü, şarkı+sanatçı araması sanatçının diğer şarkılarını veriyor; benzer sanatçıları yalnızca radyo veriyor.
 2. **Şarkı/video eşleştirme + SponsorBlock:** Müzik videosu çalınınca YouTube Music'in şarkı (ATV) karşılığına geçmek asıl kazanç. SponsorBlock `music_offtopic` kategorisi tamamlayıcı; veri CC BY-NC-SA 4.0 (atıf gerekli), gizlilik için hash önekli sorgu kullan. Sessizlik atlama yalnızca Android'de var.

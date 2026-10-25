@@ -30,7 +30,8 @@ detail, is kept at [docs/upstream-readme.md](docs/upstream-readme.md).
   and lock-screen transitions stalled. Streams and downloaded files are now
   clipped to their real duration. See [docs/ios-duration-fix.md](docs/ios-duration-fix.md).
 - **Mobile player navigation.** The default player and the lyrics view have a
-  collapse control, and the player can be pulled down to close it.
+  collapse control, and the player can be pulled down to close it. The queue
+  opens as a panel pulled up over the player.
 - **Volume normalization.** Songs louder than YouTube's loudness target are
   lowered to it, as on YouTube Music; quieter songs are never boosted. On by
   default, with a switch in Playback settings.

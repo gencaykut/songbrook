@@ -547,595 +547,609 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
                   key: const ValueKey('player-playback-theme'),
                   data: playerTheme,
                   child: Builder(
-                    builder: (context) =>
-                        widget.style == PlayerStyle.classicVinyl
-                        ? _ClassicVinylPlayerLayout(
-                            snapshot: snapshot,
-                            artworkSource: artworkSource,
-                            artworkFallbackSource: artworkFallbackSource,
-                            visualIdentity: visualIdentity,
-                            trackTransitionsEnabled:
-                                widget.trackTransitionsEnabled,
-                            artworkStyle: widget.artworkStyle,
-                            animatedArtworkEnabled:
-                                widget.animatedArtworkEnabled,
-                            canvasUrl: canvasUrl,
-                            videoStartOffset: videoStartOffset,
-                            videoDurationHint: videoDurationHint,
-                            drawBackground: widget.drawBackground,
-                            hasTrack: hasTrack,
-                            isFavorite: isFavorite,
-                            savedTrackId: savedTrackId,
-                            hasError: presentation.hasError,
-                            errorText: strings.runtimeMessageOrNull(
-                              presentation.errorText,
-                            ),
-                            queueVisible: showSideQueue,
-                            onToggleQueue: toggleQueue,
-                            onCollapse: widget.onCollapse,
-                            onOpenLyrics: _openLyrics,
-                            onOpenSearch: widget.onOpenSearch,
-                            onOpenArtist: onOpenArtist,
-                            onOpenAlbum: onOpenAlbum,
-                            strings: strings,
-                          )
-                        : widget.style == PlayerStyle.appleMusic
-                        ? _AppleMusicPlayerLayout(
-                            snapshot: snapshot,
-                            artworkSource: artworkSource,
-                            artworkFallbackSource: artworkFallbackSource,
-                            visualIdentity: visualIdentity,
-                            trackTransitionsEnabled:
-                                widget.trackTransitionsEnabled,
-                            artworkStyle: widget.artworkStyle,
-                            animatedArtworkEnabled:
-                                widget.animatedArtworkEnabled,
-                            canvasUrl: canvasUrl,
-                            autoFitInsetArtwork: autoFitInsetArtwork,
-                            videoStartOffset: videoStartOffset,
-                            videoDurationHint: videoDurationHint,
-                            drawBackground: widget.drawBackground,
-                            hasTrack: hasTrack,
-                            isFavorite: isFavorite,
-                            savedTrackId: savedTrackId,
-                            hasError: presentation.hasError,
-                            errorText: strings.runtimeMessageOrNull(
-                              presentation.errorText,
-                            ),
-                            queueVisible: showSideQueue,
-                            onToggleQueue: toggleQueue,
-                            onCollapse: widget.onCollapse,
-                            onOpenLyrics: _openLyrics,
-                            onOpenSearch: widget.onOpenSearch,
-                            onOpenArtist: onOpenArtist,
-                            onOpenAlbum: onOpenAlbum,
-                            strings: strings,
-                          )
-                        : Stack(
-                            children: [
-                              if (widget.drawBackground) ...[
-                                _BlurredPlayerBackground(
-                                  url: artworkSource,
-                                  fallbackUrl: artworkFallbackSource,
-                                ),
-                                Positioned.fill(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: playerPlaybackOverlayColors(
-                                          context,
+                    builder: (context) => _PlayerPullGestures(
+                      onPullUp: mobile && hasTrack ? toggleQueue : null,
+                      child: widget.style == PlayerStyle.classicVinyl
+                          ? _ClassicVinylPlayerLayout(
+                              snapshot: snapshot,
+                              artworkSource: artworkSource,
+                              artworkFallbackSource: artworkFallbackSource,
+                              visualIdentity: visualIdentity,
+                              trackTransitionsEnabled:
+                                  widget.trackTransitionsEnabled,
+                              artworkStyle: widget.artworkStyle,
+                              animatedArtworkEnabled:
+                                  widget.animatedArtworkEnabled,
+                              canvasUrl: canvasUrl,
+                              videoStartOffset: videoStartOffset,
+                              videoDurationHint: videoDurationHint,
+                              drawBackground: widget.drawBackground,
+                              hasTrack: hasTrack,
+                              isFavorite: isFavorite,
+                              savedTrackId: savedTrackId,
+                              hasError: presentation.hasError,
+                              errorText: strings.runtimeMessageOrNull(
+                                presentation.errorText,
+                              ),
+                              queueVisible: showSideQueue,
+                              onToggleQueue: toggleQueue,
+                              onCollapse: widget.onCollapse,
+                              onOpenLyrics: _openLyrics,
+                              onOpenSearch: widget.onOpenSearch,
+                              onOpenArtist: onOpenArtist,
+                              onOpenAlbum: onOpenAlbum,
+                              strings: strings,
+                            )
+                          : widget.style == PlayerStyle.appleMusic
+                          ? _AppleMusicPlayerLayout(
+                              snapshot: snapshot,
+                              artworkSource: artworkSource,
+                              artworkFallbackSource: artworkFallbackSource,
+                              visualIdentity: visualIdentity,
+                              trackTransitionsEnabled:
+                                  widget.trackTransitionsEnabled,
+                              artworkStyle: widget.artworkStyle,
+                              animatedArtworkEnabled:
+                                  widget.animatedArtworkEnabled,
+                              canvasUrl: canvasUrl,
+                              autoFitInsetArtwork: autoFitInsetArtwork,
+                              videoStartOffset: videoStartOffset,
+                              videoDurationHint: videoDurationHint,
+                              drawBackground: widget.drawBackground,
+                              hasTrack: hasTrack,
+                              isFavorite: isFavorite,
+                              savedTrackId: savedTrackId,
+                              hasError: presentation.hasError,
+                              errorText: strings.runtimeMessageOrNull(
+                                presentation.errorText,
+                              ),
+                              queueVisible: showSideQueue,
+                              onToggleQueue: toggleQueue,
+                              onCollapse: widget.onCollapse,
+                              onOpenLyrics: _openLyrics,
+                              onOpenSearch: widget.onOpenSearch,
+                              onOpenArtist: onOpenArtist,
+                              onOpenAlbum: onOpenAlbum,
+                              strings: strings,
+                            )
+                          : Stack(
+                              children: [
+                                if (widget.drawBackground) ...[
+                                  _BlurredPlayerBackground(
+                                    url: artworkSource,
+                                    fallbackUrl: artworkFallbackSource,
+                                  ),
+                                  Positioned.fill(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: playerPlaybackOverlayColors(
+                                            context,
+                                          ),
+                                          stops: const [0, 0.38, 0.72, 1],
                                         ),
-                                        stops: const [0, 0.38, 0.72, 1],
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                              if (useExpandedArtworkHero)
-                                Positioned(
-                                  top: _expandedArtworkHeroTop(outer.maxWidth),
-                                  left: 0,
-                                  right: 0,
-                                  height: _expandedArtworkHeroHeight(outer),
-                                  child: _ExpandedArtworkHero(
-                                    url: artworkSource,
-                                    fallbackUrl: artworkFallbackSource,
-                                    identity: visualIdentity,
-                                    isPlaying:
-                                        snapshot.status == PlayerStatus.playing,
-                                    trackTransitionsEnabled:
-                                        widget.trackTransitionsEnabled,
-                                    animatedArtworkEnabled:
-                                        widget.animatedArtworkEnabled,
-                                    canvasUrl: canvasUrl,
-                                    autoFitInsetArtwork: autoFitInsetArtwork,
-                                    videoStartOffset: videoStartOffset,
-                                    videoDurationHint: videoDurationHint,
+                                ],
+                                if (useExpandedArtworkHero)
+                                  Positioned(
+                                    top: _expandedArtworkHeroTop(
+                                      outer.maxWidth,
+                                    ),
+                                    left: 0,
+                                    right: 0,
+                                    height: _expandedArtworkHeroHeight(outer),
+                                    child: _ExpandedArtworkHero(
+                                      url: artworkSource,
+                                      fallbackUrl: artworkFallbackSource,
+                                      identity: visualIdentity,
+                                      isPlaying:
+                                          snapshot.status ==
+                                          PlayerStatus.playing,
+                                      trackTransitionsEnabled:
+                                          widget.trackTransitionsEnabled,
+                                      animatedArtworkEnabled:
+                                          widget.animatedArtworkEnabled,
+                                      canvasUrl: canvasUrl,
+                                      autoFitInsetArtwork: autoFitInsetArtwork,
+                                      videoStartOffset: videoStartOffset,
+                                      videoDurationHint: videoDurationHint,
+                                    ),
                                   ),
-                                ),
-                              Padding(
-                                padding: EdgeInsets.fromLTRB(
-                                  horizontalContentPadding,
-                                  lerpDouble(
-                                    regularTopPadding,
-                                    8,
-                                    heightCompactness,
-                                  )!,
-                                  horizontalContentPadding,
-                                  lerpDouble(
-                                    regularBottomPadding,
-                                    8,
-                                    heightCompactness,
-                                  )!,
-                                ),
-                                child: Column(
-                                  children: [
-                                    if (!mobileLandscape)
-                                      _PlayerHeader(
-                                        snapshot: snapshot,
-                                        trackTransitionsEnabled:
-                                            widget.trackTransitionsEnabled,
-                                        isFavorite: isFavorite,
-                                        savedTrackId: savedTrackId,
-                                        onOpenSearch: widget.onOpenSearch,
-                                        queueVisible: showSideQueue,
-                                        onToggleQueue: toggleQueue,
-                                        onOpenArtist: onOpenArtist,
-                                        onOpenAlbum: onOpenAlbum,
-                                        strings: strings,
-                                        onCollapse: widget.onCollapse,
-                                      ),
-                                    Expanded(
-                                      child: LayoutBuilder(
-                                        key: const ValueKey(
-                                          'player-content-layout',
+                                Padding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    horizontalContentPadding,
+                                    lerpDouble(
+                                      regularTopPadding,
+                                      8,
+                                      heightCompactness,
+                                    )!,
+                                    horizontalContentPadding,
+                                    lerpDouble(
+                                      regularBottomPadding,
+                                      8,
+                                      heightCompactness,
+                                    )!,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      if (!mobileLandscape)
+                                        _PlayerHeader(
+                                          snapshot: snapshot,
+                                          trackTransitionsEnabled:
+                                              widget.trackTransitionsEnabled,
+                                          isFavorite: isFavorite,
+                                          savedTrackId: savedTrackId,
+                                          onOpenSearch: widget.onOpenSearch,
+                                          queueVisible: showSideQueue,
+                                          onToggleQueue: toggleQueue,
+                                          onOpenArtist: onOpenArtist,
+                                          onOpenAlbum: onOpenAlbum,
+                                          strings: strings,
+                                          onCollapse: widget.onCollapse,
                                         ),
-                                        builder: (context, constraints) {
-                                          final verticalCompactness =
-                                              mobileLandscape
-                                              ? 1.0
-                                              : AppPlatform.isDesktop
-                                              ? ((620.0 -
-                                                            constraints
-                                                                .maxHeight) /
-                                                        140.0)
-                                                    .clamp(0.0, 1.0)
-                                              : 0.0;
-                                          final landscapeGap = mobileLandscape
-                                              ? lerpDouble(
-                                                  12,
-                                                  20,
-                                                  ((constraints.maxWidth -
-                                                              540.0) /
-                                                          280.0)
-                                                      .clamp(0.0, 1.0),
-                                                )!
-                                              : 0.0;
-                                          final landscapeAvailableWidth = math
-                                              .max(
-                                                0.0,
-                                                constraints.maxWidth -
-                                                    landscapeGap,
-                                              );
-                                          final landscapeArtworkFraction =
-                                              constraints.maxWidth < 700
-                                              ? 0.438
-                                              : 0.46;
-                                          final landscapeArtworkPaneWidth =
-                                              mobileLandscape
-                                              ? landscapeAvailableWidth *
-                                                    landscapeArtworkFraction
-                                              : 0.0;
-                                          final landscapeControlsWidth =
-                                              mobileLandscape
-                                              ? math.max(
+                                      Expanded(
+                                        child: LayoutBuilder(
+                                          key: const ValueKey(
+                                            'player-content-layout',
+                                          ),
+                                          builder: (context, constraints) {
+                                            final verticalCompactness =
+                                                mobileLandscape
+                                                ? 1.0
+                                                : AppPlatform.isDesktop
+                                                ? ((620.0 -
+                                                              constraints
+                                                                  .maxHeight) /
+                                                          140.0)
+                                                      .clamp(0.0, 1.0)
+                                                : 0.0;
+                                            final landscapeGap = mobileLandscape
+                                                ? lerpDouble(
+                                                    12,
+                                                    20,
+                                                    ((constraints.maxWidth -
+                                                                540.0) /
+                                                            280.0)
+                                                        .clamp(0.0, 1.0),
+                                                  )!
+                                                : 0.0;
+                                            final landscapeAvailableWidth = math
+                                                .max(
                                                   0.0,
-                                                  landscapeAvailableWidth -
-                                                      landscapeArtworkPaneWidth,
-                                                )
-                                              : 0.0;
-                                          // Give the timeline and controls the newly
-                                          // reclaimed width without also enlarging
-                                          // the already-approved mobile artwork.
-                                          final artworkWidthReduction =
-                                              mobile && !mobileLandscape
-                                              ? math.max(
-                                                  0.0,
-                                                  (20.0 - horizontalContentPadding) *
-                                                      2,
-                                                )
-                                              : 0.0;
-                                          final artworkConstraints = mobile
-                                              ? constraints.copyWith(
-                                                  maxWidth: math.max(
+                                                  constraints.maxWidth -
+                                                      landscapeGap,
+                                                );
+                                            final landscapeArtworkFraction =
+                                                constraints.maxWidth < 700
+                                                ? 0.438
+                                                : 0.46;
+                                            final landscapeArtworkPaneWidth =
+                                                mobileLandscape
+                                                ? landscapeAvailableWidth *
+                                                      landscapeArtworkFraction
+                                                : 0.0;
+                                            final landscapeControlsWidth =
+                                                mobileLandscape
+                                                ? math.max(
                                                     0.0,
-                                                    constraints.maxWidth -
-                                                        artworkWidthReduction,
-                                                  ),
-                                                )
-                                              : constraints;
-                                          final landscapeExpandedScale =
-                                              mobileLandscape &&
-                                                  widget.artworkStyle ==
-                                                      PlayerArtworkStyle
-                                                          .expanded &&
-                                                  artworkSource
-                                                          ?.trim()
-                                                          .isNotEmpty ==
-                                                      true
-                                              ? 1.08
-                                              : 1.0;
-                                          final landscapeVisualArtworkExtent =
-                                              mobileLandscape
-                                              ? math.min(
-                                                  landscapeArtworkPaneWidth,
-                                                  constraints.maxHeight,
-                                                )
-                                              : 0.0;
-                                          final regularArtworkExtent =
-                                              mobileLandscape
-                                              ? landscapeVisualArtworkExtent /
-                                                    landscapeExpandedScale
-                                              : _artworkExtent(
-                                                  artworkConstraints,
-                                                  stackedDesktop:
-                                                      stackedDesktop,
-                                                  wide: wide,
-                                                  mobile: mobile,
-                                                  compactness:
-                                                      verticalCompactness,
-                                                  mobileFrameCompactness:
-                                                      mobileFrameCompactness,
-                                                );
-                                          // Short Android frames keep the regular artwork
-                                          // size. Their vertical budget is recovered from
-                                          // the surrounding gaps instead of shrinking the
-                                          // cover, with scrolling retained only as a
-                                          // fallback for exceptional content.
-                                          final artworkExtent =
-                                              regularArtworkExtent;
-                                          // A short, narrow phone can make the cover
-                                          // width-bound before the frame-height factor is
-                                          // large enough to shrink its halo. Once the
-                                          // mobile layout has entered its compact range,
-                                          // include that measured cover reduction so the
-                                          // shadow follows the artwork proportionally.
-                                          // Roomy mobile frames retain the original
-                                          // shadow values exactly.
-                                          final mobileArtworkShadowActivation =
-                                              mobile
-                                              ? (mobileFrameCompactness /
-                                                        _mobileArtworkShadowActivationRange)
-                                                    .clamp(0.0, 1.0)
-                                              : 0.0;
-                                          final mobileArtworkShadowCompactness =
-                                              ((_mobileArtworkExtentCeiling -
-                                                          artworkExtent) /
-                                                      _mobileArtworkShadowCompressionRange)
-                                                  .clamp(0.0, 1.0) *
-                                              mobileArtworkShadowActivation;
-                                          final artworkShadowCompactness = math
-                                              .max(
-                                                verticalCompactness,
-                                                math.max(
-                                                  mobileFrameCompactness,
-                                                  mobileArtworkShadowCompactness,
-                                                ),
-                                              );
-                                          final maxContentWidth =
-                                              mobileLandscape
-                                              ? landscapeControlsWidth
-                                              : stackedDesktop
-                                              ? showSideQueue
-                                                    ? constraints.maxWidth
-                                                    : math
-                                                          .min(
-                                                            constraints
-                                                                    .maxWidth *
-                                                                0.84,
-                                                            1040.0,
-                                                          )
-                                                          .clamp(700.0, 1040.0)
-                                                          .toDouble()
-                                              : 520.0;
-                                          final artworkCanvasWidth =
-                                              mobileLandscape
-                                              ? landscapeArtworkPaneWidth
-                                              : math.min(
-                                                  constraints.maxWidth,
-                                                  maxContentWidth,
-                                                );
-                                          final artworkHorizontalClearance =
-                                              math.max(
-                                                0.0,
-                                                (artworkCanvasWidth -
-                                                        artworkExtent) /
-                                                    2,
-                                              );
-                                          final expandedArtworkTargetWidth =
-                                              fullBleedArtwork
-                                              ? constraints.maxWidth +
-                                                    (horizontalContentPadding *
-                                                        2)
-                                              : mobileLandscape
-                                              ? landscapeVisualArtworkExtent
-                                              : math.min(
-                                                  artworkCanvasWidth,
-                                                  artworkExtent * 1.18,
-                                                );
-                                          final artwork = Center(
-                                            child: useExpandedArtworkHero
-                                                ? _ExpandedArtworkPlaceholder(
-                                                    maxExtent: artworkExtent,
-                                                    isFavorite: mobileLandscape
-                                                        ? false
-                                                        : isFavorite,
+                                                    landscapeAvailableWidth -
+                                                        landscapeArtworkPaneWidth,
                                                   )
-                                                : _LargeArtwork(
-                                                    url: artworkSource,
-                                                    fallbackUrl:
-                                                        artworkFallbackSource,
-                                                    identity: visualIdentity,
-                                                    isPlaying:
-                                                        snapshot.status ==
-                                                        PlayerStatus.playing,
-                                                    trackTransitionsEnabled: widget
-                                                        .trackTransitionsEnabled,
-                                                    artworkStyle:
-                                                        widget.artworkStyle,
-                                                    expandedTargetWidth:
-                                                        expandedArtworkTargetWidth,
-                                                    fullBleedExpanded:
-                                                        fullBleedArtwork,
-                                                    animatedArtworkEnabled: widget
-                                                        .animatedArtworkEnabled,
-                                                    canvasUrl: canvasUrl,
-                                                    videoStartOffset:
-                                                        videoStartOffset,
-                                                    videoDurationHint:
-                                                        videoDurationHint,
-                                                    maxExtent: artworkExtent,
-                                                    isFavorite: mobileLandscape
-                                                        ? false
-                                                        : isFavorite,
-                                                    shadowCompactness:
-                                                        artworkShadowCompactness,
-                                                    shadowHorizontalClearance:
-                                                        artworkHorizontalClearance,
-                                                  ),
-                                          );
-                                          final gap = mobile
-                                              ? lerpDouble(
-                                                  22,
-                                                  8,
-                                                  mobileFrameCompactness,
-                                                )!
-                                              : lerpDouble(
-                                                  26,
-                                                  12,
-                                                  verticalCompactness,
-                                                )!;
-                                          final controlSpacingCompactness =
-                                              mobile
-                                              ? mobileFrameCompactness
-                                              : verticalCompactness;
-                                          final controls = _PlayerControls(
-                                            snapshot: snapshot,
-                                            trackTransitionsEnabled:
-                                                widget.trackTransitionsEnabled,
-                                            hasTrack: hasTrack,
-                                            isFavorite: isFavorite,
-                                            savedTrackId: savedTrackId,
-                                            hasError: presentation.hasError,
-                                            errorText: strings
-                                                .runtimeMessageOrNull(
-                                                  presentation.errorText,
-                                                ),
-                                            compact:
-                                                mobileLandscape ||
-                                                !wide ||
-                                                stackedDesktop,
-                                            compactness: verticalCompactness,
-                                            spacingCompactness:
-                                                controlSpacingCompactness,
-                                            landscape: mobileLandscape,
-                                            maxWidth: stackedDesktop
-                                                ? maxContentWidth
-                                                : mobileLandscape
-                                                ? landscapeControlsWidth
-                                                : 520.0,
-                                            onOpenLyrics: _openLyrics,
-                                            onOpenArtist: onOpenArtist,
-                                            strings: strings,
-                                          );
-
-                                          if (mobileLandscape) {
-                                            final effectiveTextScale =
-                                                MediaQuery.textScalerOf(
-                                                  context,
-                                                ).scale(16) /
-                                                16;
-                                            final scrollControls =
-                                                effectiveTextScale > 1.8 ||
-                                                (effectiveTextScale > 1.1 &&
-                                                    constraints.maxHeight <
-                                                        300) ||
-                                                constraints.maxHeight < 220 ||
-                                                presentation.hasError;
-                                            final controlsPane = scrollControls
-                                                ? SingleChildScrollView(
-                                                    key: const ValueKey(
-                                                      'bstream-player-controls-scroll',
-                                                    ),
-                                                    clipBehavior: Clip.hardEdge,
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                            minHeight:
-                                                                constraints
-                                                                    .maxHeight,
-                                                          ),
-                                                      child: Align(
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: controls,
-                                                      ),
+                                                : 0.0;
+                                            // Give the timeline and controls the newly
+                                            // reclaimed width without also enlarging
+                                            // the already-approved mobile artwork.
+                                            final artworkWidthReduction =
+                                                mobile && !mobileLandscape
+                                                ? math.max(
+                                                    0.0,
+                                                    (20.0 -
+                                                            horizontalContentPadding) *
+                                                        2,
+                                                  )
+                                                : 0.0;
+                                            final artworkConstraints = mobile
+                                                ? constraints.copyWith(
+                                                    maxWidth: math.max(
+                                                      0.0,
+                                                      constraints.maxWidth -
+                                                          artworkWidthReduction,
                                                     ),
                                                   )
-                                                : Align(
-                                                    alignment: Alignment.center,
-                                                    child: controls,
+                                                : constraints;
+                                            final landscapeExpandedScale =
+                                                mobileLandscape &&
+                                                    widget.artworkStyle ==
+                                                        PlayerArtworkStyle
+                                                            .expanded &&
+                                                    artworkSource
+                                                            ?.trim()
+                                                            .isNotEmpty ==
+                                                        true
+                                                ? 1.08
+                                                : 1.0;
+                                            final landscapeVisualArtworkExtent =
+                                                mobileLandscape
+                                                ? math.min(
+                                                    landscapeArtworkPaneWidth,
+                                                    constraints.maxHeight,
+                                                  )
+                                                : 0.0;
+                                            final regularArtworkExtent =
+                                                mobileLandscape
+                                                ? landscapeVisualArtworkExtent /
+                                                      landscapeExpandedScale
+                                                : _artworkExtent(
+                                                    artworkConstraints,
+                                                    stackedDesktop:
+                                                        stackedDesktop,
+                                                    wide: wide,
+                                                    mobile: mobile,
+                                                    compactness:
+                                                        verticalCompactness,
+                                                    mobileFrameCompactness:
+                                                        mobileFrameCompactness,
                                                   );
-                                            return Row(
-                                              key: const ValueKey(
-                                                'bstream-player-adaptive-landscape',
-                                              ),
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.stretch,
-                                              children: [
-                                                SizedBox(
-                                                  width:
-                                                      landscapeArtworkPaneWidth,
-                                                  child: ClipRect(
-                                                    key: const ValueKey(
-                                                      'bstream-player-landscape-artwork-pane',
-                                                    ),
-                                                    child: Stack(
-                                                      fit: StackFit.expand,
-                                                      children: [
-                                                        artwork,
-                                                        Align(
-                                                          alignment: Alignment
-                                                              .topCenter,
-                                                          child: DecoratedBox(
-                                                            decoration: const BoxDecoration(
-                                                              gradient: LinearGradient(
-                                                                begin: Alignment
-                                                                    .topCenter,
-                                                                end: Alignment
-                                                                    .bottomCenter,
-                                                                colors: [
-                                                                  Color(
-                                                                    0xA6000000,
-                                                                  ),
-                                                                  Color(
-                                                                    0x52000000,
-                                                                  ),
-                                                                  Colors
-                                                                      .transparent,
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets.only(
-                                                                    bottom: 14,
-                                                                  ),
-                                                              child: _PlayerHeader(
-                                                                snapshot:
-                                                                    snapshot,
-                                                                compactLandscape:
-                                                                    true,
-                                                                foregroundColor:
-                                                                    Colors
-                                                                        .white,
-                                                                trackTransitionsEnabled:
-                                                                    widget
-                                                                        .trackTransitionsEnabled,
-                                                                isFavorite:
-                                                                    isFavorite,
-                                                                savedTrackId:
-                                                                    savedTrackId,
-                                                                onOpenSearch: widget
-                                                                    .onOpenSearch,
-                                                                queueVisible:
-                                                                    showSideQueue,
-                                                                onToggleQueue:
-                                                                    toggleQueue,
-                                                                onOpenArtist:
-                                                                    onOpenArtist,
-                                                                onOpenAlbum:
-                                                                    onOpenAlbum,
-                                                                strings:
-                                                                    strings,
-                                                                onCollapse: widget
-                                                                    .onCollapse,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
+                                            // Short Android frames keep the regular artwork
+                                            // size. Their vertical budget is recovered from
+                                            // the surrounding gaps instead of shrinking the
+                                            // cover, with scrolling retained only as a
+                                            // fallback for exceptional content.
+                                            final artworkExtent =
+                                                regularArtworkExtent;
+                                            // A short, narrow phone can make the cover
+                                            // width-bound before the frame-height factor is
+                                            // large enough to shrink its halo. Once the
+                                            // mobile layout has entered its compact range,
+                                            // include that measured cover reduction so the
+                                            // shadow follows the artwork proportionally.
+                                            // Roomy mobile frames retain the original
+                                            // shadow values exactly.
+                                            final mobileArtworkShadowActivation =
+                                                mobile
+                                                ? (mobileFrameCompactness /
+                                                          _mobileArtworkShadowActivationRange)
+                                                      .clamp(0.0, 1.0)
+                                                : 0.0;
+                                            final mobileArtworkShadowCompactness =
+                                                ((_mobileArtworkExtentCeiling -
+                                                            artworkExtent) /
+                                                        _mobileArtworkShadowCompressionRange)
+                                                    .clamp(0.0, 1.0) *
+                                                mobileArtworkShadowActivation;
+                                            final artworkShadowCompactness =
+                                                math.max(
+                                                  verticalCompactness,
+                                                  math.max(
+                                                    mobileFrameCompactness,
+                                                    mobileArtworkShadowCompactness,
                                                   ),
-                                                ),
-                                                SizedBox(width: landscapeGap),
-                                                Expanded(
-                                                  key: const ValueKey(
-                                                    'bstream-player-landscape-controls-pane',
-                                                  ),
-                                                  child: controlsPane,
-                                                ),
-                                              ],
+                                                );
+                                            final maxContentWidth =
+                                                mobileLandscape
+                                                ? landscapeControlsWidth
+                                                : stackedDesktop
+                                                ? showSideQueue
+                                                      ? constraints.maxWidth
+                                                      : math
+                                                            .min(
+                                                              constraints
+                                                                      .maxWidth *
+                                                                  0.84,
+                                                              1040.0,
+                                                            )
+                                                            .clamp(
+                                                              700.0,
+                                                              1040.0,
+                                                            )
+                                                            .toDouble()
+                                                : 520.0;
+                                            final artworkCanvasWidth =
+                                                mobileLandscape
+                                                ? landscapeArtworkPaneWidth
+                                                : math.min(
+                                                    constraints.maxWidth,
+                                                    maxContentWidth,
+                                                  );
+                                            final artworkHorizontalClearance =
+                                                math.max(
+                                                  0.0,
+                                                  (artworkCanvasWidth -
+                                                          artworkExtent) /
+                                                      2,
+                                                );
+                                            final expandedArtworkTargetWidth =
+                                                fullBleedArtwork
+                                                ? constraints.maxWidth +
+                                                      (horizontalContentPadding *
+                                                          2)
+                                                : mobileLandscape
+                                                ? landscapeVisualArtworkExtent
+                                                : math.min(
+                                                    artworkCanvasWidth,
+                                                    artworkExtent * 1.18,
+                                                  );
+                                            final artwork = Center(
+                                              child: useExpandedArtworkHero
+                                                  ? _ExpandedArtworkPlaceholder(
+                                                      maxExtent: artworkExtent,
+                                                      isFavorite:
+                                                          mobileLandscape
+                                                          ? false
+                                                          : isFavorite,
+                                                    )
+                                                  : _LargeArtwork(
+                                                      url: artworkSource,
+                                                      fallbackUrl:
+                                                          artworkFallbackSource,
+                                                      identity: visualIdentity,
+                                                      isPlaying:
+                                                          snapshot.status ==
+                                                          PlayerStatus.playing,
+                                                      trackTransitionsEnabled:
+                                                          widget
+                                                              .trackTransitionsEnabled,
+                                                      artworkStyle:
+                                                          widget.artworkStyle,
+                                                      expandedTargetWidth:
+                                                          expandedArtworkTargetWidth,
+                                                      fullBleedExpanded:
+                                                          fullBleedArtwork,
+                                                      animatedArtworkEnabled: widget
+                                                          .animatedArtworkEnabled,
+                                                      canvasUrl: canvasUrl,
+                                                      videoStartOffset:
+                                                          videoStartOffset,
+                                                      videoDurationHint:
+                                                          videoDurationHint,
+                                                      maxExtent: artworkExtent,
+                                                      isFavorite:
+                                                          mobileLandscape
+                                                          ? false
+                                                          : isFavorite,
+                                                      shadowCompactness:
+                                                          artworkShadowCompactness,
+                                                      shadowHorizontalClearance:
+                                                          artworkHorizontalClearance,
+                                                    ),
                                             );
-                                          }
-
-                                          final contentScroll =
-                                              SingleChildScrollView(
-                                                key: const ValueKey(
-                                                  'player-content-scroll',
-                                                ),
-                                                clipBehavior: Clip.hardEdge,
-                                                child: ConstrainedBox(
-                                                  constraints: BoxConstraints(
-                                                    minHeight:
-                                                        constraints.maxHeight,
+                                            final gap = mobile
+                                                ? lerpDouble(
+                                                    22,
+                                                    8,
+                                                    mobileFrameCompactness,
+                                                  )!
+                                                : lerpDouble(
+                                                    26,
+                                                    12,
+                                                    verticalCompactness,
+                                                  )!;
+                                            final controlSpacingCompactness =
+                                                mobile
+                                                ? mobileFrameCompactness
+                                                : verticalCompactness;
+                                            final controls = _PlayerControls(
+                                              snapshot: snapshot,
+                                              trackTransitionsEnabled: widget
+                                                  .trackTransitionsEnabled,
+                                              hasTrack: hasTrack,
+                                              isFavorite: isFavorite,
+                                              savedTrackId: savedTrackId,
+                                              hasError: presentation.hasError,
+                                              errorText: strings
+                                                  .runtimeMessageOrNull(
+                                                    presentation.errorText,
                                                   ),
-                                                  child: Align(
-                                                    alignment: mobile
-                                                        ? Alignment.bottomCenter
-                                                        : Alignment.center,
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                            maxWidth:
-                                                                maxContentWidth,
-                                                          ),
-                                                      child: Column(
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
+                                              compact:
+                                                  mobileLandscape ||
+                                                  !wide ||
+                                                  stackedDesktop,
+                                              compactness: verticalCompactness,
+                                              spacingCompactness:
+                                                  controlSpacingCompactness,
+                                              landscape: mobileLandscape,
+                                              maxWidth: stackedDesktop
+                                                  ? maxContentWidth
+                                                  : mobileLandscape
+                                                  ? landscapeControlsWidth
+                                                  : 520.0,
+                                              onOpenLyrics: _openLyrics,
+                                              onOpenArtist: onOpenArtist,
+                                              strings: strings,
+                                            );
+
+                                            if (mobileLandscape) {
+                                              final effectiveTextScale =
+                                                  MediaQuery.textScalerOf(
+                                                    context,
+                                                  ).scale(16) /
+                                                  16;
+                                              final scrollControls =
+                                                  effectiveTextScale > 1.8 ||
+                                                  (effectiveTextScale > 1.1 &&
+                                                      constraints.maxHeight <
+                                                          300) ||
+                                                  constraints.maxHeight < 220 ||
+                                                  presentation.hasError;
+                                              final controlsPane =
+                                                  scrollControls
+                                                  ? SingleChildScrollView(
+                                                      key: const ValueKey(
+                                                        'bstream-player-controls-scroll',
+                                                      ),
+                                                      clipBehavior:
+                                                          Clip.hardEdge,
+                                                      child: ConstrainedBox(
+                                                        constraints:
+                                                            BoxConstraints(
+                                                              minHeight:
+                                                                  constraints
+                                                                      .maxHeight,
+                                                            ),
+                                                        child: Align(
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: controls,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  : Align(
+                                                      alignment:
+                                                          Alignment.center,
+                                                      child: controls,
+                                                    );
+                                              return Row(
+                                                key: const ValueKey(
+                                                  'bstream-player-adaptive-landscape',
+                                                ),
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.stretch,
+                                                children: [
+                                                  SizedBox(
+                                                    width:
+                                                        landscapeArtworkPaneWidth,
+                                                    child: ClipRect(
+                                                      key: const ValueKey(
+                                                        'bstream-player-landscape-artwork-pane',
+                                                      ),
+                                                      child: Stack(
+                                                        fit: StackFit.expand,
                                                         children: [
                                                           artwork,
-                                                          SizedBox(
-                                                            key: const ValueKey(
-                                                              'player-artwork-title-gap',
+                                                          Align(
+                                                            alignment: Alignment
+                                                                .topCenter,
+                                                            child: DecoratedBox(
+                                                              decoration: const BoxDecoration(
+                                                                gradient: LinearGradient(
+                                                                  begin: Alignment
+                                                                      .topCenter,
+                                                                  end: Alignment
+                                                                      .bottomCenter,
+                                                                  colors: [
+                                                                    Color(
+                                                                      0xA6000000,
+                                                                    ),
+                                                                    Color(
+                                                                      0x52000000,
+                                                                    ),
+                                                                    Colors
+                                                                        .transparent,
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              child: Padding(
+                                                                padding:
+                                                                    const EdgeInsets.only(
+                                                                      bottom:
+                                                                          14,
+                                                                    ),
+                                                                child: _PlayerHeader(
+                                                                  snapshot:
+                                                                      snapshot,
+                                                                  compactLandscape:
+                                                                      true,
+                                                                  foregroundColor:
+                                                                      Colors
+                                                                          .white,
+                                                                  trackTransitionsEnabled:
+                                                                      widget
+                                                                          .trackTransitionsEnabled,
+                                                                  isFavorite:
+                                                                      isFavorite,
+                                                                  savedTrackId:
+                                                                      savedTrackId,
+                                                                  onOpenSearch:
+                                                                      widget
+                                                                          .onOpenSearch,
+                                                                  queueVisible:
+                                                                      showSideQueue,
+                                                                  onToggleQueue:
+                                                                      toggleQueue,
+                                                                  onOpenArtist:
+                                                                      onOpenArtist,
+                                                                  onOpenAlbum:
+                                                                      onOpenAlbum,
+                                                                  strings:
+                                                                      strings,
+                                                                  onCollapse: widget
+                                                                      .onCollapse,
+                                                                ),
+                                                              ),
                                                             ),
-                                                            height: gap,
                                                           ),
-                                                          controls,
                                                         ],
                                                       ),
                                                     ),
                                                   ),
-                                                ),
+                                                  SizedBox(width: landscapeGap),
+                                                  Expanded(
+                                                    key: const ValueKey(
+                                                      'bstream-player-landscape-controls-pane',
+                                                    ),
+                                                    child: controlsPane,
+                                                  ),
+                                                ],
                                               );
-                                          final collapse = widget.onCollapse;
-                                          if (!mobile || collapse == null) {
-                                            return contentScroll;
-                                          }
-                                          return _PullDownToCollapse(
-                                            onCollapse: collapse,
-                                            child: contentScroll,
-                                          );
-                                        },
+                                            }
+
+                                            final contentScroll = SingleChildScrollView(
+                                              key: const ValueKey(
+                                                'player-content-scroll',
+                                              ),
+                                              clipBehavior: Clip.hardEdge,
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                  minHeight:
+                                                      constraints.maxHeight,
+                                                ),
+                                                child: Align(
+                                                  alignment: mobile
+                                                      ? Alignment.bottomCenter
+                                                      : Alignment.center,
+                                                  child: ConstrainedBox(
+                                                    constraints: BoxConstraints(
+                                                      maxWidth: maxContentWidth,
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        artwork,
+                                                        SizedBox(
+                                                          key: const ValueKey(
+                                                            'player-artwork-title-gap',
+                                                          ),
+                                                          height: gap,
+                                                        ),
+                                                        controls,
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                            final collapse = widget.onCollapse;
+                                            if (!mobile || collapse == null) {
+                                              return contentScroll;
+                                            }
+                                            return _PlayerPullGestures(
+                                              onPullDown: collapse,
+                                              child: contentScroll,
+                                            );
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                    ),
                   ),
                 ),
               ),
@@ -1197,8 +1211,14 @@ class _PlayerPanelState extends ConsumerState<PlayerPanel> {
 
   Future<void> _openMobilePlaybackQueue(BuildContext context) async {
     _hideKeyboard();
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const _MobilePlaybackQueuePage()),
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      barrierColor: Colors.black.withValues(alpha: 0.32),
+      builder: (_) => const _MobilePlaybackQueueSheet(),
     );
     if (!mounted) {
       return;
@@ -2694,55 +2714,85 @@ class _PlayerHeader extends StatelessWidget {
   }
 }
 
-/// Collapses the player when its content is pulled down from the top, like
-/// the system sheets and YouTube Music.
+/// Vertical pulls on the mobile player, like the system sheets and YouTube
+/// Music: pulling down from the top of its content collapses the player, and
+/// pulling up past the bottom of its content opens the playback queue.
 ///
 /// The pull is measured from the pointer rather than from scroll
 /// notifications: when the content fits, the scroll view does not scroll at
 /// all, and when it bounces it hands the drag to its bounce-back without an
-/// end notification. Scroll notifications only report whether the content is
-/// at its top, so a pull that first scrolls the content is ignored.
-class _PullDownToCollapse extends StatefulWidget {
-  const _PullDownToCollapse({required this.onCollapse, required this.child});
+/// end notification. Scroll notifications only report where the content is,
+/// so a pull down that first scrolls the content is ignored. Phones often
+/// leave the player a little taller than the screen, so a pull up may first
+/// scroll that short remainder; it opens the queue once it has gone a full
+/// pull past it.
+class _PlayerPullGestures extends StatefulWidget {
+  const _PlayerPullGestures({
+    this.onPullDown,
+    this.onPullUp,
+    required this.child,
+  });
 
-  final VoidCallback onCollapse;
+  final VoidCallback? onPullDown;
+  final VoidCallback? onPullUp;
   final Widget child;
 
   @override
-  State<_PullDownToCollapse> createState() => _PullDownToCollapseState();
+  State<_PlayerPullGestures> createState() => _PlayerPullGesturesState();
 }
 
-class _PullDownToCollapseState extends State<_PullDownToCollapse> {
+class _PlayerPullGesturesState extends State<_PlayerPullGestures> {
   static const _distanceThreshold = 96.0;
   static const _flingDistanceThreshold = 24.0;
   static const _flingVelocityThreshold = 700.0;
 
+  /// Content with more left to scroll than this is browsed, not pulled.
+  static const _pullUpReach = 120.0;
+
   bool _atTop = true;
+  double _bottomGap = 0;
   int? _pointer;
   Offset _start = Offset.zero;
   VelocityTracker? _velocity;
-  bool _eligible = false;
+  bool _downEligible = false;
+  double? _upGapAtStart;
 
   bool _handleScroll(ScrollNotification notification) {
     if (notification.depth != 0) return false;
-    final metrics = notification.metrics;
-    if (metrics.axis != Axis.vertical) return false;
-    _atTop = metrics.pixels <= metrics.minScrollExtent + 0.5;
-    if (!_atTop) _eligible = false;
+    _updateEdges(notification.metrics);
     return false;
+  }
+
+  // Layout reports the content's extent before any scroll happens, so the
+  // first pull up already knows how much content is left below.
+  bool _handleMetrics(ScrollMetricsNotification notification) {
+    if (notification.depth != 0) return false;
+    _updateEdges(notification.metrics);
+    return false;
+  }
+
+  void _updateEdges(ScrollMetrics metrics) {
+    if (metrics.axis != Axis.vertical) return;
+    _atTop = metrics.pixels <= metrics.minScrollExtent + 0.5;
+    _bottomGap = math.max(0, metrics.maxScrollExtent - metrics.pixels);
+    if (!_atTop) _downEligible = false;
   }
 
   void _handlePointerDown(PointerDownEvent event) {
     if (_pointer != null) {
       // A second finger is a pinch or a mistake, not a pull.
-      _eligible = false;
+      _downEligible = false;
+      _upGapAtStart = null;
       return;
     }
     _pointer = event.pointer;
     _start = event.position;
     _velocity = VelocityTracker.withKind(event.kind)
       ..addPosition(event.timeStamp, event.position);
-    _eligible = _atTop;
+    _downEligible = widget.onPullDown != null && _atTop;
+    _upGapAtStart = widget.onPullUp != null && _bottomGap <= _pullUpReach
+        ? _bottomGap
+        : null;
   }
 
   void _handlePointerMove(PointerMoveEvent event) {
@@ -2750,38 +2800,51 @@ class _PullDownToCollapseState extends State<_PullDownToCollapse> {
     _velocity?.addPosition(event.timeStamp, event.position);
   }
 
+  bool _pulled(double distance, double velocity) =>
+      distance >= _distanceThreshold ||
+      (distance >= _flingDistanceThreshold &&
+          velocity >= _flingVelocityThreshold);
+
   void _handlePointerUp(PointerUpEvent event) {
     if (event.pointer != _pointer) return;
     final delta = event.position - _start;
     final velocity = _velocity?.getVelocity().pixelsPerSecond.dy ?? 0;
-    final vertical = delta.dy > delta.dx.abs() * 1.5;
-    final collapse =
-        _eligible &&
-        vertical &&
-        (delta.dy >= _distanceThreshold ||
-            (delta.dy >= _flingDistanceThreshold &&
-                velocity >= _flingVelocityThreshold));
+    final vertical = delta.dy.abs() > delta.dx.abs() * 1.5;
+    final pullDown = _downEligible && vertical && _pulled(delta.dy, velocity);
+    final upGap = _upGapAtStart;
+    final pullUp =
+        upGap != null && vertical && _pulled(-delta.dy - upGap, -velocity);
     _reset();
-    if (collapse) widget.onCollapse();
+    if (pullDown) {
+      widget.onPullDown?.call();
+    } else if (pullUp) {
+      widget.onPullUp?.call();
+    }
   }
 
   void _reset([PointerEvent? event]) {
     if (event != null && event.pointer != _pointer) return;
     _pointer = null;
     _velocity = null;
-    _eligible = false;
+    _downEligible = false;
+    _upGapAtStart = null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Listener(
+      // Pulls that start on empty space between the controls count too.
+      behavior: HitTestBehavior.translucent,
       onPointerDown: _handlePointerDown,
       onPointerMove: _handlePointerMove,
       onPointerUp: _handlePointerUp,
       onPointerCancel: _reset,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: _handleScroll,
-        child: widget.child,
+      child: NotificationListener<ScrollMetricsNotification>(
+        onNotification: _handleMetrics,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: _handleScroll,
+          child: widget.child,
+        ),
       ),
     );
   }
@@ -2804,12 +2867,19 @@ class _PlaybackQueuePanel extends ConsumerStatefulWidget {
     required this.strings,
     required this.onClose,
     this.standaloneRail = false,
+    this.sheetScrollController,
   });
 
   final PlaybackQueueState queue;
   final AppStrings strings;
   final VoidCallback onClose;
   final bool standaloneRail;
+
+  /// Set when the panel is the mobile bottom sheet. The list scrolls with the
+  /// sheet's controller so dragging it down at the top moves the sheet.
+  final ScrollController? sheetScrollController;
+
+  bool get isSheet => sheetScrollController != null;
 
   @override
   ConsumerState<_PlaybackQueuePanel> createState() =>
@@ -2818,12 +2888,15 @@ class _PlaybackQueuePanel extends ConsumerStatefulWidget {
 
 class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
   static const double _estimatedQueueItemExtent = 77;
-  final ScrollController _queueScrollController = ScrollController();
+  final ScrollController _ownScrollController = ScrollController();
   final Map<String, GlobalKey> _queueEntryKeys = <String, GlobalKey>{};
+
+  ScrollController get _queueScrollController =>
+      widget.sheetScrollController ?? _ownScrollController;
 
   @override
   void dispose() {
-    _queueScrollController.dispose();
+    _ownScrollController.dispose();
     super.dispose();
   }
 
@@ -2945,22 +3018,51 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
     final queueActionTextStyle = Theme.of(
       context,
     ).textTheme.labelLarge?.copyWith(fontSize: 13, fontWeight: FontWeight.w800);
-    return ClipRect(
+    return ClipRRect(
+      borderRadius: widget.isSheet
+          ? const BorderRadius.vertical(top: Radius.circular(20))
+          : BorderRadius.zero,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.64),
-            borderRadius: standaloneRail ? null : BorderRadius.circular(6),
-            border: standaloneRail
+            color: colors.surface.withValues(
+              alpha: widget.isSheet ? 0.8 : 0.64,
+            ),
+            borderRadius: widget.isSheet
+                ? const BorderRadius.vertical(top: Radius.circular(20))
+                : standaloneRail
+                ? null
+                : BorderRadius.circular(6),
+            border: widget.isSheet
+                ? Border(top: BorderSide(color: colors.outlineVariant))
+                : standaloneRail
                 ? Border(left: BorderSide(color: colors.outlineVariant))
                 : Border.all(color: colors.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (widget.isSheet)
+                Center(
+                  key: const ValueKey('queue-sheet-handle'),
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 8),
+                    decoration: BoxDecoration(
+                      color: colors.onSurfaceVariant.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  widget.isSheet ? 8 : 12,
+                  10,
+                  12,
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -3220,17 +3322,9 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
               ),
               Expanded(
                 child: queue.entries.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            strings.playbackQueueEmpty,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColors.contentSubtitleFor(context),
-                            ),
-                          ),
-                        ),
+                    ? _QueueEmptyMessage(
+                        message: strings.playbackQueueEmpty,
+                        scrollController: widget.sheetScrollController,
                       )
                     : ReorderableListView.builder(
                         scrollController: _queueScrollController,
@@ -3402,30 +3496,49 @@ class _PlaybackQueueTileState extends State<_PlaybackQueueTile> {
   }
 }
 
-class _MobilePlaybackQueuePage extends ConsumerWidget {
-  const _MobilePlaybackQueuePage();
+class _MobilePlaybackQueueSheet extends ConsumerWidget {
+  const _MobilePlaybackQueueSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final queue = ref.watch(playbackQueueProvider);
     final strings = ref.watch(appStringsProvider);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const PlayerPlaybackGradientBackground(),
-          SafeArea(
-            child: _PlaybackQueuePanel(
-              queue: queue,
-              strings: strings,
-              standaloneRail: true,
-              onClose: () => Navigator.of(context).pop(),
-            ),
-          ),
-        ],
+    // Opens tall enough to keep the player's header visible above it; a drag
+    // past the smallest size closes it.
+    return DraggableScrollableSheet(
+      key: const ValueKey('mobile-playback-queue-sheet'),
+      expand: false,
+      initialChildSize: 0.92,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      builder: (context, scrollController) => _PlaybackQueuePanel(
+        queue: queue,
+        strings: strings,
+        sheetScrollController: scrollController,
+        onClose: () => Navigator.of(context).pop(),
       ),
     );
+  }
+}
+
+class _QueueEmptyMessage extends StatelessWidget {
+  const _QueueEmptyMessage({required this.message, this.scrollController});
+
+  final String message;
+  final ScrollController? scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: AppColors.contentSubtitleFor(context)),
+      ),
+    );
+    if (scrollController == null) return Center(child: text);
+    return ListView(controller: scrollController, children: [text]);
   }
 }
 

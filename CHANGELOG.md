@@ -18,6 +18,9 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 - Added a collapse control to the default player header and a back control to
   the mobile lyrics header. The player can be pulled down to close it when its
   content is scrolled to the top.
+- On phones the playback queue opens as a panel over the player instead of a
+  separate page. Pull the player up, or use the queue button, to open it; pull
+  the panel down to close it.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
 
