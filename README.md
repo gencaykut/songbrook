@@ -155,7 +155,9 @@ tests are set up only on Windows and Linux, and two tests compare `/var` with
 - [docs/upstream-readme.md](docs/upstream-readme.md): BStream Music's full
   feature list, architecture, and platform notes.
 - [docs/innertube_playback.md](docs/innertube_playback.md): stream resolution,
-  client fallback order, and PO tokens.
+  client fallback order, PO tokens, song versions, and SponsorBlock.
+- [docs/manual-test-1.0.0.md](docs/manual-test-1.0.0.md): the manual iPhone
+  test checklist (in Turkish).
 - [docs/ios-duration-fix.md](docs/ios-duration-fix.md): the iOS duration fixes
   (in Turkish).
 - [docs/audio-routing.md](docs/audio-routing.md): audio output and casting

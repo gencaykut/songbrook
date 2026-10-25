@@ -137,6 +137,35 @@ direct muxed stream is available, the downloader repeats normal deep
 validation and saves that last-resort payload with its real `.mp4` extension;
 it is never mislabeled as `.m4a` and no transcoder is required.
 
+## Song versions and SponsorBlock (Songbrook)
+
+Signed-out `next` and `player` responses expose neither YouTube Music's
+song/video counterpart nor the `musicVideoType`, but every song (ATV) version
+is published on an auto-generated `<Artist> - Topic` channel, and the player
+response's `videoDetails.author` names the uploading channel. The resolved
+audio therefore carries that channel (`InnerTubeResolvedAudio.channel`,
+`AudioStreamResolution.channelName`).
+
+When it is not a Topic channel, `RemoteTrackResolver` searches YouTube Music
+songs for the title and artist and plays the song's stream under the video's
+queue entry if `matchSongCounterpart` accepts it: equal titles once video
+labels and featured credits are removed (live, remix and acoustic qualifiers
+are kept), a shared artist (an `Artist - ` title prefix counts), and a song no
+more than 30 seconds longer than the video and at least half its length.
+Matches are kept for the session; any failure plays the video. The track
+records the streamed video in `streamVideoId` and takes the song's length.
+
+A video that keeps playing skips SponsorBlock `music_offtopic` segments. The
+request names only the first four hex characters of the video id's SHA-256
+(`/api/skipSegments/<prefix>`); the matching video is picked locally. Segments
+apply only when `streamVideoId` equals the track id, never to a song version.
+SponsorBlock data is CC BY-NC-SA 4.0 and credited in THIRD_PARTY_NOTICES.
+
+Both are on by default (`settings.preferSongVersions`,
+`settings.skipOffTopicSegments`). Live checks:
+`integration_test/claude_song_version_test.dart` and
+`integration_test/claude_sponsorblock_test.dart`.
+
 ## Benchmark
 
 Run:

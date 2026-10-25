@@ -1,7 +1,8 @@
 # 1.0.0+130 iPhone manuel test listesi
 
 Telefonda 1.2.9+129 vardı; 1.0.0 onun üzerine kuruldu (aynı bundle ID). Bu
-liste 1.2.9'dan sonraki değişiklikleri kapsar. Sorun çıkan maddeye kısa bir not
+liste 1.2.9'dan sonraki değişiklikleri kapsar. 1–9. bölümler 25 Ekim'de
+denendi; 10. bölüm aynı gün sonradan eklenen özellikler içindir (`31725d6`). Sorun çıkan maddeye kısa bir not
 düş: ne yaptın, ne bekledin, ne oldu.
 
 ## 1. Yükseltme ve kimlik
@@ -69,6 +70,7 @@ düş: ne yaptın, ne bekledin, ne oldu.
 - [ ] Kuyruk bitince radyo benzer şarkılarla devam ediyor.
 - [ ] Bir şarkı otomatik geçtikten hemen sonra İleri'ye bas: ilk basış yok
       sayılabilir (bilinen davranış, 900 ms). Bir saniye sonra basınca geçmeli.
+      (Kuyruk artık ayrı sayfa değil, panel: bkz. 10. bölüm.)
 
 ## 8. Kaldırılan özellik: TikTok LIVE
 
@@ -83,3 +85,31 @@ düş: ne yaptın, ne bekledin, ne oldu.
 - [ ] AirPlay / "Şuraya yayınla" menüsü açılıyor.
 - [ ] YouTube Music hesabıyla giriş (kullanıyorsan) çalışıyor, listeler senkron.
 - [ ] Uygulamayı arka plana al, 10 dakika sonra dön: çalma kesilmemiş.
+
+## 10. Sonradan eklenenler (25 Ekim, `31725d6`)
+
+### Sıradakiler paneli
+- [ ] Oynatıcıyı yukarı çek: kuyruk aşağıdan açılan panel olarak geliyor,
+      oynatıcının başlığı açıkta kalıyor. Aşağı savurunca kapanıyor.
+- [ ] Başlıktaki kuyruk düğmesi aynı paneli açıyor; dört oynatıcı stilinde de
+      dene (Ayarlar → Görünüm).
+- [ ] Paneldeki "Otomatik oynatma" kapalıyken kuyruk son şarkıda duruyor;
+      açınca radyo hemen devam ediyor. Ayarlar → Çalma'daki anahtar aynı ayar.
+- [ ] Panelin altındaki "Benzer" bölümünden bir şarkıya dokun: çalanın
+      arkasına eklenip çalıyor, kuyruğun geri kalanı yerinde. Radyo sonradan
+      şarkı eklediğinde eklenen şarkı yerinde kalıyor ve iki kez görünmüyor.
+
+### Müzik videoları
+- [ ] Ara → Videolar'dan resmi bir klip çal ("Tarkan Verme", "Despacito"):
+      videonun girişi yerine şarkı sürümü baştan çalıyor, süre şarkının süresi.
+- [ ] Ayarlar → Çalma → "Şarkı sürümünü tercih et"i kapat, yeni bir klip çal:
+      video çalıyor ve müzik dışı girişi atlanıyor (Despacito'da ilk ~22 sn).
+      Son 20 dakikada çalınan bir klipte ayar hemen yansımayabilir.
+- [ ] Bir klip sıradaki şarkı olarak otomatik başladığında ya da kilit
+      ekranındayken atlama çalışıyor mu? (Simülatörde doğrulanmadı.)
+- [ ] Ayarlar → Çalma'da "Müzik olmayan bölümleri atla" anahtarı ve açıklamada
+      SponsorBlock atfı (CC BY-NC-SA 4.0) var.
+
+### Hız
+- [ ] Bir şarkının başlaması telefonda hâlâ ~3 sn mi? Müzik videolarında ilk
+      dokunuşta +0,5–1 sn bekleniyor.
