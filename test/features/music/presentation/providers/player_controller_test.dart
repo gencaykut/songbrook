@@ -976,6 +976,94 @@ void main() {
   );
 
   test(
+    'a song inserted after the current one plays and keeps the queue',
+    () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      final first = _queuedRemoteTrack('insert-first');
+      final second = _queuedRemoteTrack('insert-second');
+      final third = _queuedRemoteTrack('insert-third');
+      final similar = _queuedRemoteTrack('insert-similar');
+
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      await controller.playRemote(
+        first,
+        queue: [first, second, third],
+        queueSourceId: 'remote-insert',
+      );
+      await controller.playInsertedAfterCurrent(similar);
+      await _flushCompletion();
+
+      final queue = container.read(playbackQueueProvider);
+      expect(queue.entries.map((entry) => entry.id), [
+        'insert-first',
+        'insert-similar',
+        'insert-second',
+        'insert-third',
+      ]);
+      expect(queue.currentIndex, 1);
+      expect(
+        player.playedRemote.map((track) => track.id).last,
+        'insert-similar',
+      );
+    },
+  );
+
+  test(
+    'an inserted song keeps its place when related radio extends the queue',
+    () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      final seed = _queuedRemoteTrack('radio-seed');
+      final related = _queuedRemoteTrack('radio-related');
+      final more = _queuedRemoteTrack('radio-more');
+      final similar = _queuedRemoteTrack('radio-similar');
+      final extension = Completer<List<RecommendationPlaybackItem>>();
+      var extensionStarted = false;
+
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      await controller.playRecommendation(
+        RecommendationPlaybackItem(track: seed),
+        queue: [RecommendationPlaybackItem(track: seed)],
+        queueSourceId: 'personalized-home:insert',
+        queueExtender: () {
+          extensionStarted = true;
+          return extension.future;
+        },
+      );
+      await _waitUntil(() => extensionStarted);
+
+      // The radio page arrives while the inserted song is already playing.
+      await controller.playInsertedAfterCurrent(similar);
+      // Related radio also brings the inserted song; it must not play twice.
+      extension.complete([
+        RecommendationPlaybackItem(track: seed),
+        RecommendationPlaybackItem(track: related),
+        RecommendationPlaybackItem(track: similar),
+        RecommendationPlaybackItem(track: more),
+      ]);
+      await _flushCompletion();
+
+      final queue = container.read(playbackQueueProvider);
+      expect(queue.entries.map((entry) => entry.id), [
+        'radio-seed',
+        'radio-similar',
+        'radio-related',
+        'radio-more',
+      ]);
+      expect(queue.currentIndex, 1);
+      expect(
+        container.read(playerControllerProvider).value?.trackId,
+        'radio-similar',
+      );
+    },
+  );
+
+  test(
     'with Autoplay off a recommendation queue ends, and resumes when it is on',
     () async {
       final player = _FakePlayerService();

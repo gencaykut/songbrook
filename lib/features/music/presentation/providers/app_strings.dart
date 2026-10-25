@@ -1142,6 +1142,7 @@ class AppStrings {
   String get loudnessNormalization =>
       choose('Normalizar volumen', 'Normalize volume');
   String get autoplay => choose('Reproducción automática', 'Autoplay');
+  String get similar => choose('Similares', 'Similar');
   String get autoplaySummary => choose(
     'Cuando termina la cola, sigue con canciones similares.',
     'When the queue ends, keep playing similar songs.',

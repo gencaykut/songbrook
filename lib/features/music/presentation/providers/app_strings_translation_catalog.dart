@@ -2336,6 +2336,7 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '自动播放',
     '自動再生',
   ],
+  'Similar': <String>['Semelhantes', 'Similaires', '비슷한 곡', '相似歌曲', '似た曲'],
   'When the queue ends, keep playing similar songs.': <String>[
     'Quando a fila terminar, continua com músicas parecidas.',
     'À la fin de la file, continue avec des titres similaires.',

@@ -23,6 +23,8 @@ import '../../../../services/player/local_audio_quality_service.dart';
 import '../../../../services/spotify_canvas/spotify_canvas_resolver.dart';
 import '../../../../services/sharing/bstream_track_link.dart';
 import '../../../../services/youtube_music/innertube_search_service.dart';
+import '../../../../services/youtube_music/playback/innertube_video_id.dart';
+import '../../data/datasources/remote_music_datasource.dart';
 import '../../domain/entities/local_track.dart';
 import '../../domain/entities/track_info.dart';
 import '../providers/music_providers.dart';
@@ -3332,6 +3334,10 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
                         // Scrolls with the songs so a short or text-scaled
                         // panel keeps its list room.
                         header: _QueueAutoplaySwitch(strings: strings),
+                        footer: _QueueSimilarSection(
+                          queue: queue,
+                          strings: strings,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         itemCount: queue.entries.length,
                         itemBuilder: (context, index) {
@@ -3563,6 +3569,113 @@ class _QueueAutoplaySwitch extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Songs like the one playing, below the queue: its related radio and other
+/// songs by its artist. Tapping one plays it next without losing the queue.
+class _QueueSimilarSection extends ConsumerWidget {
+  const _QueueSimilarSection({required this.queue, required this.strings});
+
+  final PlaybackQueueState queue;
+  final AppStrings strings;
+
+  static String? _videoId(String reference) {
+    try {
+      return InnerTubeVideoId.extract(reference)?.value;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final index = queue.currentIndex;
+    if (index < 0 || index >= queue.entries.length) {
+      return const SizedBox.shrink();
+    }
+    final current = queue.entries[index];
+    // Several credited artists arrive joined; the first is the song's own.
+    final artist = current.artist.split(',').first.trim();
+    final seed = SimilarSongsSeed(
+      videoId: _videoId(current.id),
+      artist: artist.isEmpty ? null : artist,
+    );
+    if (seed.isEmpty) return const SizedBox.shrink();
+
+    final sources = ref.watch(similarSongsProvider(seed));
+    final heading = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
+      child: Text(
+        strings.similar,
+        key: const ValueKey('queue-similar-title'),
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w900,
+          color: AppColors.contentHeadingFor(context),
+        ),
+      ),
+    );
+    return sources.when(
+      loading: () => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          heading,
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              ),
+            ),
+          ),
+        ],
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (sources) {
+        final songs = mergeSimilarSongs(
+          radio: sources.radio,
+          artistSongs: sources.artistSongs,
+          excludedVideoIds: {
+            for (final entry in queue.entries) ?_videoId(entry.id),
+          },
+        );
+        if (songs.isEmpty) return const SizedBox.shrink();
+        return Column(
+          key: const ValueKey('queue-similar-section'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            heading,
+            for (final song in songs)
+              Padding(
+                key: ValueKey('queue-similar-${song.videoId}'),
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _PlaybackQueueTile(
+                  entry: PlaybackQueueEntry(
+                    id: song.videoId,
+                    title: song.title,
+                    artist: song.artist,
+                    album: song.album,
+                    thumbnailUrl:
+                        youtubeThumbnailSourceForVideoId(song.videoId) ??
+                        song.thumbnailUrl,
+                    isRemote: true,
+                  ),
+                  isCurrent: false,
+                  isPlaying: false,
+                  onTap: () => unawaited(
+                    ref
+                        .read(playerControllerProvider.notifier)
+                        .playInsertedAfterCurrent(
+                          trackInfoFromInnerTubeSong(song),
+                        ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

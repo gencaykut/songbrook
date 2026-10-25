@@ -24,6 +24,10 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 - Added an Autoplay switch to the queue panel and Playback settings. When it
   is off, a queue started from Home or Search ends with its last song instead
   of continuing with related radio. On by default.
+- Added a Similar section below the queue: songs from the playing song's
+  related radio and other songs by its artist. Tapping one plays it next and
+  keeps the rest of the queue, even when related radio later adds more
+  songs.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
 

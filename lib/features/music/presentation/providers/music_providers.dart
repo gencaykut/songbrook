@@ -111,6 +111,7 @@ import 'player/recommendation_playback_item.dart';
 import 'player/recommendation_queue_extension_coordinator.dart';
 import 'player/remote_playback_source_factory.dart';
 import 'player/remote_prefetch_coordinator.dart';
+import 'player/similar_songs.dart';
 import 'player/remote_playback_retry_coordinator.dart';
 
 export 'app_strings.dart';
@@ -128,6 +129,7 @@ export 'player/recommendation_playback_item.dart';
 export 'player/recommendation_queue_extension_coordinator.dart';
 export 'player/remote_playback_source_factory.dart';
 export 'player/remote_prefetch_coordinator.dart';
+export 'player/similar_songs.dart';
 export 'player/remote_playback_retry_coordinator.dart';
 export '../../domain/entities/lyrics_romanization_language.dart';
 
@@ -745,6 +747,54 @@ final catalogPlaylistsProvider = FutureProvider<List<CatalogPlaylist>>((
     resolved.whereType<CatalogPlaylist>(),
   );
 });
+
+/// An artist's songs, kept for the session: the queue panel asks again for
+/// every song by the same artist.
+final _artistSongsProvider = FutureProvider.family<List<InnerTubeSong>, String>(
+  (ref, artist) =>
+      ref.watch(youtubeMusicSearchProvider).searchSongs(artist, limit: 20),
+);
+
+/// The two sources of the queue's "Similar" section for one playing song.
+/// Either may fail on its own; the other still fills the section.
+final similarSongsProvider = FutureProvider.autoDispose
+    .family<
+      ({List<InnerTubeSong> radio, List<InnerTubeSong> artistSongs}),
+      SimilarSongsSeed
+    >((ref, seed) async {
+      final service = ref.watch(youtubeMusicSearchProvider);
+      final videoId = seed.videoId?.trim();
+      final artist = seed.artist?.trim();
+      Future<List<InnerTubeSong>> radio() async {
+        if (videoId == null || videoId.isEmpty) return const [];
+        if (service is! YouTubeMusicRelated) return const [];
+        final page = await (service as YouTubeMusicRelated).getNext(
+          videoId,
+          radio: true,
+          limit: 30,
+        );
+        return page.songs;
+      }
+
+      Future<List<InnerTubeSong>> artistSongs() async {
+        if (artist == null || artist.isEmpty) return const [];
+        return ref.watch(_artistSongsProvider(artist).future);
+      }
+
+      Future<List<InnerTubeSong>> orEmpty(
+        Future<List<InnerTubeSong>> Function() load,
+      ) async {
+        try {
+          return await load();
+        } catch (error) {
+          debugPrint('Similar songs source failed: $error');
+          return const [];
+        }
+      }
+
+      final results = await Future.wait([orEmpty(radio), orEmpty(artistSongs)]);
+      return (radio: results[0], artistSongs: results[1]);
+    });
 
 final catalogPlaylistProvider = FutureProvider.family<CatalogPlaylist?, String>(
   (ref, playlistId) {

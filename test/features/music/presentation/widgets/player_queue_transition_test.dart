@@ -1,6 +1,8 @@
+import 'package:bstream_music/features/music/domain/entities/track_info.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/features/music/presentation/widgets/player_panel.dart';
 import 'package:bstream_music/services/player/player_service.dart';
+import 'package:bstream_music/services/youtube_music/innertube_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -313,6 +315,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets('the mobile queue lists Similar songs and plays one next', (
+    tester,
+  ) async {
+    _configureView(tester, const Size(390, 844));
+    _TestPlayerController.inserted.clear();
+    final seeds = <SimilarSongsSeed>[];
+    InnerTubeSong song(String id, String artist) =>
+        InnerTubeSong(videoId: id, title: 'Tema $id', artists: [artist]);
+    await tester.pumpWidget(
+      _playerHarness(
+        platform: TargetPlatform.iOS,
+        similarRadio: [
+          song('radio000001', 'Otro'),
+          song('radio000002', 'Otro'),
+        ],
+        similarArtistSongs: [song('artist00001', 'BStream Music')],
+        onSimilarSeed: seeds.add,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('player-queue-toggle')));
+    await tester.pumpAndSettle();
+
+    final title = find.byKey(const ValueKey('queue-similar-title'));
+    await tester.scrollUntilVisible(
+      title,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('mobile-playback-queue-sheet')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Similares'), findsOneWidget);
+    expect(seeds.last, const SimilarSongsSeed(artist: 'BStream Music'));
+    final ids = [
+      for (final id in ['radio000001', 'artist00001', 'radio000002'])
+        tester.getTopLeft(find.byKey(ValueKey('queue-similar-$id'))).dy,
+    ];
+    expect(ids, orderedEquals([...ids]..sort()));
+
+    await tester.tap(find.byKey(const ValueKey('queue-similar-artist00001')));
+    await tester.pump();
+    expect(_TestPlayerController.inserted.map((track) => track.id), [
+      'artist00001',
+    ]);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 void _configureView(WidgetTester tester, [Size size = const Size(960, 600)]) {
@@ -331,11 +383,18 @@ Widget _playerHarness({
   TargetPlatform platform = TargetPlatform.windows,
   PlayerStyle style = defaultPlayerStyle,
   ValueNotifier<bool>? active,
+  List<InnerTubeSong> similarRadio = const [],
+  List<InnerTubeSong> similarArtistSongs = const [],
+  void Function(SimilarSongsSeed seed)? onSimilarSeed,
 }) {
   return ProviderScope(
     overrides: [
       playerControllerProvider.overrideWith(_TestPlayerController.new),
       playbackQueueProvider.overrideWith(_TestQueueNotifier.new),
+      similarSongsProvider.overrideWith((ref, seed) async {
+        onSimilarSeed?.call(seed);
+        return (radio: similarRadio, artistSongs: similarArtistSongs);
+      }),
       libraryTracksProvider.overrideWith((ref) async => const []),
       favoriteTrackIdsProvider.overrideWithValue(const <String>{}),
       appStringsProvider.overrideWithValue(
@@ -367,6 +426,13 @@ Widget _playerHarness({
 }
 
 class _TestPlayerController extends PlayerController {
+  static final inserted = <TrackInfo>[];
+
+  @override
+  Future<void> playInsertedAfterCurrent(TrackInfo track) async {
+    inserted.add(track);
+  }
+
   void updateTitle(String title) {
     state = AsyncData(
       PlayerSnapshot(

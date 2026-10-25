@@ -5926,6 +5926,13 @@ Widget _playerHarness({
         localPlaybackAudioQualityServiceProvider.overrideWithValue(
           localAudioQualityService,
         ),
+      // The queue's Similar section would otherwise query YouTube Music.
+      similarSongsProvider.overrideWith(
+        (ref, seed) async => (
+          radio: const <InnerTubeSong>[],
+          artistSongs: const <InnerTubeSong>[],
+        ),
+      ),
       playerControllerProvider.overrideWith(
         () =>
             playerController ??

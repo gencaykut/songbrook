@@ -891,9 +891,10 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       for (final index in _shufflePlan)
         if (index >= 0 && index < _queue.length) _queue[index],
     ];
-    final nextQueue = _remoteQueueEntries
-        .reconcile(candidates, previousQueue: _queue)
-        .toList();
+    final nextQueue = _keepInsertedItems(
+      _queue,
+      _remoteQueueEntries.reconcile(candidates, previousQueue: _queue).toList(),
+    );
     var nextIndex = nextQueue.indexWhere(
       (candidate) => _sameQueueItem(candidate, current),
     );
@@ -2576,12 +2577,15 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     final previousQueue = _queue;
     final previousIndex = _queueIndex;
     final previousCurrent = _playingRemoteTrack;
-    final nextQueue = _remoteQueueEntries
-        .reconcile(
-          tracks.map(_QueueItem.remote).toList(growable: false),
-          previousQueue: previousQueue,
-        )
-        .toList();
+    final nextQueue = _keepInsertedItems(
+      previousQueue,
+      _remoteQueueEntries
+          .reconcile(
+            tracks.map(_QueueItem.remote).toList(growable: false),
+            previousQueue: previousQueue,
+          )
+          .toList(),
+    );
 
     var nextIndex = -1;
     if (previousCurrent != null &&
@@ -3067,6 +3071,78 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     _publishPlaybackQueue();
     unawaited(_maybeExtendRecommendationQueue());
     await _playQueueItem(_queue[_queueIndex], automaticTransition: automatic);
+  }
+
+  /// Plays [track] now as the song after the current one, keeping the rest
+  /// of the queue. The inserted song keeps its place when the queue's source
+  /// (related radio, a playlist) later grows or changes.
+  Future<void> playInsertedAfterCurrent(TrackInfo track) async {
+    if (_queue.isEmpty || _queueIndex < 0 || _queueIndex >= _queue.length) {
+      await playRemote(track, queue: [track]);
+      return;
+    }
+    _resetQueueNavigation();
+    final entry = _remoteQueueEntries.newRemoteItem(track);
+    final inserted = _QueueItem.remote(
+      track,
+      remoteQueueEntryId: entry.remoteQueueEntryId,
+      logicalEntryId: '$_insertedEntryPrefix${_insertedEntrySequence++}',
+    );
+    final index = _queueIndex + 1;
+    _queue = List<_QueueItem>.unmodifiable([
+      ..._queue.take(index),
+      inserted,
+      ..._queue.skip(index),
+    ]);
+    // A downloaded queue handed to the native player cannot hold a stream;
+    // the logical queue drives playback from here, as for mixed queues.
+    _useNativeLocalQueue = false;
+    _resetShuffleHistory();
+    _publishPlaybackQueue();
+    await playQueueIndex(index);
+  }
+
+  static const _insertedEntryPrefix = 'inserted:';
+  int _insertedEntrySequence = 0;
+
+  bool _isInsertedItem(_QueueItem item) =>
+      item.logicalEntryId?.startsWith(_insertedEntryPrefix) == true;
+
+  /// Songs inserted with [playInsertedAfterCurrent] are not part of the
+  /// queue's source, so a sync rebuilt from the source drops them. Put each
+  /// back after the song it followed, and drop a later copy the source brings
+  /// (related radio often contains it) so it does not play twice.
+  List<_QueueItem> _keepInsertedItems(
+    List<_QueueItem> previousQueue,
+    List<_QueueItem> nextQueue,
+  ) {
+    final result = List<_QueueItem>.of(nextQueue);
+    for (var index = 0; index < previousQueue.length; index++) {
+      final item = previousQueue[index];
+      if (!_isInsertedItem(item) ||
+          result.any((candidate) => _sameQueueItem(candidate, item))) {
+        continue;
+      }
+      var position = 0;
+      for (var previous = index - 1; previous >= 0; previous--) {
+        final anchor = result.indexWhere(
+          (candidate) => _sameQueueItem(candidate, previousQueue[previous]),
+        );
+        if (anchor >= 0) {
+          position = anchor + 1;
+          break;
+        }
+      }
+      result.insert(position, item);
+      for (var later = result.length - 1; later > position; later--) {
+        final candidate = result[later];
+        if (!_isInsertedItem(candidate) &&
+            _sameQueueRepresentation(candidate, item)) {
+          result.removeAt(later);
+        }
+      }
+    }
+    return result;
   }
 
   Future<void> playQueueIndex(int index) async {
