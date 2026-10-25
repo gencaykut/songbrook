@@ -2337,6 +2337,21 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '自動再生',
   ],
   'Similar': <String>['Semelhantes', 'Similaires', '비슷한 곡', '相似歌曲', '似た曲'],
+  'Prefer song versions': <String>[
+    'Preferir a versão da música',
+    'Préférer la version audio',
+    '노래 버전 우선',
+    '优先播放歌曲版本',
+    '曲バージョンを優先',
+  ],
+  'When a music video plays, use its song version from YouTube Music if there is one.':
+      <String>[
+        'Ao tocar um videoclipe, usa a versão da música do YouTube Music, se houver.',
+        'Lors de la lecture d\'un clip, utilise sa version audio de YouTube Music si elle existe.',
+        '뮤직비디오를 재생할 때 YouTube Music에 노래 버전이 있으면 그 버전을 재생합니다.',
+        '播放音乐视频时，如果 YouTube Music 有歌曲版本，则改为播放歌曲版本。',
+        'ミュージックビデオを再生するとき、YouTube Music に曲バージョンがあればそちらを再生します。',
+      ],
   'When the queue ends, keep playing similar songs.': <String>[
     'Quando a fila terminar, continua com músicas parecidas.',
     'À la fin de la file, continue avec des titres similaires.',

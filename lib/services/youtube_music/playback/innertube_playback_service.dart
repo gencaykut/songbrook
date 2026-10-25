@@ -50,9 +50,13 @@ final class InnerTubeResolvedAudio {
     required this.expiresAt,
     required this.resolutionElapsed,
     required this.probe,
+    this.channel,
   });
 
   final String videoId;
+
+  /// The uploading channel, as YouTube reports it for the video.
+  final String? channel;
   final Uri uri;
   final Map<String, String> headers;
   final InnerTubeClientProfile profile;
@@ -622,6 +626,7 @@ class InnerTubePlaybackService {
             ),
             resolutionElapsed: totalStopwatch.elapsed,
             probe: probe,
+            channel: response.author,
           );
         } on InnerTubeStreamValidationException catch (error) {
           // Modern Web GVS enforcement can bind the token either to videoId or
@@ -663,6 +668,7 @@ class InnerTubePlaybackService {
             ),
             resolutionElapsed: totalStopwatch.elapsed,
             probe: probe,
+            channel: response.author,
           );
         }
       } catch (error) {

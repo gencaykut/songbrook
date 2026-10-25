@@ -5,14 +5,19 @@ import 'package:bstream_music/core/errors/app_exception.dart';
 import 'package:bstream_music/features/music/domain/entities/track_info.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
+import 'package:bstream_music/services/youtube_music/innertube_search_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+
+  group('song versions', songVersionTests);
 
   test(
     'coalesces concurrent persistent-cache loads before resolving',
@@ -843,4 +848,167 @@ class _ChainedResolver implements AudioStreamResolver {
       await resolver.dispose();
     }
   }
+}
+
+class _ChannelAudioResolver implements AudioStreamResolver {
+  _ChannelAudioResolver(this.channels);
+
+  final Map<String, String> channels;
+  final resolvedIds = <String>[];
+
+  @override
+  Future<AudioStreamResolution> resolve(TrackInfo track) async {
+    resolvedIds.add(track.id);
+    return AudioStreamResolution(
+      source: AudioStreamSource.innerTube,
+      streamUrl: 'https://media.example/${track.id}.m4a',
+      streamExtension: 'm4a',
+      videoId: track.id,
+      streamDuration: const Duration(minutes: 4),
+      channelName: channels[track.id],
+    );
+  }
+
+  @override
+  Future<void> dispose() async {}
+}
+
+class _FixedSongFinder extends SongCounterpartFinder {
+  _FixedSongFinder(this.songs) : super(_UnusedSearch());
+
+  final Map<String, InnerTubeSong> songs;
+  final lookedUp = <String>[];
+
+  @override
+  Future<InnerTubeSong?> find(
+    TrackInfo video, {
+    Duration? videoDuration,
+  }) async {
+    lookedUp.add(video.id);
+    return songs[video.id];
+  }
+}
+
+class _UnusedSearch implements YouTubeMusicSearch {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName}');
+}
+
+class _SongVersionSettings extends SettingsController {
+  _SongVersionSettings({required this.preferSongVersions});
+
+  final bool preferSongVersions;
+
+  @override
+  Future<SettingsState> build() async => SettingsState(
+    downloadDirectory: '/tmp/songbrook-resolver-test',
+    language: AppLanguage.spanish,
+    preferSongVersions: preferSongVersions,
+  );
+}
+
+ProviderContainer _songVersionContainer(
+  _ChannelAudioResolver resolver,
+  _FixedSongFinder finder, {
+  bool preferSongVersions = true,
+}) {
+  return ProviderContainer(
+    overrides: [
+      audioStreamResolverProvider.overrideWithValue(resolver),
+      songCounterpartFinderProvider.overrideWithValue(finder),
+      settingsControllerProvider.overrideWith(
+        () => _SongVersionSettings(preferSongVersions: preferSongVersions),
+      ),
+      remoteTrackResolverProvider.overrideWith(
+        (ref) => RemoteTrackResolver(ref, useMobileCachePolicy: false),
+      ),
+    ],
+  );
+}
+
+void songVersionTests() {
+  const video = TrackInfo(
+    id: 'videoVerme1',
+    title: 'Verme',
+    artist: 'Tarkan',
+    url: 'https://www.youtube.com/watch?v=videoVerme1',
+  );
+  final song = InnerTubeSong(
+    videoId: 'songVerme01',
+    title: 'Verme',
+    artists: const ['Tarkan'],
+  );
+
+  test('a music video plays the stream of its song version', () async {
+    final resolver = _ChannelAudioResolver({
+      'videoVerme1': 'Tarkan',
+      'songVerme01': 'Tarkan - Topic',
+    });
+    final finder = _FixedSongFinder({'videoVerme1': song});
+    final container = _songVersionContainer(resolver, finder);
+    addTearDown(container.dispose);
+    await container.read(settingsControllerProvider.future);
+
+    final resolved = await container
+        .read(remoteTrackResolverProvider)
+        .resolve(video);
+
+    expect(resolved.id, 'videoVerme1');
+    expect(resolved.title, 'Verme');
+    expect(resolved.streamUrl, 'https://media.example/songVerme01.m4a');
+    expect(resolver.resolvedIds, ['videoVerme1', 'songVerme01']);
+  });
+
+  test('a song from a Topic channel is not looked up again', () async {
+    final resolver = _ChannelAudioResolver({'songVerme01': 'Tarkan - Topic'});
+    final finder = _FixedSongFinder({});
+    final container = _songVersionContainer(resolver, finder);
+    addTearDown(container.dispose);
+    await container.read(settingsControllerProvider.future);
+
+    await container
+        .read(remoteTrackResolverProvider)
+        .resolve(
+          const TrackInfo(
+            id: 'songVerme01',
+            title: 'Verme',
+            artist: 'Tarkan',
+            url: '',
+          ),
+        );
+
+    expect(finder.lookedUp, isEmpty);
+    expect(resolver.resolvedIds, ['songVerme01']);
+  });
+
+  test(
+    'a video without a song version, or with the setting off, stays',
+    () async {
+      final resolver = _ChannelAudioResolver({'videoVerme1': 'Tarkan'});
+      final container = _songVersionContainer(resolver, _FixedSongFinder({}));
+      addTearDown(container.dispose);
+      await container.read(settingsControllerProvider.future);
+      final resolved = await container
+          .read(remoteTrackResolverProvider)
+          .resolve(video);
+      expect(resolved.streamUrl, 'https://media.example/videoVerme1.m4a');
+
+      final offResolver = _ChannelAudioResolver({'videoVerme1': 'Tarkan'});
+      final offFinder = _FixedSongFinder({'videoVerme1': song});
+      final off = _songVersionContainer(
+        offResolver,
+        offFinder,
+        preferSongVersions: false,
+      );
+      addTearDown(off.dispose);
+      expect(
+        (await off.read(settingsControllerProvider.future)).preferSongVersions,
+        isFalse,
+      );
+      final kept = await off.read(remoteTrackResolverProvider).resolve(video);
+      expect(kept.streamUrl, 'https://media.example/videoVerme1.m4a');
+      expect(offFinder.lookedUp, isEmpty);
+    },
+  );
 }

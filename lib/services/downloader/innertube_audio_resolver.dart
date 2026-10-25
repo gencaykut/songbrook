@@ -84,6 +84,7 @@ final class InnerTubeAudioResolver
         expiresAt: resolved.expiresAt,
         streamDuration: resolved.format.approxDuration,
         loudnessDb: resolved.format.loudnessDb,
+        channelName: resolved.channel,
       );
     } catch (error) {
       onResolverFailure?.call(source, error);

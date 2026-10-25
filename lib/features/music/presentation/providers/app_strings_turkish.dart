@@ -506,6 +506,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Normalize volume': 'Ses seviyesini dengele',
   'Autoplay': 'Otomatik oynatma',
   'Similar': 'Benzer',
+  'Prefer song versions': 'Şarkı sürümünü tercih et',
+  'When a music video plays, use its song version from YouTube Music if there is one.':
+      'Müzik videosu çalınınca, YouTube Music\'te varsa şarkı sürümünü çalar.',
   'When the queue ends, keep playing similar songs.':
       'Sıra bitince benzer şarkılarla devam eder.',
   "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":

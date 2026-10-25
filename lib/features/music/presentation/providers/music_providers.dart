@@ -112,6 +112,7 @@ import 'player/recommendation_queue_extension_coordinator.dart';
 import 'player/remote_playback_source_factory.dart';
 import 'player/remote_prefetch_coordinator.dart';
 import 'player/similar_songs.dart';
+import 'player/song_counterpart.dart';
 import 'player/remote_playback_retry_coordinator.dart';
 
 export 'app_strings.dart';
@@ -130,6 +131,7 @@ export 'player/recommendation_queue_extension_coordinator.dart';
 export 'player/remote_playback_source_factory.dart';
 export 'player/remote_prefetch_coordinator.dart';
 export 'player/similar_songs.dart';
+export 'player/song_counterpart.dart';
 export 'player/remote_playback_retry_coordinator.dart';
 export '../../domain/entities/lyrics_romanization_language.dart';
 
@@ -747,6 +749,10 @@ final catalogPlaylistsProvider = FutureProvider<List<CatalogPlaylist>>((
     resolved.whereType<CatalogPlaylist>(),
   );
 });
+
+final songCounterpartFinderProvider = Provider<SongCounterpartFinder>(
+  (ref) => SongCounterpartFinder(ref.watch(youtubeMusicSearchProvider)),
+);
 
 /// An artist's songs, kept for the session: the queue panel asks again for
 /// every song by the same artist.

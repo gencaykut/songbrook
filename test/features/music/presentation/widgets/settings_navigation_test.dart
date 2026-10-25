@@ -1960,6 +1960,10 @@ void main() {
       find.byKey(const ValueKey('settings-card-storage')),
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-card-storage')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
     await tester.pumpAndSettle();
 
@@ -2459,6 +2463,10 @@ void main() {
           .first,
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-card-storage')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
     await tester.pumpAndSettle();
 
@@ -2543,6 +2551,10 @@ void main() {
         tester,
         find.byKey(const ValueKey('settings-card-storage')),
       );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('settings-card-storage')),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
       await tester.pumpAndSettle();
 
@@ -2624,6 +2636,10 @@ void main() {
       tester,
       find.byKey(const ValueKey('settings-card-storage')),
     );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('settings-card-storage')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('settings-card-storage')));
     await tester.pumpAndSettle();
 
@@ -2666,10 +2682,12 @@ void main() {
       );
       await tester.pumpAndSettle();
       final storageCard = find.byKey(const ValueKey('settings-card-storage'));
+      // Large accessible text makes every settings card several screens tall.
       await tester.scrollUntilVisible(
         storageCard,
         240,
         scrollable: find.byType(Scrollable).first,
+        maxScrolls: 100,
       );
       await tester.pumpAndSettle();
       await tester.tap(storageCard);

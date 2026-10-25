@@ -602,6 +602,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       .read(settingsControllerProvider.notifier)
                       .setAutoplayEnabled,
                 ),
+                const SizedBox(height: appCardGap),
+                _PlaybackSwitchSettings(
+                  key: const ValueKey('settings-inline-song-versions'),
+                  switchKey: const ValueKey('settings-song-versions-switch'),
+                  enabled: state.preferSongVersions,
+                  icon: Icons.music_note_rounded,
+                  title: strings.preferSongVersions,
+                  summary: strings.preferSongVersionsSummary,
+                  onEnabledChanged: ref
+                      .read(settingsControllerProvider.notifier)
+                      .setPreferSongVersions,
+                ),
               ],
             ),
             _SettingsGroup(

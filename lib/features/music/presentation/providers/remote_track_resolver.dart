@@ -261,15 +261,27 @@ class RemoteTrackResolver {
   }) async {
     try {
       final resolver = _ref.read(audioStreamResolverProvider);
-      final resolved = resolver is FallbackAwareAudioStreamResolver
-          ? await (resolver as FallbackAwareAudioStreamResolver)
-                .resolveWithMode(
-                  track,
-                  mode: mode,
-                  onResolverFailure: onResolverFailure,
-                  shouldContinue: shouldContinue,
-                )
-          : await resolver.resolve(track);
+      Future<AudioStreamResolution> resolve(
+        TrackInfo target, {
+        AudioResolverFailureCallback? onFailure,
+      }) {
+        return resolver is FallbackAwareAudioStreamResolver
+            ? (resolver as FallbackAwareAudioStreamResolver).resolveWithMode(
+                target,
+                mode: mode,
+                onResolverFailure: onFailure,
+                shouldContinue: shouldContinue,
+              )
+            : resolver.resolve(target);
+      }
+
+      var resolved = await resolve(track, onFailure: onResolverFailure);
+      if (shouldContinue != null && !shouldContinue()) {
+        throw const AudioStreamResolverException(
+          'Audio stream resolution was superseded.',
+        );
+      }
+      resolved = await _preferSongVersion(track, resolved, resolve);
       if (shouldContinue != null && !shouldContinue()) {
         throw const AudioStreamResolverException(
           'Audio stream resolution was superseded.',
@@ -301,6 +313,43 @@ class RemoteTrackResolver {
         return track;
       }
       rethrow;
+    }
+  }
+
+  /// A music video's stream comes from the artist's or an uploader's channel;
+  /// its song version, from the artist's Topic channel. When YouTube Music has
+  /// that song, play its stream under the video's queue entry. Any failure
+  /// keeps the video.
+  Future<AudioStreamResolution> _preferSongVersion(
+    TrackInfo track,
+    AudioStreamResolution resolved,
+    Future<AudioStreamResolution> Function(TrackInfo target) resolve,
+  ) async {
+    final channel = resolved.channelName;
+    final enabled =
+        _ref
+            .read(settingsControllerProvider)
+            .asData
+            ?.value
+            .preferSongVersions ??
+        true;
+    if (!enabled || channel == null || isSongVersionChannel(channel)) {
+      return resolved;
+    }
+    try {
+      final song = await _ref
+          .read(songCounterpartFinderProvider)
+          .find(track, videoDuration: resolved.streamDuration);
+      if (song == null) return resolved;
+      final songResolution = await resolve(trackInfoFromInnerTubeSong(song));
+      debugPrint(
+        '[Playback] ${track.id} is a music video; playing its song '
+        'version ${song.videoId}.',
+      );
+      return songResolution;
+    } catch (error) {
+      debugPrint('[Playback] No song version for ${track.id}: $error');
+      return resolved;
     }
   }
 

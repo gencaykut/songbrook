@@ -101,6 +101,7 @@ class AudioStreamResolution {
     this.expiresAt,
     this.streamDuration,
     this.loudnessDb,
+    this.channelName,
   });
 
   /// Which resolver produced this result.
@@ -150,6 +151,10 @@ class AudioStreamResolution {
   /// YouTube's loudness relative to its playback target, in dB.
   final double? loudnessDb;
 
+  /// The channel that uploaded the resolved video, when the extractor
+  /// reports it. Song versions come from `<Artist> - Topic` channels.
+  final String? channelName;
+
   bool get isUsable {
     final uri = Uri.tryParse(streamUrl);
     return uri != null &&
@@ -173,6 +178,7 @@ class AudioStreamResolution {
       expiresAt: expiresAt,
       streamDuration: streamDuration,
       loudnessDb: loudnessDb,
+      channelName: channelName,
     );
   }
 

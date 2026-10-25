@@ -28,6 +28,11 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   related radio and other songs by its artist. Tapping one plays it next and
   keeps the rest of the queue, even when related radio later adds more
   songs.
+- A music video now plays its song version from YouTube Music when there is
+  one, without the video's intro, skits or different mix. Official videos and
+  lyric re-uploads that name the artist are matched by title, artist and
+  length; live, remix and cover versions are left alone. On by default, with
+  a switch in Playback settings.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
 

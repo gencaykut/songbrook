@@ -1143,6 +1143,12 @@ class AppStrings {
       choose('Normalizar volumen', 'Normalize volume');
   String get autoplay => choose('Reproducción automática', 'Autoplay');
   String get similar => choose('Similares', 'Similar');
+  String get preferSongVersions =>
+      choose('Preferir la versión de la canción', 'Prefer song versions');
+  String get preferSongVersionsSummary => choose(
+    'Al reproducir un videoclip, usa la versión de la canción de YouTube Music si existe.',
+    'When a music video plays, use its song version from YouTube Music if there is one.',
+  );
   String get autoplaySummary => choose(
     'Cuando termina la cola, sigue con canciones similares.',
     'When the queue ends, keep playing similar songs.',
