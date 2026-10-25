@@ -14,6 +14,7 @@ class CastAwarePlayerService
     implements
         PlayerService,
         NativeRemoteQueuePlayer,
+        AbandonableSourceLoadPlayer,
         CrossfadeCapablePlayer,
         SkipSilenceCapablePlayer,
         LoudnessNormalizingPlayer {
@@ -336,6 +337,13 @@ class CastAwarePlayerService
       await native.playRemoteSource(source);
     } else {
       await _local.playRemote(source.track);
+    }
+  }
+
+  @override
+  Future<void> abandonPendingSourceLoad() async {
+    if (_local case final AbandonableSourceLoadPlayer local) {
+      await local.abandonPendingSourceLoad();
     }
   }
 

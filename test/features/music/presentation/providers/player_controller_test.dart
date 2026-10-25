@@ -60,6 +60,53 @@ void main() {
       );
     });
 
+    test('picking a song while it is being prefetched plays it', () async {
+      final player = _NativeRemoteQueuePlayerService();
+      final first = _unresolvedRemoteTrack('playing-now');
+      final upcoming = _unresolvedRemoteTrack('being-prefetched');
+      final resolver = _GatedAudioResolver([upcoming.id]);
+      final container = _container(player, audioResolver: resolver);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+
+      await controller.playRemote(first, queue: [first, upcoming]);
+      await _waitUntil(() => resolver.calls.contains(upcoming.id));
+      // The user picks the song whose prefetch is still resolving. Picking
+      // invalidates that prefetch, which must not take the pick down with it.
+      final pick = controller.playRemote(upcoming, queue: [first, upcoming]);
+      // Let the pick reach the resolver and join the in-flight resolution.
+      await _flushCompletion();
+      resolver.release(upcoming.id);
+      await pick;
+      await _flushCompletion();
+
+      expect(player.nativeRemoteSources.last.track.id, upcoming.id);
+      final snapshot = container.read(playerControllerProvider).value!;
+      expect(snapshot.trackId, upcoming.id);
+      expect(snapshot.status, PlayerStatus.playing);
+    });
+
+    test('a new pick abandons the pending load before resolving', () async {
+      final player = _NativeRemoteQueuePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final first = _queuedRemoteTrack('first-pick');
+      final second = _queuedRemoteTrack('second-pick');
+
+      await controller.playRemote(first, queue: [first, second]);
+      await controller.playRemote(second, queue: [first, second]);
+
+      expect(player.loadEvents, [
+        'abandon',
+        'load:${first.id}',
+        'abandon',
+        'load:${second.id}',
+      ]);
+    });
+
     test('cache-disabled native lookahead rolls beyond five songs', () async {
       final player = _NativeRemoteQueuePlayerService();
       final container = _container(player);
@@ -5570,6 +5617,29 @@ class _SequencedAudioResolver implements AudioStreamResolver {
   Future<void> dispose() async {}
 }
 
+/// Resolves every track immediately except those listed in [gated], which
+/// wait for [release].
+class _GatedAudioResolver implements AudioStreamResolver {
+  _GatedAudioResolver(Iterable<String> gated)
+    : _gates = {for (final id in gated) id: Completer<AudioStreamResolution>()};
+
+  final Map<String, Completer<AudioStreamResolution>> _gates;
+  final List<String> calls = [];
+
+  @override
+  Future<AudioStreamResolution> resolve(TrackInfo track) {
+    calls.add(track.id);
+    return _gates[track.id]?.future ??
+        Future.value(_primaryInnerTubeResolution(track.id));
+  }
+
+  void release(String id) =>
+      _gates[id]!.complete(_primaryInnerTubeResolution(id));
+
+  @override
+  Future<void> dispose() async {}
+}
+
 class _ControlledAudioResolver implements AudioStreamResolver {
   final Completer<AudioStreamResolution> _resolution =
       Completer<AudioStreamResolution>();
@@ -6297,10 +6367,11 @@ class _ModeAwareFallbackAudioResolver
 }
 
 class _NativeRemoteQueuePlayerService extends _FakePlayerService
-    implements NativeRemoteQueuePlayer {
+    implements NativeRemoteQueuePlayer, AbandonableSourceLoadPlayer {
   _NativeRemoteQueuePlayerService({this.failCachedOpen = false});
 
   bool failCachedOpen;
+  final List<String> loadEvents = [];
   int cachedOpenFailures = 0;
   int nativeRemoteStarts = 0;
   final List<RemotePlaybackSource> nativeRemoteSources = [];
@@ -6315,6 +6386,7 @@ class _NativeRemoteQueuePlayerService extends _FakePlayerService
       throw StateError('simulated native cache decoder failure');
     }
     nativeRemoteStarts++;
+    loadEvents.add('load:${source.track.id}');
     nativeRemoteSources.add(source);
     playedRemote.add(source.track);
     emit(_remoteSnapshot(source));
@@ -6327,6 +6399,11 @@ class _NativeRemoteQueuePlayerService extends _FakePlayerService
   }) async {
     remoteWindows.add(List.unmodifiable(upcoming));
     remoteWindowFinalizations.add(finalize);
+  }
+
+  @override
+  Future<void> abandonPendingSourceLoad() async {
+    loadEvents.add('abandon');
   }
 
   void emitNativeTransition(RemotePlaybackSource source) {

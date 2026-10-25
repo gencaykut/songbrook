@@ -30,6 +30,7 @@ class JustAudioPlayerService
     implements
         PlayerService,
         NativeRemoteQueuePlayer,
+        AbandonableSourceLoadPlayer,
         CrossfadeCapablePlayer,
         SkipSilenceCapablePlayer,
         LoudnessNormalizingPlayer {
@@ -1992,6 +1993,27 @@ class JustAudioPlayerService
         _handleSourceLoadTimeout(generation);
       },
     ).whenComplete(() => _finishSourceLoad(generation));
+  }
+
+  @override
+  Future<void> abandonPendingSourceLoad() async {
+    if (_disposed || !_sourceLoadPending) {
+      return;
+    }
+    // The loading source already replaced the previous song, so pausing cuts
+    // nothing audible. just_audio keeps `playing` across source changes, so
+    // without the pause the native player starts the abandoned song as soon
+    // as it is ready, even though its load no longer calls play.
+    _sourceLoadGeneration = null;
+    _playbackGeneration++;
+    _remoteQueueRevision++;
+    _playbackExplicitlySuppressed = true;
+    _cancelActiveSourceLoad();
+    try {
+      await _player.pause();
+    } catch (_) {
+      // The replacement load stops the abandoned source anyway.
+    }
   }
 
   @override

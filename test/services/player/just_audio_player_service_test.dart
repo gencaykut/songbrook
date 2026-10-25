@@ -252,6 +252,53 @@ void main() {
   );
 
   test(
+    'an abandoned load does not start while the next song resolves',
+    () async {
+      final fixture = await _Fixture.create();
+      final backend = fixture.backend;
+      try {
+        await fixture.service.playRemoteSource(_remoteSource('old'));
+        expect(backend.playing, isTrue);
+        backend.blockNextSourceLoad = true;
+        final load = fixture.service.playRemoteSource(
+          _remoteSource('abandoned'),
+        );
+        await _waitUntil(() => backend.sourceLoadCalls.length == 2);
+        final callsBeforeAbandon = backend.playCalls;
+
+        await fixture.service.abandonPendingSourceLoad();
+        backend.completeSourceLoad(1);
+        await load;
+        await _drainEvents();
+        expect(backend.playing, isFalse);
+        expect(backend.playCalls, callsBeforeAbandon);
+
+        await fixture.service.playRemoteSource(_remoteSource('next'));
+        await _drainEvents();
+        expect(_queueEntryId(backend), 'remote:next');
+        expect(backend.playing, isTrue);
+        expect(fixture.service.currentSnapshot.wantsToPlay, isTrue);
+      } finally {
+        await fixture.dispose();
+      }
+    },
+  );
+
+  test('abandoning without a pending load keeps playback going', () async {
+    final fixture = await _Fixture.create();
+    final backend = fixture.backend;
+    try {
+      await fixture.service.playRemoteSource(_remoteSource('playing'));
+      await fixture.service.abandonPendingSourceLoad();
+      await _drainEvents();
+      expect(backend.playing, isTrue);
+      expect(fixture.service.currentSnapshot.status, PlayerStatus.playing);
+    } finally {
+      await fixture.dispose();
+    }
+  });
+
+  test(
     'native interruption during replacement load prevents late restart',
     () async {
       final fixture = await _Fixture.create();

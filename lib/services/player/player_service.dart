@@ -202,6 +202,16 @@ abstract interface class NativeRemoteQueuePlayer {
   });
 }
 
+/// Optional capability for backends whose source loads continue after the
+/// user has picked another song. The replacement is usually still being
+/// resolved, so without this the abandoned song starts for a moment and the
+/// replacement's resolution competes with its buffering.
+abstract interface class AbandonableSourceLoadPlayer {
+  /// Stops a source load that is still in flight from starting playback.
+  /// Does nothing when no load is pending, so audible playback is never cut.
+  Future<void> abandonPendingSourceLoad();
+}
+
 abstract class PlayerService {
   Stream<PlayerSnapshot> get snapshotStream;
   PlayerSnapshot get currentSnapshot;

@@ -202,7 +202,25 @@ class RemoteTrackResolver {
         mode == AudioResolutionMode.primaryThenFallback &&
         cached != null &&
         !cached.isExpired) {
-      return cached.future.then((resolved) => _mergeTrackInfo(track, resolved));
+      return cached.future.then(
+        (resolved) => _mergeTrackInfo(track, resolved),
+        onError: (Object error, StackTrace stackTrace) {
+          // The joined resolution may belong to a caller that gave up, such
+          // as the prefetch of the song the user has just picked: picking it
+          // invalidates that prefetch. This caller still wants the track.
+          if (!RemotePlaybackFailureClassifier.isCancellation(error) ||
+              (shouldContinue != null && !shouldContinue())) {
+            Error.throwWithStackTrace(error, stackTrace);
+          }
+          return resolve(
+            track,
+            allowStaleStreamFallback: allowStaleStreamFallback,
+            mode: mode,
+            onResolverFailure: onResolverFailure,
+            shouldContinue: shouldContinue,
+          );
+        },
+      );
     }
 
     final generation = Object();

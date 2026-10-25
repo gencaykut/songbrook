@@ -1124,6 +1124,12 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     _invalidateCrossfadePreparations();
     final requestId = ++_playRequestId;
     _requestPlayback();
+    // A song picked moments ago may still be loading; it must not start
+    // while this one is being resolved.
+    if (ref.read(playerServiceProvider)
+        case final AbandonableSourceLoadPlayer abandonable) {
+      unawaited(abandonable.abandonPendingSourceLoad());
+    }
     _changingLocalTrackRequestId = null;
     _remoteRetry.resetForSelection();
     ref
