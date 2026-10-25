@@ -28,46 +28,51 @@ void main() {
       audioFormatPredicate: isAvFoundationCompatibleInnerTubeAudio,
     );
 
-    const variants = ['clip+headers', 'plain+headers'];
+    // All variants clip like production; they differ in AVPlayer's
+    // automaticallyWaitsToMinimizeStalling (on by default).
+    const variants = ['wait', 'noWait'];
     for (var i = 0; i < ids.length; i++) {
       final resolved = await playback.resolve(ids[i]);
       final uri = resolved.uri.replace(fragment: '.m4a');
       final duration = resolved.format.approxDuration!;
-      final sizeMb = (resolved.format.contentLength ?? 0) / (1 << 20);
-      // Rotate the variant so CDN warmth does not favour one of them.
-      final variant = variants[i % variants.length];
-      final headers = variant.contains('noHeaders') ? null : resolved.headers;
-      UriAudioSource child() => AudioSource.uri(uri, headers: headers);
-      final source = variant.startsWith('plain')
-          ? child()
-          : ClippingAudioSource(
-              child: child(),
-              end: duration - const Duration(milliseconds: 300),
-            );
-
-      final player = AudioPlayer(useProxyForRequestHeaders: false);
-      final watch = Stopwatch()..start();
-      int? readyMs;
-      String error = '';
-      try {
-        await player.setAudioSource(source, preload: !variant.endsWith('lazy'));
-        readyMs = watch.elapsedMilliseconds;
-        player.play();
-        await player.positionStream
-            .firstWhere(
-              (position) => position > const Duration(milliseconds: 200),
-            )
-            .timeout(const Duration(seconds: 30));
-      } catch (e) {
-        error = ' error=$e';
+      // Each song is loaded with both settings; alternate which goes first
+      // so CDN warmth does not favour one of them.
+      final order = i.isEven ? variants : variants.reversed.toList();
+      for (final variant in order) {
+        final source = ClippingAudioSource(
+          child: AudioSource.uri(uri, headers: resolved.headers),
+          end: duration - const Duration(milliseconds: 300),
+        );
+        final player = AudioPlayer(
+          useProxyForRequestHeaders: false,
+          audioLoadConfiguration: AudioLoadConfiguration(
+            darwinLoadControl: DarwinLoadControl(
+              automaticallyWaitsToMinimizeStalling: variant == 'wait',
+            ),
+          ),
+        );
+        final watch = Stopwatch()..start();
+        int? readyMs;
+        String error = '';
+        try {
+          await player.setAudioSource(source);
+          readyMs = watch.elapsedMilliseconds;
+          player.play();
+          await player.positionStream
+              .firstWhere(
+                (position) => position > const Duration(milliseconds: 200),
+              )
+              .timeout(const Duration(seconds: 30));
+        } catch (e) {
+          error = ' error=$e';
+        }
+        // ignore: avoid_print
+        print(
+          'CLAUDE_AV video=${ids[i]} variant=$variant first=${order.first} '
+          'readyMs=$readyMs audibleMs=${watch.elapsedMilliseconds}$error',
+        );
+        await player.dispose();
       }
-      // ignore: avoid_print
-      print(
-        'CLAUDE_AV video=${ids[i]} variant=$variant '
-        'sizeMb=${sizeMb.toStringAsFixed(1)} durationS=${duration.inSeconds} '
-        'readyMs=$readyMs audibleMs=${watch.elapsedMilliseconds}$error',
-      );
-      await player.dispose();
     }
   });
 }

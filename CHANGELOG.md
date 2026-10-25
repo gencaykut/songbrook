@@ -72,6 +72,11 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   now clipped to their real duration.
 - Fixed the duration showing `--:--` on iOS after an automatic transition to a
   song without a catalog duration.
+- Fixed a song picked shortly after another one started sometimes never
+  playing while the previous song kept going. Picking one of the next songs
+  while it was being prepared in the background cancelled the pick as well.
+- Fixed a song picked while another was still loading playing for a moment
+  before the new pick started.
 - Fixed every challenge-based playback fallback (EJS and Web PO token clients)
   failing on iOS and macOS: WebKit's load of the headless harness document was
   cancelled, and BotGuard passed typed-data arguments WebKit rejects.
