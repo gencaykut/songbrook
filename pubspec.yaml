@@ -55,6 +55,8 @@ dependencies:
   crypto: ^3.0.7
   image: ^4.8.0
   uuid: ^4.5.3
+  # Songbrook Connect: the hub and client talk over a WebSocket on the LAN.
+  web_socket_channel: ^3.0.3
   file_picker: ^12.2.0
   image_picker: ^1.2.4
   media_kit: ^1.2.6
@@ -92,6 +94,7 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  stream_channel: ^2.1.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

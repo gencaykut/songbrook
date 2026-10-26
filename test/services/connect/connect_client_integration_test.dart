@@ -1,0 +1,789 @@
+// Adapted from Ariami (https://github.com/picccassso/Ariami, commit 9b8d27e),
+// ariami_core/test/services/connect/connect_client_integration_test.dart, MIT License, Copyright (c) 2026 Alex (aka Picasso).
+
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:bstream_music/services/connect/connect_models.dart';
+import 'package:bstream_music/services/connect/connect_envelope.dart';
+import 'package:bstream_music/services/connect/connect_client.dart';
+import 'package:bstream_music/services/connect/connect_hub.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:web_socket_channel/io.dart';
+
+/// End-to-end test of the client transport against the real hub over real
+/// websockets: an inactive controller must observe every state change the
+/// active device publishes after running a routed command.
+void main() {
+  late HttpServer server;
+  late ConnectHub hub;
+  final clients = <ConnectClient>[];
+
+  setUp(() async {
+    hub = ConnectHub();
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) async {
+      final socket = await WebSocketTransformer.upgrade(request);
+      final channel = IOWebSocketChannel(socket);
+      channel.stream.listen((raw) {
+        final message = WsMessage.fromJson(
+          jsonDecode(raw as String) as Map<String, dynamic>,
+        );
+        if (message.type == WsMessageType.identify) {
+          final data = message.data ?? const <String, dynamic>{};
+          hub.register(
+            channel,
+            userId: 'user',
+            deviceId: data['deviceId'] as String? ?? '',
+            deviceName: data['deviceName'] as String? ?? '',
+            clientType: data['clientType'] as String? ?? '',
+          );
+        } else {
+          hub.handle(channel, message);
+        }
+      }, onDone: () => hub.unregister(channel));
+    });
+  });
+
+  tearDown(() async {
+    for (final client in clients) {
+      await client.dispose();
+    }
+    clients.clear();
+    await server.close(force: true);
+  });
+
+  Future<void> pump([int rounds = 40]) async {
+    for (var i = 0; i < rounds; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+  }
+
+  Future<void> waitFor(bool Function() condition) async {
+    for (var i = 0; i < 200; i++) {
+      if (condition()) return;
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    fail('Condition not reached; hub/client message flow is broken.');
+  }
+
+  test(
+    'controller sees the new track after the active device runs its command',
+    () async {
+      // The "TV": owns a two-track queue and applies commands locally.
+      var tvIndex = 0;
+      var tvPlaying = true;
+      var tvQueue = <Map<String, dynamic>>[
+        {'id': 'song-a', 'title': 'A'},
+        {'id': 'song-b', 'title': 'B'},
+      ];
+      ConnectPlaybackSnapshot tvSnapshot() => ConnectPlaybackSnapshot(
+        queue: tvQueue,
+        currentIndex: tvIndex,
+        positionMs: 1000,
+        durationMs: 60000,
+        isPlaying: tvPlaying,
+        shuffle: false,
+        repeatMode: 'off',
+        volume: 1,
+      );
+      final tv = ConnectClient(
+        deviceId: 'tv',
+        deviceName: 'Living Room Mac',
+        clientType: 'tv',
+        snapshotProvider: tvSnapshot,
+        applySnapshot: (_) async {},
+        handleCommand: (command, arguments) async {
+          if (command == ConnectCommand.next) tvIndex = 1;
+          if (command == ConnectCommand.pause) tvPlaying = false;
+          if (command == ConnectCommand.playQueueIndex) {
+            tvIndex = (arguments['index'] as num).toInt();
+          }
+          if (command == ConnectCommand.playContext) {
+            final snapshot = ConnectPlaybackSnapshot.fromJson(
+              Map<String, dynamic>.from(arguments['snapshot'] as Map),
+            );
+            tvQueue = snapshot.queue;
+            tvIndex = snapshot.currentIndex;
+            tvPlaying = snapshot.isPlaying;
+          }
+        },
+        pauseForTransfer: () async {},
+      );
+      clients.add(tv);
+
+      // The "laptop": empty local queue, purely a controller here.
+      final laptop = ConnectClient(
+        deviceId: 'laptop',
+        deviceName: 'Laptop',
+        clientType: 'desktop',
+        snapshotProvider: () => ConnectPlaybackSnapshot.fromJson(const {}),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async {},
+      );
+      clients.add(laptop);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await tv.connect(baseUrl: baseUrl);
+      await laptop.connect(baseUrl: baseUrl);
+      await waitFor(() => tv.isConnected && laptop.isConnected);
+      await waitFor(
+        () =>
+            tv.negotiatedProtocolVersion == 3 &&
+            laptop.negotiatedProtocolVersion == 3,
+      );
+
+      tv.publishState(activate: true);
+      await waitFor(
+        () =>
+            laptop.activeDeviceId == 'tv' &&
+            laptop.remoteSnapshot?.currentTrackId == 'song-a',
+      );
+
+      // Laptop skips; the TV runs the command and publishes; the laptop's view
+      // of the remote session must advance to the new track.
+      laptop.sendCommand(ConnectCommand.next);
+      await waitFor(() => laptop.remoteSnapshot?.currentTrackId == 'song-b');
+
+      // Same for jumping to an explicit queue index (queue tap).
+      laptop.sendCommand(ConnectCommand.playQueueIndex, <String, dynamic>{
+        'index': 0,
+      });
+      await waitFor(() => laptop.remoteSnapshot?.currentTrackId == 'song-a');
+
+      // And a state change with no track change (pause).
+      laptop.sendCommand(ConnectCommand.pause);
+      await waitFor(() => laptop.remoteSnapshot?.isPlaying == false);
+
+      // Browsing on the laptop starts a whole new queue on the TV.
+      laptop.sendCommand(ConnectCommand.playContext, <String, dynamic>{
+        'snapshot': ConnectPlaybackSnapshot(
+          queue: [
+            {'id': 'song-c', 'title': 'C'},
+          ],
+          currentIndex: 0,
+          positionMs: 0,
+          durationMs: 60000,
+          isPlaying: true,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ).toJson(),
+      });
+      await waitFor(
+        () =>
+            laptop.remoteSnapshot?.currentTrackId == 'song-c' &&
+            laptop.remoteSnapshot?.isPlaying == true,
+      );
+    },
+  );
+
+  test(
+    'explicit refresh reloads authoritative playback without taking over',
+    () async {
+      var tvTrackId = 'song-a';
+      ConnectPlaybackSnapshot tvSnapshot() => ConnectPlaybackSnapshot(
+        queue: <Map<String, dynamic>>[
+          <String, dynamic>{'id': tvTrackId, 'title': tvTrackId},
+        ],
+        currentIndex: 0,
+        positionMs: 1000,
+        durationMs: 60000,
+        isPlaying: true,
+        shuffle: false,
+        repeatMode: 'off',
+        volume: 1,
+      );
+      final tv = ConnectClient(
+        deviceId: 'refresh-tv',
+        deviceName: 'TV',
+        clientType: 'tv',
+        snapshotProvider: tvSnapshot,
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async {},
+      );
+      final phone = ConnectClient(
+        deviceId: 'refresh-phone',
+        deviceName: 'Phone',
+        clientType: 'mobile',
+        snapshotProvider: () => ConnectPlaybackSnapshot.fromJson(const {}),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async {},
+      );
+      clients
+        ..add(tv)
+        ..add(phone);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await tv.connect(baseUrl: baseUrl);
+      await phone.connect(baseUrl: baseUrl);
+      await waitFor(() => tv.isConnected && phone.isConnected);
+      tv.publishState(activate: true);
+      await waitFor(
+        () =>
+            phone.activeDeviceId == 'refresh-tv' &&
+            phone.remoteSnapshot?.currentTrackId == 'song-a',
+      );
+
+      // Model a state push missed while the phone process was suspended. First
+      // let the hub advance to song-b, then restore the phone's last-seen song-a
+      // snapshot so only an authoritative refresh can repair it.
+      tvTrackId = 'song-b';
+      tv.publishState();
+      await waitFor(() => phone.remoteSnapshot?.currentTrackId == 'song-b');
+      phone.remoteSnapshot = ConnectPlaybackSnapshot(
+        queue: const <Map<String, dynamic>>[
+          <String, dynamic>{'id': 'song-a', 'title': 'song-a'},
+        ],
+        currentIndex: 0,
+        positionMs: 1000,
+        durationMs: 60000,
+        isPlaying: true,
+        shuffle: false,
+        repeatMode: 'off',
+        volume: 1,
+      );
+
+      await phone.refreshState();
+      await waitFor(
+        () =>
+            phone.isConnected &&
+            phone.activeDeviceId == 'refresh-tv' &&
+            phone.remoteSnapshot?.currentTrackId == 'song-b',
+      );
+      expect(phone.isThisDeviceActive, isFalse);
+    },
+  );
+
+  test(
+    'local play before welcome takes ownership without a stale overlay',
+    () async {
+      var desktopPlaying = true;
+      final desktop = ConnectClient(
+        deviceId: 'startup-desktop',
+        deviceName: 'Desktop',
+        clientType: 'desktop',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: const [
+            {'id': 'desktop-song', 'title': 'Desktop song'},
+          ],
+          currentIndex: 0,
+          positionMs: 12000,
+          durationMs: 60000,
+          isPlaying: desktopPlaying,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (_) async {},
+        handleCommand: (command, _) async {
+          if (command == ConnectCommand.pause) desktopPlaying = false;
+        },
+        pauseForTransfer: () async => desktopPlaying = false,
+      );
+      final phone = ConnectClient(
+        deviceId: 'startup-phone',
+        deviceName: 'Phone',
+        clientType: 'mobile',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: const [
+            {'id': 'phone-song', 'title': 'Phone song'},
+          ],
+          currentIndex: 0,
+          positionMs: 0,
+          durationMs: 60000,
+          isPlaying: true,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async {},
+      );
+      clients
+        ..add(desktop)
+        ..add(phone);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await desktop.connect(baseUrl: baseUrl);
+      await waitFor(() => desktop.isConnected);
+      desktop.publishState(activate: true);
+      await waitFor(() => desktop.isThisDeviceActive);
+
+      // Models tapping the restored phone track before its Connect socket has
+      // opened and received the desktop's authoritative welcome snapshot.
+      phone.requestLocalTakeover();
+      expect(phone.hasPendingLocalTakeover, isTrue);
+      await phone.connect(baseUrl: baseUrl);
+
+      await waitFor(
+        () =>
+            phone.isThisDeviceActive &&
+            desktop.remoteSnapshot?.currentTrackId == 'phone-song' &&
+            !desktopPlaying,
+      );
+      expect(phone.hasPendingLocalTakeover, isFalse);
+    },
+  );
+
+  test('commands queued while disconnected flush once after welcome', () async {
+    var pauseExecutions = 0;
+    var tvPlaying = true;
+    ConnectPlaybackSnapshot tvSnapshot() => ConnectPlaybackSnapshot(
+      queue: const <Map<String, dynamic>>[
+        <String, dynamic>{'id': 'song-a', 'title': 'A'},
+      ],
+      currentIndex: 0,
+      positionMs: 1000,
+      durationMs: 60000,
+      isPlaying: tvPlaying,
+      shuffle: false,
+      repeatMode: 'off',
+      volume: 1,
+    );
+    final tv = ConnectClient(
+      deviceId: 'queued-tv',
+      deviceName: 'Queued TV',
+      clientType: 'tv',
+      snapshotProvider: tvSnapshot,
+      applySnapshot: (_) async {},
+      handleCommand: (command, _) async {
+        if (command == ConnectCommand.pause) {
+          pauseExecutions++;
+          tvPlaying = false;
+        }
+      },
+      pauseForTransfer: () async {},
+    );
+    final controller = ConnectClient(
+      deviceId: 'queued-controller',
+      deviceName: 'Queued Controller',
+      clientType: 'mobile',
+      snapshotProvider: () => ConnectPlaybackSnapshot.fromJson(const {}),
+      applySnapshot: (_) async {},
+      handleCommand: (_, _) async {},
+      pauseForTransfer: () async {},
+      commandAckTimeout: const Duration(milliseconds: 100),
+    );
+    clients
+      ..add(tv)
+      ..add(controller);
+    final baseUrl = 'http://127.0.0.1:${server.port}';
+
+    await tv.connect(baseUrl: baseUrl);
+    await waitFor(() => tv.isConnected && tv.devices.isNotEmpty);
+    tv.publishState(activate: true);
+    await pump(4);
+    controller.sendCommand(ConnectCommand.pause);
+    expect(controller.pendingCommandCount, 1);
+
+    await controller.connect(baseUrl: baseUrl);
+    await waitFor(
+      () =>
+          controller.pendingCommandCount == 0 &&
+          pauseExecutions == 1 &&
+          controller.remoteSnapshot?.isPlaying == false,
+    );
+
+    expect(pauseExecutions, 1);
+  });
+
+  test(
+    '"Play here", skip, and hand back: the old device follows the session',
+    () async {
+      // TV: active first, then hands off and becomes a mirror.
+      var tvIndex = 0;
+      var tvPlaying = true;
+      ConnectPlaybackSnapshot? tvApplied;
+      final tv = ConnectClient(
+        deviceId: 'tv',
+        deviceName: 'Living Room Mac',
+        clientType: 'tv',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: [
+            {'id': 'song-a', 'title': 'A'},
+            {'id': 'song-b', 'title': 'B'},
+          ],
+          currentIndex: tvIndex,
+          positionMs: 1000,
+          durationMs: 60000,
+          isPlaying: tvPlaying,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (snapshot) async => tvApplied = snapshot,
+        handleCommand: (command, arguments) async {
+          if (command == ConnectCommand.pause) tvPlaying = false;
+        },
+        pauseForTransfer: () async => tvPlaying = false,
+      );
+      clients.add(tv);
+
+      // Laptop: takes the session over via "Play here", then skips a track.
+      var laptopIndex = 0;
+      var laptopPlaying = false;
+      ConnectPlaybackSnapshot? laptopQueue;
+      late final ConnectClient laptop;
+      laptop = ConnectClient(
+        deviceId: 'laptop',
+        deviceName: 'Laptop',
+        clientType: 'desktop',
+        snapshotProvider: () {
+          final base = laptopQueue;
+          if (base == null) return ConnectPlaybackSnapshot.fromJson(const {});
+          return ConnectPlaybackSnapshot(
+            queue: base.queue,
+            currentIndex: laptopIndex,
+            positionMs: 0,
+            durationMs: 60000,
+            isPlaying: laptopPlaying,
+            shuffle: base.shuffle,
+            repeatMode: base.repeatMode,
+            volume: 1,
+          );
+        },
+        applySnapshot: (snapshot) async {
+          laptopQueue = snapshot;
+          laptopIndex = snapshot.currentIndex;
+        },
+        handleCommand: (command, arguments) async {
+          if (command == ConnectCommand.play) laptopPlaying = true;
+          if (command == ConnectCommand.pause) laptopPlaying = false;
+          if (command == ConnectCommand.seek) {}
+        },
+        pauseForTransfer: () async => laptopPlaying = false,
+      );
+      clients.add(laptop);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await tv.connect(baseUrl: baseUrl);
+      await laptop.connect(baseUrl: baseUrl);
+      await waitFor(() => tv.isConnected && laptop.isConnected);
+      tv.publishState(activate: true);
+      await waitFor(() => laptop.activeDeviceId == 'tv');
+
+      laptop.transferTo('laptop');
+      await waitFor(
+        () =>
+            laptop.isThisDeviceActive &&
+            tv.activeDeviceId == 'laptop' &&
+            laptopQueue != null,
+      );
+
+      // Laptop skips to the next track and publishes, as its controller would.
+      laptopIndex = 1;
+      laptopPlaying = true;
+      laptop.publishState();
+
+      // The TV (now a mirror) must follow the laptop's session.
+      await waitFor(() => tv.remoteSnapshot?.currentTrackId == 'song-b');
+
+      // Handing the session back to the TV must carry the *current* track.
+      laptop.transferTo('tv');
+      await waitFor(() => tvApplied != null && tv.isThisDeviceActive);
+      expect(tvApplied!.currentTrackId, 'song-b');
+    },
+  );
+
+  test(
+    'first local skip publishes while transfer play is still pending',
+    () async {
+      var laptopPlaying = true;
+      final laptop = ConnectClient(
+        deviceId: 'laptop',
+        deviceName: 'Laptop',
+        clientType: 'desktop',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: const [
+            {'id': 'song-a', 'title': 'A'},
+            {'id': 'song-b', 'title': 'B'},
+          ],
+          currentIndex: 0,
+          positionMs: 1000,
+          durationMs: 60000,
+          isPlaying: laptopPlaying,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async => laptopPlaying = false,
+      );
+      clients.add(laptop);
+
+      var tvIndex = 0;
+      var tvPlaying = false;
+      ConnectPlaybackSnapshot? tvQueue;
+      final playUntilInterrupted = Completer<void>();
+      final tv = ConnectClient(
+        deviceId: 'tv',
+        deviceName: 'Living Room Mac',
+        clientType: 'tv',
+        snapshotProvider: () {
+          final queue = tvQueue;
+          if (queue == null) return ConnectPlaybackSnapshot.fromJson(const {});
+          return ConnectPlaybackSnapshot(
+            queue: queue.queue,
+            currentIndex: tvIndex,
+            positionMs: 0,
+            durationMs: 60000,
+            isPlaying: tvPlaying,
+            shuffle: queue.shuffle,
+            repeatMode: queue.repeatMode,
+            volume: 1,
+          );
+        },
+        applySnapshot: (snapshot) async {
+          tvQueue = snapshot;
+          tvIndex = snapshot.currentIndex;
+        },
+        handleCommand: (command, arguments) async {
+          if (command == ConnectCommand.play) {
+            tvPlaying = true;
+            // Models just_audio: play() starts now, but its Future remains
+            // pending until playback is later interrupted.
+            await playUntilInterrupted.future;
+          }
+        },
+        pauseForTransfer: () async => tvPlaying = false,
+      );
+      clients.add(tv);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await laptop.connect(baseUrl: baseUrl);
+      await tv.connect(baseUrl: baseUrl);
+      await waitFor(() => laptop.isConnected && tv.isConnected);
+      laptop.publishState(activate: true);
+      await waitFor(() => tv.activeDeviceId == 'laptop');
+
+      laptop.transferTo('tv');
+      await waitFor(
+        () =>
+            tv.isThisDeviceActive &&
+            !tv.isApplyingRemoteState &&
+            tvPlaying &&
+            tvQueue != null,
+      );
+
+      // The TV advances locally before play()'s Future has completed. The Mac
+      // must still receive this very first post-transfer track change.
+      tvIndex = 1;
+      tv.publishState();
+      await waitFor(() => laptop.remoteSnapshot?.currentTrackId == 'song-b');
+
+      playUntilInterrupted.complete();
+    },
+  );
+
+  test(
+    '[handoff_actions_idempotent] successful handoff pauses source once',
+    () async {
+      var sourcePlaying = true;
+      var sourcePauseCalls = 0;
+      final source = ConnectClient(
+        deviceId: 'source',
+        deviceName: 'Source',
+        clientType: 'desktop',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: const <Map<String, dynamic>>[
+            <String, dynamic>{'id': 'song-a', 'title': 'A'},
+          ],
+          currentIndex: 0,
+          positionMs: 1000,
+          durationMs: 60000,
+          isPlaying: sourcePlaying,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async {
+          sourcePauseCalls++;
+          sourcePlaying = false;
+        },
+      );
+      clients.add(source);
+
+      ConnectPlaybackSnapshot? targetSnapshot;
+      var targetPlaying = false;
+      final target = ConnectClient(
+        deviceId: 'target',
+        deviceName: 'Target',
+        clientType: 'tv',
+        snapshotProvider: () =>
+            targetSnapshot?.copyWith(isPlaying: targetPlaying) ??
+            ConnectPlaybackSnapshot.fromJson(const <String, dynamic>{}),
+        applySnapshot: (snapshot) async => targetSnapshot = snapshot,
+        handleCommand: (command, _) async {
+          if (command == ConnectCommand.play) targetPlaying = true;
+        },
+        pauseForTransfer: () async => targetPlaying = false,
+      );
+      clients.add(target);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await source.connect(baseUrl: baseUrl);
+      await target.connect(baseUrl: baseUrl);
+      await waitFor(() => source.isConnected && target.isConnected);
+      source.publishState(activate: true);
+      await waitFor(() => target.activeDeviceId == 'source');
+
+      source.transferTo('target');
+      await waitFor(() => target.isThisDeviceActive && targetPlaying);
+      await pump(4);
+
+      expect(sourcePauseCalls, 1);
+    },
+  );
+
+  test('late-joining controller adopts the session from its welcome', () async {
+    final tv = ConnectClient(
+      deviceId: 'tv',
+      deviceName: 'Living Room Mac',
+      clientType: 'tv',
+      snapshotProvider: () => ConnectPlaybackSnapshot(
+        queue: [
+          {'id': 'song-a', 'title': 'A'},
+        ],
+        currentIndex: 0,
+        positionMs: 5000,
+        durationMs: 60000,
+        isPlaying: true,
+        shuffle: false,
+        repeatMode: 'off',
+        volume: 1,
+      ),
+      applySnapshot: (_) async {},
+      handleCommand: (_, _) async {},
+      pauseForTransfer: () async {},
+    );
+    clients.add(tv);
+
+    final baseUrl = 'http://127.0.0.1:${server.port}';
+    await tv.connect(baseUrl: baseUrl);
+    await waitFor(() => tv.isConnected);
+    tv.publishState(activate: true);
+    await pump(4);
+
+    // The laptop connects afterwards: its welcome alone must deliver the
+    // active device and the current snapshot.
+    final laptop = ConnectClient(
+      deviceId: 'laptop',
+      deviceName: 'Laptop',
+      clientType: 'desktop',
+      snapshotProvider: () => ConnectPlaybackSnapshot.fromJson(const {}),
+      applySnapshot: (_) async {},
+      handleCommand: (_, _) async {},
+      pauseForTransfer: () async {},
+    );
+    clients.add(laptop);
+    await laptop.connect(baseUrl: baseUrl);
+    await waitFor(
+      () =>
+          laptop.activeDeviceId == 'tv' &&
+          laptop.remoteSnapshot?.currentTrackId == 'song-a',
+    );
+  });
+
+  test(
+    'connected replacement continues the song when the player disconnects',
+    () async {
+      var tvPlaying = true;
+      final tv = ConnectClient(
+        deviceId: 'tv',
+        deviceName: 'Living Room Mac',
+        clientType: 'tv',
+        snapshotProvider: () => ConnectPlaybackSnapshot(
+          queue: const [
+            {'id': 'song-a', 'title': 'A'},
+            {'id': 'song-b', 'title': 'B'},
+          ],
+          currentIndex: 1,
+          positionMs: 12000,
+          durationMs: 60000,
+          isPlaying: tvPlaying,
+          shuffle: false,
+          repeatMode: 'off',
+          volume: 1,
+        ),
+        applySnapshot: (_) async {},
+        handleCommand: (_, _) async {},
+        pauseForTransfer: () async => tvPlaying = false,
+      );
+      clients.add(tv);
+
+      // The phone has unrelated stale local playback. Before this fix, losing
+      // the TV cleared its remote mirror and exposed this song instead.
+      var phoneSnapshot = ConnectPlaybackSnapshot(
+        queue: const [
+          {'id': 'unrelated-local-song', 'title': 'Wrong song'},
+        ],
+        currentIndex: 0,
+        positionMs: 0,
+        durationMs: 60000,
+        isPlaying: false,
+        shuffle: false,
+        repeatMode: 'off',
+        volume: 1,
+      );
+      var phoneStartedPlaying = false;
+      final phone = ConnectClient(
+        deviceId: 'phone',
+        deviceName: 'Phone',
+        clientType: 'mobile',
+        snapshotProvider: () =>
+            phoneSnapshot.copyWith(isPlaying: phoneStartedPlaying),
+        applySnapshot: (snapshot) async => phoneSnapshot = snapshot,
+        handleCommand: (command, arguments) async {
+          if (command == ConnectCommand.seek) {
+            phoneSnapshot = phoneSnapshot.copyWith(
+              positionMs: (arguments['positionMs'] as num).toInt(),
+            );
+          } else if (command == ConnectCommand.play) {
+            phoneStartedPlaying = true;
+          } else if (command == ConnectCommand.pause) {
+            phoneStartedPlaying = false;
+          }
+        },
+        pauseForTransfer: () async => phoneStartedPlaying = false,
+      );
+      clients.add(phone);
+
+      final baseUrl = 'http://127.0.0.1:${server.port}';
+      await tv.connect(baseUrl: baseUrl);
+      await phone.connect(baseUrl: baseUrl);
+      await waitFor(() => tv.isConnected && phone.isConnected);
+      tv.publishState(activate: true);
+      await waitFor(
+        () =>
+            phone.activeDeviceId == 'tv' &&
+            phone.remoteSnapshot?.currentTrackId == 'song-b',
+      );
+
+      // Freeze Connect publishing before the local engine pauses. The hub must
+      // retain the last playing snapshot and continue it on the phone, while the
+      // departing TV itself is silenced before its socket closes.
+      await tv.relinquishPlayback(() async {
+        tvPlaying = false;
+      });
+
+      await waitFor(
+        () =>
+            phone.isThisDeviceActive &&
+            phoneSnapshot.currentTrackId == 'song-b' &&
+            phoneStartedPlaying,
+      );
+      expect(tvPlaying, isFalse);
+      expect(phoneSnapshot.currentTrackId, isNot('unrelated-local-song'));
+      expect(phoneSnapshot.positionMs, greaterThanOrEqualTo(12000));
+    },
+  );
+}
