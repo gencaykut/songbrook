@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bonsoir/bonsoir.dart';
+import 'package:flutter/foundation.dart';
 
 /// The Bonjour service type Songbrook hosts advertise on the LAN.
 const String kConnectServiceType = '_songbrook._tcp';
@@ -20,20 +21,26 @@ class ConnectDiscoveredHost {
   final List<String> addresses;
   final int port;
 
-  /// IPv4 first: link-local IPv6 needs a scope that URIs cannot carry well.
+  /// The address to reach the host at: a LAN IPv4 address first, then a
+  /// routable IPv6 one. Link-local IPv6 needs a zone that URIs cannot carry,
+  /// and loopback works only when the host is this machine (the simulator).
   Uri? get baseUrl {
-    final ordered = [
-      ...addresses.where(
-        (address) =>
-            InternetAddress.tryParse(address)?.type == InternetAddressType.IPv4,
-      ),
-      ...addresses.where(
-        (address) =>
-            InternetAddress.tryParse(address)?.type == InternetAddressType.IPv6,
-      ),
-    ];
-    if (ordered.isEmpty) return null;
-    return Uri(scheme: 'http', host: ordered.first, port: port);
+    int rank(InternetAddress address) {
+      if (address.isLoopback) return 3;
+      if (address.type == InternetAddressType.IPv4) return 0;
+      if (address.isLinkLocal) return 4;
+      return 1;
+    }
+
+    final parsed =
+        addresses
+            .map((raw) => InternetAddress.tryParse(raw.split('%').first))
+            .whereType<InternetAddress>()
+            .where((address) => rank(address) < 4)
+            .toList()
+          ..sort((a, b) => rank(a).compareTo(rank(b)));
+    if (parsed.isEmpty) return null;
+    return Uri(scheme: 'http', host: parsed.first.address, port: port);
   }
 }
 
@@ -60,6 +67,7 @@ abstract interface class ConnectHostDiscovery {
 
 class BonsoirConnectBroadcaster implements ConnectBroadcaster {
   BonsoirBroadcast? _broadcast;
+  StreamSubscription<BonsoirBroadcastEvent>? _events;
 
   @override
   Future<void> start({
@@ -78,6 +86,11 @@ class BonsoirConnectBroadcaster implements ConnectBroadcaster {
     );
     _broadcast = broadcast;
     await broadcast.initialize();
+    _events = broadcast.eventStream?.listen(
+      (event) => debugPrint('[Connect] Bonjour broadcast: $event'),
+      onError: (Object error) =>
+          debugPrint('[Connect] Bonjour broadcast failed: $error'),
+    );
     await broadcast.start();
   }
 
@@ -85,6 +98,8 @@ class BonsoirConnectBroadcaster implements ConnectBroadcaster {
   Future<void> stop() async {
     final broadcast = _broadcast;
     _broadcast = null;
+    await _events?.cancel();
+    _events = null;
     await broadcast?.stop();
   }
 }
