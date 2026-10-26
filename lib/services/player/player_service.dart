@@ -27,6 +27,7 @@ class PlayerSnapshot {
     this.shuffleEnabled = false,
     this.repeatMode = PlaybackRepeatMode.off,
     this.isBuffering = false,
+    this.isSongVersion = false,
   });
 
   final PlayerStatus status;
@@ -57,6 +58,10 @@ class PlayerSnapshot {
   /// still reported as [PlayerStatus.playing] while nothing is audible.
   final bool isBuffering;
 
+  /// A music video is playing its song version; [title] and [artist] are
+  /// the song's.
+  final bool isSongVersion;
+
   /// Playback is wanted but no audio is coming out yet: a song that is still
   /// being resolved or loaded, or one that is filling its buffer.
   bool get isWaitingForAudio =>
@@ -81,6 +86,7 @@ class PlayerSnapshot {
     bool? shuffleEnabled,
     PlaybackRepeatMode? repeatMode,
     bool? isBuffering,
+    bool? isSongVersion,
   }) {
     return PlayerSnapshot(
       status: status ?? this.status,
@@ -121,6 +127,7 @@ class PlayerSnapshot {
       shuffleEnabled: shuffleEnabled ?? this.shuffleEnabled,
       repeatMode: repeatMode ?? this.repeatMode,
       isBuffering: isBuffering ?? this.isBuffering,
+      isSongVersion: isSongVersion ?? this.isSongVersion,
     );
   }
 }

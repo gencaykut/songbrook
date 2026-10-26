@@ -102,6 +102,57 @@ void main() {
     expect(image.fallbackSource, localTrack.thumbnailPath);
   });
 
+  testWidgets('mini-player names a song version under its title', (
+    tester,
+  ) async {
+    _configureView(tester, const Size(360, 800));
+    const snapshot = PlayerSnapshot(
+      status: PlayerStatus.playing,
+      title: 'Verme',
+      artist: 'Tarkan',
+      trackId: 'music-video-1',
+      isSongVersion: true,
+    );
+    await tester.pumpWidget(
+      _miniPlayerHarness(
+        playerController: _TestPlayerController(snapshot: snapshot),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Tarkan · Versión de la canción'), findsOneWidget);
+  });
+
+  testWidgets('mini-player shows Pause and a wait ring while starting', (
+    tester,
+  ) async {
+    _configureView(tester, const Size(360, 800));
+    const snapshot = PlayerSnapshot(
+      status: PlayerStatus.loading,
+      playWhenReady: true,
+      title: 'Verme',
+      artist: 'Tarkan',
+      trackId: 'starting-song',
+    );
+    await tester.pumpWidget(
+      _miniPlayerHarness(
+        playerController: _TestPlayerController(snapshot: snapshot),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final control = find.byKey(const ValueKey('mini-player-primary-control'));
+    expect(
+      find.descendant(of: control, matching: find.byIcon(Icons.pause_rounded)),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('playback-wait-indicator')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'mini-player cross-fades artwork and metadata when track changes',
     (tester) async {

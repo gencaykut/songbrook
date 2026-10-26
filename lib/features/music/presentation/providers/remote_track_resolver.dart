@@ -76,6 +76,12 @@ TrackInfo _mergeTrackInfo(TrackInfo base, TrackInfo resolved) {
     streamVideoId: hasResolvedTransport
         ? resolved.streamVideoId
         : base.streamVideoId,
+    songVersionTitle: hasResolvedTransport
+        ? resolved.songVersionTitle
+        : base.songVersionTitle,
+    songVersionArtist: hasResolvedTransport
+        ? resolved.songVersionArtist
+        : base.songVersionArtist,
     streamDuration: hasResolvedTransport
         ? resolved.streamDuration
         : base.streamDuration,
@@ -302,20 +308,28 @@ class RemoteTrackResolver {
           'Audio stream resolution was superseded.',
         );
       }
-      final videoResolution = resolved;
-      resolved = await _preferSongVersion(track, resolved, resolve);
+      final songVersion = await _preferSongVersion(track, resolved, resolve);
       if (shouldContinue != null && !shouldContinue()) {
         throw const AudioStreamResolverException(
           'Audio stream resolution was superseded.',
         );
       }
+      final song = songVersion?.song;
+      if (songVersion != null) resolved = songVersion.resolution;
       var merged = _mergeTrackInfo(track, _trackFromResolution(resolved));
-      // The queue keeps the video's metadata, but the song version has its
-      // own length; the player's progress follows it.
-      final songLength = resolved.streamDuration;
-      if (!identical(resolved, videoResolution) && songLength != null) {
+      if (song != null) {
+        // The queue keeps the video's metadata, but the song version has its
+        // own length, which the player's progress follows, and its own name,
+        // which the player shows.
+        final songLength = resolved.streamDuration;
         merged = merged.copyWith(
-          duration: Duration(seconds: songLength.inMilliseconds ~/ 1000),
+          duration: songLength == null
+              ? null
+              : Duration(seconds: songLength.inMilliseconds ~/ 1000),
+          songVersionTitle: song.title,
+          songVersionArtist: song.artists.isEmpty
+              ? null
+              : song.artists.join(', '),
         );
       }
       if (_hasPlayableStream(merged) && _isCurrentGeneration(key, generation)) {
@@ -350,7 +364,10 @@ class RemoteTrackResolver {
   /// its song version, from the artist's Topic channel. When YouTube Music has
   /// that song, play its stream under the video's queue entry. Any failure
   /// keeps the video.
-  Future<AudioStreamResolution> _preferSongVersion(
+  /// The song version to play instead of the music video [track], or null
+  /// to play the video itself.
+  Future<({InnerTubeSong song, AudioStreamResolution resolution})?>
+  _preferSongVersion(
     TrackInfo track,
     AudioStreamResolution resolved,
     Future<AudioStreamResolution> Function(TrackInfo target) resolve,
@@ -364,22 +381,22 @@ class RemoteTrackResolver {
             .preferSongVersions ??
         true;
     if (!enabled || channel == null || isSongVersionChannel(channel)) {
-      return resolved;
+      return null;
     }
     try {
       final song = await _ref
           .read(songCounterpartFinderProvider)
           .find(track, videoDuration: resolved.streamDuration);
-      if (song == null) return resolved;
+      if (song == null) return null;
       final songResolution = await resolve(trackInfoFromInnerTubeSong(song));
       debugPrint(
         '[Playback] ${track.id} is a music video; playing its song '
         'version ${song.videoId}.',
       );
-      return songResolution;
+      return (song: song, resolution: songResolution);
     } catch (error) {
       debugPrint('[Playback] No song version for ${track.id}: $error');
-      return resolved;
+      return null;
     }
   }
 
@@ -660,6 +677,8 @@ class RemoteTrackResolver {
       streamChannels: track.streamChannels,
       streamClientProfileKey: track.streamClientProfileKey,
       streamVideoId: track.streamVideoId,
+      songVersionTitle: track.songVersionTitle,
+      songVersionArtist: track.songVersionArtist,
       streamDuration: track.streamDuration,
       loudnessDb: track.loudnessDb,
       extractor: track.extractor,

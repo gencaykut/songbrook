@@ -1106,6 +1106,38 @@ void main() {
   });
 
   test(
+    'a song version shows its name while the queue keeps the video',
+    () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      final video = _queuedRemoteTrack('versionVid').copyWith(
+        title: 'Tarkan - Verme (Official Video)',
+        artist: 'TarkanVEVO',
+        streamVideoId: 'versionSong',
+        songVersionTitle: 'Verme',
+        songVersionArtist: 'Tarkan',
+      );
+
+      await container.read(playerControllerProvider.future);
+      await container
+          .read(playerControllerProvider.notifier)
+          .playRemote(video, queue: [video]);
+      player.emit(
+        player.currentSnapshot.copyWith(status: PlayerStatus.playing),
+      );
+      await _flushCompletion();
+
+      final snapshot = container.read(playerControllerProvider).value!;
+      expect(snapshot.title, 'Verme');
+      expect(snapshot.artist, 'Tarkan');
+      expect(snapshot.isSongVersion, isTrue);
+      final queue = container.read(playbackQueueProvider);
+      expect(queue.entries.single.title, 'Tarkan - Verme (Official Video)');
+    },
+  );
+
+  test(
     'a song inserted after the current one plays and keeps the queue',
     () async {
       final player = _FakePlayerService();

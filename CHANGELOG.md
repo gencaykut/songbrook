@@ -33,6 +33,12 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   lyric re-uploads that name the artist are matched by title, artist and
   length; live, remix and cover versions are left alone. On by default, with
   a switch in Playback settings.
+- While a music video plays its song version, the player, mini player and
+  lock screen show the song's title and artist, marked "Song version". The
+  queue, history, favorites and downloads keep the video's own name.
+- The play control shows Pause with a thin ring while a picked song is
+  starting or buffering, instead of Play while it resolved and Pause while
+  it was silent.
 - Music videos that keep playing as videos skip their non-music parts
   (intros, skits, talking) using SponsorBlock's community data
   (CC BY-NC-SA 4.0). The request names only a four-character prefix of the

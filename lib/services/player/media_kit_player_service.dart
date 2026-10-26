@@ -576,8 +576,9 @@ class MediaKitPlayerService
       ),
       RemoteCrossfadePlaybackSource(:final source) => PlayerSnapshot(
         status: PlayerStatus.playing,
-        title: source.track.title,
-        artist: source.track.artist,
+        title: source.track.displayTitle,
+        artist: source.track.displayArtist,
+        isSongVersion: source.track.songVersionTitle != null,
         album: source.track.album,
         trackId: source.track.id.isEmpty ? source.track.url : source.track.id,
         queueEntryId: source.queueEntryId,
@@ -1039,8 +1040,9 @@ class MediaKitPlayerService
     _emit(
       PlayerSnapshot(
         status: PlayerStatus.loading,
-        title: track.title,
-        artist: track.artist,
+        title: track.displayTitle,
+        artist: track.displayArtist,
+        isSongVersion: track.songVersionTitle != null,
         album: track.album,
         trackId: track.id.isEmpty ? track.url : track.id,
         sourceUrl: track.url,

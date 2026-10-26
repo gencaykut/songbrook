@@ -377,6 +377,7 @@ class JustAudioPlayerService
                 : _nativeSuccessorDuration(state)),
         isRemote: isRemote,
         isExternal: tag.extras?['isExternal'] == true,
+        isSongVersion: tag.extras?['songVersion'] == true,
       ),
     );
   }
@@ -1764,8 +1765,9 @@ class JustAudioPlayerService
       ),
       RemoteCrossfadePlaybackSource(:final source) => PlayerSnapshot(
         status: PlayerStatus.playing,
-        title: source.track.title,
-        artist: source.track.artist,
+        title: source.track.displayTitle,
+        artist: source.track.displayArtist,
+        isSongVersion: source.track.songVersionTitle != null,
         album: source.track.album,
         trackId: source.track.id.isEmpty ? source.track.url : source.track.id,
         queueEntryId: source.queueEntryId,
@@ -1921,8 +1923,9 @@ class JustAudioPlayerService
     _emit(
       PlayerSnapshot(
         status: PlayerStatus.loading,
-        title: track.title,
-        artist: track.artist,
+        title: track.displayTitle,
+        artist: track.displayArtist,
+        isSongVersion: track.songVersionTitle != null,
         album: track.album,
         trackId: track.id.isEmpty ? track.url : track.id,
         queueEntryId: source.queueEntryId,
@@ -2934,13 +2937,14 @@ class JustAudioPlayerService
     return MediaItem(
       id: track.id.isEmpty ? track.url : track.id,
       album: track.album ?? AppConstants.displayName,
-      title: track.title,
-      artist: track.artist,
+      title: track.displayTitle,
+      artist: track.displayArtist,
       artUri: _notificationArtUri(artworkSource),
       duration: track.duration,
       extras: {
         'sourceUrl': track.url,
         'isRemote': true,
+        if (track.songVersionTitle != null) 'songVersion': true,
         'queueEntryId': source.queueEntryId,
         if (artworkSource != null && artworkSource.isNotEmpty)
           'displayArtwork': artworkSource,

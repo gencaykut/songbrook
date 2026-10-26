@@ -20,6 +20,8 @@ class TrackInfo {
     this.streamChannels,
     this.streamClientProfileKey,
     this.streamVideoId,
+    this.songVersionTitle,
+    this.songVersionArtist,
     this.streamDuration,
     this.loudnessDb,
     this.extractor,
@@ -65,6 +67,15 @@ class TrackInfo {
   /// music video plays its song version, whose timings are not the video's.
   final String? streamVideoId;
 
+  /// Title and artist of the song version that [streamUrl] plays instead of
+  /// this music video. They are shown while it plays; [title] and [artist]
+  /// stay the video's so history, favorites and downloads keep naming it.
+  final String? songVersionTitle;
+  final String? songVersionArtist;
+
+  String get displayTitle => songVersionTitle ?? title;
+  String get displayArtist => songVersionArtist ?? artist;
+
   /// Millisecond-precise duration of the media behind [streamUrl].
   ///
   /// [duration] is catalog metadata rounded to whole seconds and can exceed
@@ -108,6 +119,8 @@ class TrackInfo {
     int? streamChannels,
     String? streamClientProfileKey,
     String? streamVideoId,
+    String? songVersionTitle,
+    String? songVersionArtist,
     Duration? streamDuration,
     double? loudnessDb,
     String? extractor,
@@ -139,6 +152,8 @@ class TrackInfo {
       streamClientProfileKey:
           streamClientProfileKey ?? this.streamClientProfileKey,
       streamVideoId: streamVideoId ?? this.streamVideoId,
+      songVersionTitle: songVersionTitle ?? this.songVersionTitle,
+      songVersionArtist: songVersionArtist ?? this.songVersionArtist,
       streamDuration: streamDuration ?? this.streamDuration,
       loudnessDb: loudnessDb ?? this.loudnessDb,
       extractor: extractor ?? this.extractor,

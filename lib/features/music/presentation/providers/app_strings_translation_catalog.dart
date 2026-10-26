@@ -2352,6 +2352,13 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
         '使用 SponsorBlock 社区数据（CC BY-NC-SA 4.0）跳过音乐视频中的片头和对白。',
         'SponsorBlock のコミュニティデータ（CC BY-NC-SA 4.0）で、ミュージックビデオのイントロや会話を飛ばします。',
       ],
+  'Song version': <String>[
+    'Versão da música',
+    'Version audio',
+    '노래 버전',
+    '歌曲版本',
+    '曲バージョン',
+  ],
   'Prefer song versions': <String>[
     'Preferir a versão da música',
     'Préférer la version audio',

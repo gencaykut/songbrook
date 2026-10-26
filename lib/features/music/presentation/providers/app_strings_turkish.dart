@@ -506,6 +506,7 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Normalize volume': 'Ses seviyesini dengele',
   'Autoplay': 'Otomatik oynatma',
   'Similar': 'Benzer',
+  'Song version': 'Şarkı sürümü',
   'Prefer song versions': 'Şarkı sürümünü tercih et',
   'Skip non-music parts': 'Müzik olmayan bölümleri atla',
   "Skips intros and talking in music videos using SponsorBlock's community data (CC BY-NC-SA 4.0).":

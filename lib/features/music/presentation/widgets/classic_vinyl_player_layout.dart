@@ -576,7 +576,7 @@ class _ClassicVinylControls extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(vertical: 3),
                     child: Text(
                       key: const ValueKey('player-track-artist'),
-                      snapshot.artist ?? AppConstants.displayName,
+                      playerArtistLine(snapshot, strings),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(

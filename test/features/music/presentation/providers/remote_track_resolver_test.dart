@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bstream_music/core/errors/app_exception.dart';
+import 'package:bstream_music/features/music/data/models/track_info_model.dart';
 import 'package:bstream_music/features/music/domain/entities/track_info.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
@@ -962,6 +963,54 @@ void songVersionTests() {
     expect(resolved.streamVideoId, 'songVerme01');
     expect(resolved.duration, const Duration(minutes: 3, seconds: 37));
     expect(resolver.resolvedIds, ['videoVerme1', 'songVerme01']);
+  });
+
+  test('the song version names the song but keeps the video', () async {
+    final resolver = _ChannelAudioResolver({
+      'videoVerme1': 'Tarkan',
+      'songVerme01': 'Tarkan - Topic',
+    });
+    final finder = _FixedSongFinder({'videoVerme1': song});
+    final container = _songVersionContainer(resolver, finder);
+    addTearDown(container.dispose);
+    await container.read(settingsControllerProvider.future);
+
+    final resolved = await container
+        .read(remoteTrackResolverProvider)
+        .resolve(video.copyWith(title: 'Tarkan - Verme (Official Video)'));
+
+    // History, favorites and downloads use the video's own name.
+    expect(resolved.title, 'Tarkan - Verme (Official Video)');
+    expect(resolved.songVersionTitle, 'Verme');
+    expect(resolved.songVersionArtist, 'Tarkan');
+    expect(resolved.displayTitle, 'Verme');
+
+    final model = TrackInfoModel.fromJson(
+      TrackInfoModel(
+        id: resolved.id,
+        title: resolved.title,
+        artist: resolved.artist,
+        url: resolved.url,
+        songVersionTitle: resolved.songVersionTitle,
+        songVersionArtist: resolved.songVersionArtist,
+      ).toJson(),
+    );
+    expect(model.songVersionTitle, 'Verme');
+    expect(model.songVersionArtist, 'Tarkan');
+  });
+
+  test('a video that plays itself has no song version name', () async {
+    final resolver = _ChannelAudioResolver({'videoVerme1': 'Tarkan'});
+    final container = _songVersionContainer(resolver, _FixedSongFinder({}));
+    addTearDown(container.dispose);
+    await container.read(settingsControllerProvider.future);
+
+    final resolved = await container
+        .read(remoteTrackResolverProvider)
+        .resolve(video);
+
+    expect(resolved.songVersionTitle, isNull);
+    expect(resolved.displayTitle, 'Verme');
   });
 
   test('a song from a Topic channel is not looked up again', () async {

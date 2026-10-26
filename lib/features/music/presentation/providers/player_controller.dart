@@ -3721,8 +3721,14 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     if (remote != null) {
       final cachedRemote = _isCachedRemoteSnapshot(snapshot, remote);
       snapshot = snapshot.copyWith(
-        title: remote.title.trim().isEmpty ? snapshot.title : remote.title,
-        artist: remote.artist.trim().isEmpty ? snapshot.artist : remote.artist,
+        // A music video playing its song version shows the song's name.
+        title: remote.displayTitle.trim().isEmpty
+            ? snapshot.title
+            : remote.displayTitle,
+        artist: remote.displayArtist.trim().isEmpty
+            ? snapshot.artist
+            : remote.displayArtist,
+        isSongVersion: remote.songVersionTitle != null,
         album: remote.album ?? snapshot.album,
         trackId: cachedRemote
             ? (remote.id.isEmpty ? remote.url : remote.id)
