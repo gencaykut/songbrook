@@ -156,6 +156,8 @@ tests are set up only on Windows and Linux, and two tests compare `/var` with
   feature list, architecture, and platform notes.
 - [docs/innertube_playback.md](docs/innertube_playback.md): stream resolution,
   client fallback order, PO tokens, song versions, and SponsorBlock.
+- [docs/songbrook-connect.md](docs/songbrook-connect.md): the Songbrook Connect
+  design and progress (in Turkish).
 - [docs/manual-test-1.0.0.md](docs/manual-test-1.0.0.md): the manual iPhone
   test checklist (in Turkish).
 - [docs/ios-duration-fix.md](docs/ios-duration-fix.md): the iOS duration fixes
