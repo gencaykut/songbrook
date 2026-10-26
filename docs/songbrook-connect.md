@@ -5,6 +5,15 @@ Durum (26 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirm
 ## İlerleme
 
 - **1. aşama (tamam):** `lib/services/connect/` altında `connect_models.dart`, `connect_hub.dart`, `connect_client.dart`, `remote_playback.dart` ve zarf için `connect_envelope.dart`. Ariami'nin hub, istemci, model ve uzak oynatma testleri `test/services/connect/` altında; 128 test geçiyor (gerçek yerel WebSocket ile sahiplik, devretme, failover, komut tekrarı, kopma). Plandan sapma: v2 kod yolları çıkarılmadı. Songbrook istemcisi her zaman v3'ü seçiyor; v2'yi çıkarmak Ariami'nin testlerinin bir kısmını atmayı gerektirirdi, çalışma anında maliyeti yok. Ariami'ye özgü ölçüm aracı (`connect_p0_baseline`) ve sözleşme fikstürleri alınmadı. Kimlik doğrulama `identify` mesajındaki `sessionToken` alanında; 2. aşamada eşleştirme anahtarıyla üretilecek.
+- **2. aşama (tamam, 26 Ekim):**
+  - Mac: `ConnectHostServer` (`dart:io` `HttpServer`, `/api/ws`, önce 47821 portu) hub'ın önünde; `identify` gelmezse 20 sn'de 4008, kimlik geçersizse 4001 ile kapatır. Bonjour yayını `_songbrook._tcp` (TXT `id`, `v`), `bonsoir` 7.1.5 (MIT).
+  - Eşleştirme: Mac'te Ayarlar → Songbrook Connect → Cihaz ekle; 6 haneli kod 2 dakika, tek kullanım, 5 yanlış denemede iptal (`ConnectPairingCode`). Eşleşen cihaz 32 baytlık bir anahtar alır; anahtar iki tarafta Keychain'de (`ConnectStore`).
+  - Kimlik: her bağlantıda `v1.<ms>.<nonce>.<HMAC-SHA256>` belirteci (±5 dk, nonce tekrarına izin yok; `ConnectAuthVerifier`). İstemciye her yeniden bağlanmada yeni belirteç için `sessionTokenProvider` eklendi.
+  - Bilinen sınırlama (şifresiz ilk sürüm kararı): eşleştirme sırasında anahtar ağda açık gider; aynı ağdaki pasif bir dinleyici o anı yakalarsa anahtarı alabilir. Sonraki bağlantılarda anahtar gönderilmez.
+  - Mac bir cihazı kaldırınca bağlantısı 4001 ile kapanır, telefon Mac'i unutur ("Mac'in bu cihazı kaldırdı").
+  - `ConnectController` (`connect_controller.dart`): Mac'te hub + sunucu + yayın + Mac'in kendi istemcisi (döngü adresi); telefonda keşif, kodla eşleşme, bilinen Mac'e otomatik bağlanma (Bonjour yoksa son adres). Ayar varsayılan kapalı (`SharedPreferences`). Henüz oynatma yok: cihazlar komut bildirmiyor ve durum yayınlamıyor.
+  - Canlı doğrulama (26 Ekim): `integration_test/claude_connect_host_test.dart` (macOS) ile `claude_connect_client_test.dart` (iOS simülatörü) birlikte; kod bir dosya üzerinden geçer (`--dart-define=CONNECT_CODE_FILE=…`), anahtarlar bellekte. Simülatör Mac'i Bonjour'da buldu, Mac'in LAN adresine bağlandı, eşleşme + bağlantı ~0,3 sn. `claude_bonjour_probe_test.dart` Bonsoir yayınını tek başına dener.
+  - macOS yerel ağ izni şart: izin verilmeden Bonjour kaydı sessizce askıda kalıyor (ne başladı ne hata olayı). Sistem Ayarları → Gizlilik ve Güvenlik → Yerel Ağ. Gerçek iPhone'la henüz denenmedi.
 
 ## Amaç
 
