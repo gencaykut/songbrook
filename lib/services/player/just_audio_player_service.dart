@@ -235,7 +235,14 @@ class JustAudioPlayerService
             return;
           }
         }
-        _emit(_snapshot.copyWith(status: status));
+        _emit(
+          _snapshot.copyWith(
+            status: status,
+            isBuffering:
+                state.processingState == ProcessingState.loading ||
+                state.processingState == ProcessingState.buffering,
+          ),
+        );
         _maybeStartCrossfade();
       }),
       player.errorStream.listen((error) {

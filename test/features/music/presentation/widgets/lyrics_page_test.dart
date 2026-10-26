@@ -4202,7 +4202,10 @@ void main() {
       // A remote refresh can temporarily expose no snapshot value. That is
       // not a song change and must not discard the manual selection.
       player.emit(const PlayerSnapshot(status: PlayerStatus.loading));
-      await _settleLyricsAnimations(tester);
+      // The play control's wait ring spins until audio starts, so this
+      // transient state cannot settle.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(container.read(selectedLyricsControllerProvider), alternative);
       player.emit(lookupSnapshot);
       await _settleLyricsAnimations(tester);

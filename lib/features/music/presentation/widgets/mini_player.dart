@@ -22,6 +22,7 @@ import '../providers/playback_visual_cache_provider.dart';
 import 'favorite_star_badge.dart';
 import 'decorative_progress_transition.dart';
 import 'playback_progress_line.dart';
+import 'playback_wait_indicator.dart';
 import 'playlist_artwork.dart';
 import 'source_image.dart';
 import 'track_change_transition.dart';
@@ -111,6 +112,7 @@ class MiniPlayer extends ConsumerWidget {
         final rawError = player.error ?? snapshot?.errorMessage;
         return (
           status: snapshot?.status,
+          waiting: snapshot?.isWaitingForAudio ?? false,
           title: snapshot?.title,
           artist: snapshot?.artist,
           trackId: snapshot?.trackId,
@@ -162,7 +164,10 @@ class MiniPlayer extends ConsumerWidget {
         : windowsLayout
         ? 64.0
         : 52.0;
-    final isPlaying = presentation.status == PlayerStatus.playing;
+    // A song that is still starting shows Pause, which is what the control
+    // does while playback is wanted.
+    final isPlaying =
+        presentation.status == PlayerStatus.playing || presentation.waiting;
     final playControlSize = compactMobile ? 50.0 : 54.0;
     final playIconSize = compactMobile
         ? isPlaying
@@ -278,31 +283,35 @@ class MiniPlayer extends ConsumerWidget {
     );
     final primaryControl = SizedBox.square(
       dimension: playControlSize,
-      child: IconButton(
-        key: const ValueKey('mini-player-primary-control'),
-        tooltip: isPlaying ? strings.pause : strings.play,
-        style: IconButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.playbackControlForegroundFor(context),
-          disabledBackgroundColor: Colors.transparent,
-          disabledForegroundColor: AppColors.playbackControlForegroundFor(
-            context,
-          ).withValues(alpha: 0.62),
-          shape: const CircleBorder(),
-        ),
-        iconSize: playIconSize,
-        padding: EdgeInsets.zero,
-        constraints: BoxConstraints.tight(Size.square(playControlSize)),
-        icon: Transform.translate(
-          offset: windowsLayout && !isPlaying
-              ? const Offset(1, 0)
-              : Offset.zero,
-          child: Icon(
-            isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+      child: PlaybackWaitIndicator(
+        waiting: presentation.waiting,
+        color: AppColors.playbackControlForegroundFor(context),
+        child: IconButton(
+          key: const ValueKey('mini-player-primary-control'),
+          tooltip: isPlaying ? strings.pause : strings.play,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: AppColors.playbackControlForegroundFor(context),
+            disabledBackgroundColor: Colors.transparent,
+            disabledForegroundColor: AppColors.playbackControlForegroundFor(
+              context,
+            ).withValues(alpha: 0.62),
+            shape: const CircleBorder(),
           ),
+          iconSize: playIconSize,
+          padding: EdgeInsets.zero,
+          constraints: BoxConstraints.tight(Size.square(playControlSize)),
+          icon: Transform.translate(
+            offset: windowsLayout && !isPlaying
+                ? const Offset(1, 0)
+                : Offset.zero,
+            child: Icon(
+              isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            ),
+          ),
+          onPressed: () =>
+              ref.read(playerControllerProvider.notifier).togglePlayPause(),
         ),
-        onPressed: () =>
-            ref.read(playerControllerProvider.notifier).togglePlayPause(),
       ),
     );
     final previousControl = _MiniTransportButton(

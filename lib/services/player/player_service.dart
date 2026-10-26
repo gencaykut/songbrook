@@ -26,6 +26,7 @@ class PlayerSnapshot {
     this.isExternal = false,
     this.shuffleEnabled = false,
     this.repeatMode = PlaybackRepeatMode.off,
+    this.isBuffering = false,
   });
 
   final PlayerStatus status;
@@ -52,6 +53,15 @@ class PlayerSnapshot {
   final bool shuffleEnabled;
   final PlaybackRepeatMode repeatMode;
 
+  /// The backend is filling its buffer. A starting or rebuffering source is
+  /// still reported as [PlayerStatus.playing] while nothing is audible.
+  final bool isBuffering;
+
+  /// Playback is wanted but no audio is coming out yet: a song that is still
+  /// being resolved or loaded, or one that is filling its buffer.
+  bool get isWaitingForAudio =>
+      wantsToPlay && (status == PlayerStatus.loading || isBuffering);
+
   PlayerSnapshot copyWith({
     PlayerStatus? status,
     Object? playWhenReady = _unsetPlayerSnapshotValue,
@@ -70,6 +80,7 @@ class PlayerSnapshot {
     bool? isExternal,
     bool? shuffleEnabled,
     PlaybackRepeatMode? repeatMode,
+    bool? isBuffering,
   }) {
     return PlayerSnapshot(
       status: status ?? this.status,
@@ -109,6 +120,7 @@ class PlayerSnapshot {
       isExternal: isExternal ?? this.isExternal,
       shuffleEnabled: shuffleEnabled ?? this.shuffleEnabled,
       repeatMode: repeatMode ?? this.repeatMode,
+      isBuffering: isBuffering ?? this.isBuffering,
     );
   }
 }

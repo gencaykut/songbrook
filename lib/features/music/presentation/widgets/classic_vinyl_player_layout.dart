@@ -684,7 +684,8 @@ class _ClassicVinylControls extends ConsumerWidget {
     );
     final transport = _ClassicVinylTransportControls(
       hasTrack: hasTrack,
-      isPlaying: isPlaying,
+      isPlaying: isPlaying || snapshot.isWaitingForAudio,
+      waiting: snapshot.isWaitingForAudio,
       shuffleEnabled: snapshot.shuffleEnabled,
       repeatMode: snapshot.repeatMode,
       compact: compact,
@@ -755,6 +756,7 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
   const _ClassicVinylTransportControls({
     required this.hasTrack,
     required this.isPlaying,
+    this.waiting = false,
     required this.shuffleEnabled,
     required this.repeatMode,
     required this.compact,
@@ -764,7 +766,12 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
   });
 
   final bool hasTrack;
+
+  /// Shows Pause, which is what the control does while playback is wanted.
   final bool isPlaying;
+
+  /// Playback is wanted but not yet audible.
+  final bool waiting;
   final bool shuffleEnabled;
   final PlaybackRepeatMode repeatMode;
   final bool compact;
@@ -875,36 +882,40 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
                   child: Center(
                     child: SizedBox.square(
                       dimension: fittedPrimaryButtonSize,
-                      child: IconButton(
-                        key: const ValueKey('player-primary-control'),
-                        tooltip: isPlaying ? strings.pause : strings.play,
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          disabledBackgroundColor: Colors.transparent,
-                        ),
+                      child: PlaybackWaitIndicator(
+                        waiting: waiting,
                         color: foreground,
-                        disabledColor: foreground.withValues(alpha: 0.38),
-                        padding: EdgeInsets.zero,
-                        constraints: BoxConstraints.tight(
-                          Size.square(fittedPrimaryButtonSize),
-                        ),
-                        iconSize: primaryIconSize,
-                        icon: Transform.translate(
-                          offset: isPlaying
-                              ? Offset.zero
-                              : const Offset(1.25, 0),
-                          transformHitTests: false,
-                          child: Icon(
-                            isPlaying
-                                ? Icons.pause_rounded
-                                : Icons.play_arrow_rounded,
+                        child: IconButton(
+                          key: const ValueKey('player-primary-control'),
+                          tooltip: isPlaying ? strings.pause : strings.play,
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            disabledBackgroundColor: Colors.transparent,
                           ),
+                          color: foreground,
+                          disabledColor: foreground.withValues(alpha: 0.38),
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints.tight(
+                            Size.square(fittedPrimaryButtonSize),
+                          ),
+                          iconSize: primaryIconSize,
+                          icon: Transform.translate(
+                            offset: isPlaying
+                                ? Offset.zero
+                                : const Offset(1.25, 0),
+                            transformHitTests: false,
+                            child: Icon(
+                              isPlaying
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                            ),
+                          ),
+                          onPressed: hasTrack
+                              ? () => ref
+                                    .read(playerControllerProvider.notifier)
+                                    .togglePlayPause()
+                              : null,
                         ),
-                        onPressed: hasTrack
-                            ? () => ref
-                                  .read(playerControllerProvider.notifier)
-                                  .togglePlayPause()
-                            : null,
                       ),
                     ),
                   ),

@@ -42,6 +42,7 @@ import 'playback_audio_quality.dart';
 import 'playback_dark_theme.dart';
 import 'playback_gradient_background.dart';
 import 'playback_menu_bottom_sheet.dart';
+import 'playback_wait_indicator.dart';
 import 'playlist_artwork.dart';
 import 'playlist_picker_dialog.dart';
 import 'source_image.dart';
@@ -2180,7 +2181,8 @@ class _AppleMusicControls extends ConsumerWidget {
         SizedBox(height: lerpDouble(18, 0, compactness)),
         _AppleTransportControls(
           hasTrack: hasTrack,
-          isPlaying: isPlaying,
+          isPlaying: isPlaying || snapshot.isWaitingForAudio,
+          waiting: snapshot.isWaitingForAudio,
           compactness: compactness,
           tightLandscape: tightLandscape,
           strings: strings,
@@ -2209,13 +2211,19 @@ class _AppleTransportControls extends ConsumerWidget {
   const _AppleTransportControls({
     required this.hasTrack,
     required this.isPlaying,
+    this.waiting = false,
     required this.compactness,
     this.tightLandscape = false,
     required this.strings,
   });
 
   final bool hasTrack;
+
+  /// Shows Pause, which is what the control does while playback is wanted.
   final bool isPlaying;
+
+  /// Playback is wanted but not yet audible.
+  final bool waiting;
   final double compactness;
   final bool tightLandscape;
   final AppStrings strings;
@@ -2258,26 +2266,32 @@ class _AppleTransportControls extends ConsumerWidget {
             SizedBox(width: gap),
             SizedBox.square(
               dimension: primarySize,
-              child: IconButton(
-                key: const ValueKey('player-primary-control'),
-                tooltip: isPlaying ? strings.pause : strings.play,
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints.tight(Size.square(primarySize)),
+              child: PlaybackWaitIndicator(
+                waiting: waiting,
                 color: foreground,
-                disabledColor: foreground.withValues(alpha: 0.38),
-                iconSize: primaryIconSize,
-                icon: Transform.translate(
-                  offset: isPlaying ? Offset.zero : const Offset(1.5, 0),
-                  transformHitTests: false,
-                  child: Icon(
-                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                child: IconButton(
+                  key: const ValueKey('player-primary-control'),
+                  tooltip: isPlaying ? strings.pause : strings.play,
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints.tight(Size.square(primarySize)),
+                  color: foreground,
+                  disabledColor: foreground.withValues(alpha: 0.38),
+                  iconSize: primaryIconSize,
+                  icon: Transform.translate(
+                    offset: isPlaying ? Offset.zero : const Offset(1.5, 0),
+                    transformHitTests: false,
+                    child: Icon(
+                      isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                    ),
                   ),
+                  onPressed: hasTrack
+                      ? () => ref
+                            .read(playerControllerProvider.notifier)
+                            .togglePlayPause()
+                      : null,
                 ),
-                onPressed: hasTrack
-                    ? () => ref
-                          .read(playerControllerProvider.notifier)
-                          .togglePlayPause()
-                    : null,
               ),
             ),
             SizedBox(width: gap),
@@ -2974,6 +2988,7 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
           isExternal: player.value?.isExternal ?? false,
           album: player.value?.album,
           duration: player.value?.duration,
+          waiting: player.value?.isWaitingForAudio ?? false,
         ),
       ),
     );
@@ -2985,7 +3000,8 @@ class _PlaybackQueuePanelState extends ConsumerState<_PlaybackQueuePanel> {
     final currentArtist = currentEntry?.artist ?? playback.artist;
     final currentThumbnail =
         currentEntry?.thumbnailUrl ?? playback.thumbnailUrl;
-    final isPlaying = playback.status == PlayerStatus.playing;
+    final isPlaying =
+        playback.status == PlayerStatus.playing || playback.waiting;
     final hasCurrentTrack =
         currentEntry != null ||
         (playback.status != PlayerStatus.idle &&
@@ -5571,33 +5587,43 @@ class _PlaybackButtons extends ConsumerWidget {
               ? () => ref.read(playerControllerProvider.notifier).playPrevious()
               : null,
         );
+        // A song that is still starting shows Pause, which is what the
+        // control does while playback is wanted.
+        final waiting = snapshot.isWaitingForAudio;
+        final showsPause = isPlaying || waiting;
         final primaryButton = SizedBox(
           width: enlargedPlaySize,
           height: enlargedPlaySize,
-          child: IconButton(
-            key: const ValueKey('player-primary-control'),
-            tooltip: isPlaying ? strings.pause : strings.play,
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              disabledBackgroundColor: Colors.transparent,
-            ),
+          child: PlaybackWaitIndicator(
+            waiting: waiting,
             color: controlColor,
-            disabledColor: controlColor.withValues(alpha: 0.38),
-            padding: EdgeInsets.zero,
-            constraints: BoxConstraints.tight(Size.square(enlargedPlaySize)),
-            iconSize: enlargedPlayIconSize,
-            icon: Transform.translate(
-              offset: isPlaying ? Offset.zero : Offset(mobile ? 1.25 : 1.5, 0),
-              transformHitTests: false,
-              child: Icon(
-                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            child: IconButton(
+              key: const ValueKey('player-primary-control'),
+              tooltip: showsPause ? strings.pause : strings.play,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
               ),
+              color: controlColor,
+              disabledColor: controlColor.withValues(alpha: 0.38),
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints.tight(Size.square(enlargedPlaySize)),
+              iconSize: enlargedPlayIconSize,
+              icon: Transform.translate(
+                offset: showsPause
+                    ? Offset.zero
+                    : Offset(mobile ? 1.25 : 1.5, 0),
+                transformHitTests: false,
+                child: Icon(
+                  showsPause ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                ),
+              ),
+              onPressed: hasTrack
+                  ? () => ref
+                        .read(playerControllerProvider.notifier)
+                        .togglePlayPause()
+                  : null,
             ),
-            onPressed: hasTrack
-                ? () => ref
-                      .read(playerControllerProvider.notifier)
-                      .togglePlayPause()
-                : null,
           ),
         );
         final nextButton = _ControlButton(

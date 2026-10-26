@@ -416,6 +416,25 @@ void main() {
     },
   );
 
+  test('a playing source that rebuffers reports it is waiting', () async {
+    final fixture = await _Fixture.create();
+    final backend = fixture.backend;
+    try {
+      await fixture.service.playRemoteSource(_remoteSource('current'));
+      backend.emitReady();
+      expect(fixture.service.currentSnapshot.isWaitingForAudio, isFalse);
+
+      backend.emitBuffering();
+      expect(fixture.service.currentSnapshot.status, PlayerStatus.playing);
+      expect(fixture.service.currentSnapshot.isWaitingForAudio, isTrue);
+
+      backend.emitReady();
+      expect(fixture.service.currentSnapshot.isWaitingForAudio, isFalse);
+    } finally {
+      await fixture.dispose();
+    }
+  });
+
   test(
     'native pause while rebuffering is a pause, not continuing recovery',
     () async {

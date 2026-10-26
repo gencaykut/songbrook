@@ -25,6 +25,7 @@ import 'mini_player.dart';
 import 'playback_gradient_background.dart';
 import 'playback_menu_bottom_sheet.dart';
 import 'playback_progress_line.dart';
+import 'playback_wait_indicator.dart';
 import 'source_image.dart';
 import 'decorative_progress_transition.dart';
 import 'uniform_playback_slider_track_shape.dart';
@@ -1415,6 +1416,7 @@ class _LyricsCompanionControls extends ConsumerWidget {
         final snapshot = player.value;
         return (
           status: snapshot?.status,
+          waiting: snapshot?.isWaitingForAudio ?? false,
           trackId: snapshot?.trackId,
           sourceUrl: snapshot?.sourceUrl,
           title: snapshot?.title,
@@ -1430,7 +1432,10 @@ class _LyricsCompanionControls extends ConsumerWidget {
             playback.sourceUrl?.trim().isNotEmpty == true ||
             playback.title?.trim().isNotEmpty == true ||
             playback.artist?.trim().isNotEmpty == true);
-    final isPlaying = playback.status == PlayerStatus.playing;
+    // A song that is still starting shows Pause, which is what the control
+    // does while playback is wanted.
+    final isPlaying =
+        playback.status == PlayerStatus.playing || playback.waiting;
     final foreground = Colors.white.withValues(alpha: 0.94);
     final sideSize = mobileLayout ? 44.0 : 40.0;
     final sideIconSize = mobileLayout ? 28.0 : 26.0;
@@ -1492,40 +1497,46 @@ class _LyricsCompanionControls extends ConsumerWidget {
                 ),
                 SizedBox.square(
                   dimension: primarySize,
-                  child: IconButton(
-                    key: const ValueKey('lyrics-companion-primary-control'),
-                    tooltip: isPlaying ? strings.pause : strings.play,
-                    icon: Transform.translate(
-                      offset: isPlaying
-                          ? Offset.zero
-                          : Offset(mobileLayout ? 1.25 : 1.5, 0),
-                      transformHitTests: false,
-                      child: Icon(
-                        isPlaying
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
+                  child: PlaybackWaitIndicator(
+                    waiting: playback.waiting,
+                    color: foreground,
+                    child: IconButton(
+                      key: const ValueKey('lyrics-companion-primary-control'),
+                      tooltip: isPlaying ? strings.pause : strings.play,
+                      icon: Transform.translate(
+                        offset: isPlaying
+                            ? Offset.zero
+                            : Offset(mobileLayout ? 1.25 : 1.5, 0),
+                        transformHitTests: false,
+                        child: Icon(
+                          isPlaying
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                        ),
                       ),
-                    ),
-                    iconSize: primaryIconSize,
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints.tight(Size.square(primarySize)),
-                    style: IconButton.styleFrom(
-                      minimumSize: Size.square(primarySize),
-                      maximumSize: Size.square(primarySize),
-                      foregroundColor: foreground,
-                      disabledForegroundColor: foreground.withValues(
-                        alpha: 0.38,
+                      iconSize: primaryIconSize,
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints.tight(
+                        Size.square(primarySize),
                       ),
-                      backgroundColor: Colors.transparent,
-                      disabledBackgroundColor: Colors.transparent,
-                      shape: const CircleBorder(),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      style: IconButton.styleFrom(
+                        minimumSize: Size.square(primarySize),
+                        maximumSize: Size.square(primarySize),
+                        foregroundColor: foreground,
+                        disabledForegroundColor: foreground.withValues(
+                          alpha: 0.38,
+                        ),
+                        backgroundColor: Colors.transparent,
+                        disabledBackgroundColor: Colors.transparent,
+                        shape: const CircleBorder(),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: hasTrack
+                          ? () => ref
+                                .read(playerControllerProvider.notifier)
+                                .togglePlayPause()
+                          : null,
                     ),
-                    onPressed: hasTrack
-                        ? () => ref
-                              .read(playerControllerProvider.notifier)
-                              .togglePlayPause()
-                        : null,
                   ),
                 ),
                 sideControl(
@@ -1644,6 +1655,7 @@ class _LyricsHeader extends ConsumerWidget {
         final snapshot = player.value;
         return (
           status: snapshot?.status,
+          waiting: snapshot?.isWaitingForAudio ?? false,
           thumbnailUrl: snapshot?.thumbnailUrl,
           hasTrack:
               snapshot?.title?.trim().isNotEmpty == true &&
@@ -1652,7 +1664,10 @@ class _LyricsHeader extends ConsumerWidget {
         );
       }),
     );
-    final isPlaying = playback.status == PlayerStatus.playing;
+    // A song that is still starting shows Pause, which is what the control
+    // does while playback is wanted.
+    final isPlaying =
+        playback.status == PlayerStatus.playing || playback.waiting;
 
     return Column(
       key: const ValueKey('lyrics-header'),
@@ -1725,26 +1740,30 @@ class _LyricsHeader extends ConsumerWidget {
               if (mobileLayout)
                 SizedBox.square(
                   dimension: 48,
-                  child: IconButton(
-                    key: const ValueKey('lyrics-playback-control'),
-                    tooltip: isPlaying ? strings.pause : strings.play,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 48,
-                      height: 48,
-                    ),
+                  child: PlaybackWaitIndicator(
+                    waiting: playback.waiting,
                     color: Colors.white,
-                    disabledColor: Colors.white.withValues(alpha: 0.36),
-                    iconSize: isPlaying ? 36 : 40,
-                    onPressed: playback.hasTrack
-                        ? () => ref
-                              .read(playerControllerProvider.notifier)
-                              .togglePlayPause()
-                        : null,
-                    icon: Icon(
-                      isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
+                    child: IconButton(
+                      key: const ValueKey('lyrics-playback-control'),
+                      tooltip: isPlaying ? strings.pause : strings.play,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 48,
+                        height: 48,
+                      ),
+                      color: Colors.white,
+                      disabledColor: Colors.white.withValues(alpha: 0.36),
+                      iconSize: isPlaying ? 36 : 40,
+                      onPressed: playback.hasTrack
+                          ? () => ref
+                                .read(playerControllerProvider.notifier)
+                                .togglePlayPause()
+                          : null,
+                      icon: Icon(
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
                     ),
                   ),
                 ),
