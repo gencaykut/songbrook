@@ -506,6 +506,42 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Normalize volume': 'Ses seviyesini dengele',
   'Autoplay': 'Otomatik oynatma',
   'Similar': 'Benzer',
+  'Control this Mac\'s music from your iPhone on the same network.':
+      'Aynı ağdaki iPhone\'undan bu Mac\'teki müziği yönet.',
+  'Control your Mac\'s music from this device on the same network.':
+      'Aynı ağdaki Mac\'inde çalan müziği bu cihazdan yönet.',
+  'Add a device': 'Cihaz ekle',
+  'Shows a code to pair your iPhone.':
+      'iPhone\'unu eşleştirmek için bir kod gösterir.',
+  'Pairing code': 'Eşleştirme kodu',
+  'On your iPhone, open Settings → Songbrook Connect, tap this Mac and enter the code. It is valid for 2 minutes.':
+      'iPhone\'unda Ayarlar → Songbrook Connect\'i aç, bu Mac\'e dokun ve kodu gir. Kod 2 dakika geçerli.',
+  'Connected': 'Bağlı',
+  'Not connected': 'Bağlı değil',
+  'Remove device': 'Cihazı kaldır',
+  'It will have to pair again to connect.':
+      'Yeniden bağlanmak için tekrar eşleşmesi gerekecek.',
+  'Looking for your Mac…': 'Mac\'in aranıyor…',
+  'Open Songbrook on your Mac and turn on Songbrook Connect. Both must be on the same Wi-Fi network.':
+      'Mac\'inde Songbrook\'u aç ve Songbrook Connect\'i aç. İkisi aynı Wi-Fi ağında olmalı.',
+  'Tap to pair': 'Eşleştirmek için dokun',
+  'Enter the code your Mac shows': 'Mac\'inde görünen kodu gir',
+  'On the Mac: Settings → Songbrook Connect → Add a device.':
+      'Mac\'te: Ayarlar → Songbrook Connect → Cihaz ekle.',
+  'Pair': 'Eşleştir',
+  'Forget': 'Unut',
+  'Not on this network': 'Bu ağda değil',
+  'That code is not correct.': 'Kod doğru değil.',
+  'The code expired. Show a new one on your Mac.':
+      'Kodun süresi doldu. Mac\'inde yeni bir kod göster.',
+  'Too many attempts. Show a new code on your Mac.':
+      'Çok fazla deneme yapıldı. Mac\'inde yeni bir kod göster.',
+  'Your Mac is not showing a code. Tap Add a device on the Mac.':
+      'Mac\'inde bir kod görünmüyor. Mac\'te Cihaz ekle\'ye dokun.',
+  'Could not reach the Mac.': 'Mac\'e ulaşılamadı.',
+  'Your Mac removed this device. Pair it again.':
+      'Mac\'in bu cihazı kaldırdı. Yeniden eşleştir.',
+  'Songbrook Connect could not start.': 'Songbrook Connect başlatılamadı.',
   'Song version': 'Şarkı sürümü',
   'Prefer song versions': 'Şarkı sürümünü tercih et',
   'Skip non-music parts': 'Müzik olmayan bölümleri atla',

@@ -1151,6 +1151,76 @@ class AppStrings {
   );
   String get preferSongVersions =>
       choose('Preferir la versión de la canción', 'Prefer song versions');
+  String get connectHostSummary => choose(
+    'Controla la música de este Mac desde tu iPhone en la misma red.',
+    'Control this Mac\'s music from your iPhone on the same network.',
+  );
+  String get connectClientSummary => choose(
+    'Controla la música de tu Mac desde este dispositivo en la misma red.',
+    'Control your Mac\'s music from this device on the same network.',
+  );
+  String get connectAddDevice => choose('Añadir dispositivo', 'Add a device');
+  String get connectAddDeviceSummary => choose(
+    'Muestra un código para emparejar tu iPhone.',
+    'Shows a code to pair your iPhone.',
+  );
+  String get connectPairingCodeTitle =>
+      choose('Código de emparejamiento', 'Pairing code');
+  String get connectPairingCodeHint => choose(
+    'En tu iPhone, abre Ajustes → Songbrook Connect, toca este Mac e introduce el código. Es válido durante 2 minutos.',
+    'On your iPhone, open Settings → Songbrook Connect, tap this Mac and enter the code. It is valid for 2 minutes.',
+  );
+  String get connectConnected => choose('Conectado', 'Connected');
+  String get connectNotConnected => choose('Sin conexión', 'Not connected');
+  String get connectRemoveDevice =>
+      choose('Quitar dispositivo', 'Remove device');
+  String get connectRemoveDeviceSummary => choose(
+    'Tendrá que emparejarse de nuevo para conectarse.',
+    'It will have to pair again to connect.',
+  );
+  String get connectSearching =>
+      choose('Buscando tu Mac…', 'Looking for your Mac…');
+  String get connectSearchingSummary => choose(
+    'Abre Songbrook en tu Mac y activa Songbrook Connect. Ambos deben estar en la misma red Wi-Fi.',
+    'Open Songbrook on your Mac and turn on Songbrook Connect. Both must be on the same Wi-Fi network.',
+  );
+  String get connectTapToPair => choose('Toca para emparejar', 'Tap to pair');
+  String get connectEnterCode => choose(
+    'Introduce el código que muestra tu Mac',
+    'Enter the code your Mac shows',
+  );
+  String get connectEnterCodeHint => choose(
+    'En el Mac: Ajustes → Songbrook Connect → Añadir dispositivo.',
+    'On the Mac: Settings → Songbrook Connect → Add a device.',
+  );
+  String get connectPair => choose('Emparejar', 'Pair');
+  String get connectForget => choose('Olvidar', 'Forget');
+  String get connectNotFound =>
+      choose('No está en esta red', 'Not on this network');
+  String get connectWrongCode =>
+      choose('El código no es correcto.', 'That code is not correct.');
+  String get connectCodeExpired => choose(
+    'El código caducó. Muestra uno nuevo en tu Mac.',
+    'The code expired. Show a new one on your Mac.',
+  );
+  String get connectTooManyAttempts => choose(
+    'Demasiados intentos. Muestra un código nuevo en tu Mac.',
+    'Too many attempts. Show a new code on your Mac.',
+  );
+  String get connectNoCode => choose(
+    'Tu Mac no muestra ningún código. Toca Añadir dispositivo en el Mac.',
+    'Your Mac is not showing a code. Tap Add a device on the Mac.',
+  );
+  String get connectUnreachable =>
+      choose('No se pudo conectar con el Mac.', 'Could not reach the Mac.');
+  String get connectPairingRemoved => choose(
+    'Tu Mac quitó este dispositivo. Vuelve a emparejarlo.',
+    'Your Mac removed this device. Pair it again.',
+  );
+  String get connectFailed => choose(
+    'Songbrook Connect no pudo iniciarse.',
+    'Songbrook Connect could not start.',
+  );
   String get songVersionLabel =>
       choose('Versión de la canción', 'Song version');
   String get preferSongVersionsSummary => choose(

@@ -1,4 +1,4 @@
 "CFBundleDisplayName" = "Songbrook";
-"NSLocalNetworkUsageDescription" = "Songbrook, “Şuraya yayınla” seçeneğini kullandığında uyumlu cihazları bulmak ve müziğini onlara aktarmak için yerel ağını kullanır.";
+"NSLocalNetworkUsageDescription" = "Songbrook, “Şuraya yayınla” seçeneğiyle uyumlu cihazları bulmak ve müziğini onlara aktarmak, Songbrook Connect ile de Mac'ine bağlanmak için yerel ağını kullanır.";
 "NSAppleMusicUsageDescription" = "Songbrook'un cihazında kayıtlı müzikleri gösterip çalabilmesi için erişim izni gerekiyor.";
 "NSPhotoLibraryUsageDescription" = "Songbrook, uygulamaya özel bir arka plan seçebilmen için fotoğraflarına erişmek istiyor.";

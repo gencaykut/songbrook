@@ -44,11 +44,12 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Songbrook necesita acceso a tus fotos para elegir un fondo personalizado.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Songbrook usa tu red local para encontrar dispositivos compatibles y transmitir tu música cuando eliges Transmitir a.</string>
+	<string>Songbrook usa tu red local para encontrar dispositivos compatibles, transmitir tu música cuando eliges Transmitir a y conectarse a tu Mac con Songbrook Connect.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_googlecast._tcp</string>
 		<string>_CC1AD845._googlecast._tcp</string>
+		<string>_songbrook._tcp</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>

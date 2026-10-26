@@ -106,6 +106,7 @@ class ConnectClient {
   Future<void>? _refreshFuture;
   String? _baseUrl;
   String? _sessionToken;
+  String? Function()? _sessionTokenProvider;
   int _reconnectAttempt = 0;
   bool _closedByUser = false;
   bool _reconnectSuppressed = false;
@@ -187,11 +188,18 @@ class ConnectClient {
     return null;
   }
 
-  Future<void> connect({required String baseUrl, String? sessionToken}) async {
+  /// [sessionTokenProvider], when given, is asked for a fresh token on every
+  /// (re)connection; Songbrook's identify tokens are single-use.
+  Future<void> connect({
+    required String baseUrl,
+    String? sessionToken,
+    String? Function()? sessionTokenProvider,
+  }) async {
     _sessionReady = false;
     _hasRemoteQueue = false;
     _baseUrl = baseUrl;
     _sessionToken = sessionToken;
+    _sessionTokenProvider = sessionTokenProvider;
     _closedByUser = false;
     _reconnectSuppressed = false;
     _reconnectAttempt = 0;
@@ -262,14 +270,15 @@ class ConnectClient {
           },
         ),
       );
+      final sessionToken = _sessionTokenProvider?.call() ?? _sessionToken;
       _send(
         WsMessage(
           type: WsMessageType.identify,
           data: <String, dynamic>{
             'deviceId': deviceId,
             'deviceName': deviceName,
-            if (_sessionToken != null && _sessionToken!.isNotEmpty)
-              'sessionToken': _sessionToken,
+            if (sessionToken != null && sessionToken.isNotEmpty)
+              'sessionToken': sessionToken,
             'clientType': clientType,
           },
         ),
@@ -1589,6 +1598,7 @@ class ConnectClient {
     if (authenticationRequired) {
       _reconnectSuppressed = true;
       _sessionToken = null;
+      _sessionTokenProvider = null;
       errorMessage = 'Your session expired. Please sign in again.';
     } else if (replaced) {
       _reconnectSuppressed = true;

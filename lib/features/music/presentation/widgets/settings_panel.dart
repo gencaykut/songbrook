@@ -20,13 +20,19 @@ import '../../../../platform_channels/android_file_export_channel.dart';
 import '../../../../platform_channels/android_supported_links_settings_channel.dart';
 import '../../../../platform_channels/ios_file_export_channel.dart';
 import '../../../../services/app_update/github_release_checker.dart';
+import '../../../../services/connect/connect_discovery.dart';
+import '../../../../services/connect/connect_host_server.dart';
+import '../../../../services/connect/connect_pairing_client.dart';
 import '../../../../services/storage/library_csv_import_service.dart';
 import '../../../../services/storage/library_csv_service.dart';
+import '../providers/connect_controller.dart';
 import '../providers/music_providers.dart';
 import 'app_update_dialog.dart';
 import 'lyrics_animation_transition.dart';
 import 'scrolled_under_tab_frame.dart';
 import 'youtube_music_settings_account_card.dart';
+
+part 'settings_connect_section.dart';
 
 typedef DownloadDirectoryPicker =
     Future<String?> Function({String? dialogTitle, String? initialDirectory});
@@ -628,6 +634,12 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                 ),
               ],
             ),
+            if (AppPlatform.isIOS ||
+                AppPlatform.current == AppPlatformType.macos)
+              _SettingsGroup(
+                title: kConnectProductName,
+                children: [_ConnectSettings(strings: strings)],
+              ),
             _SettingsGroup(
               title: strings.privacyAndRecommendations,
               children: [
