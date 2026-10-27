@@ -165,12 +165,14 @@ class _FakePlayback implements ConnectPlayback {
 
 void main() {
   late _FakeLan lan;
+  late StreamController<void> resumes;
   late _MemorySecureStore macKeychain;
   late _MemorySecureStore phoneKeychain;
   final containers = <ProviderContainer>[];
 
   setUp(() {
     lan = _FakeLan();
+    resumes = StreamController<void>.broadcast();
     macKeychain = _MemorySecureStore();
     phoneKeychain = _MemorySecureStore();
   });
@@ -206,6 +208,7 @@ void main() {
         connectBroadcasterProvider.overrideWithValue(lan),
         connectHostDiscoveryProvider.overrideWithValue(_FakeDiscovery(lan)),
         connectPlaybackProvider.overrideWithValue(playback ?? _FakePlayback()),
+        connectAppResumedProvider.overrideWithValue(resumes.stream),
       ],
     );
     containers.add(container);
@@ -435,5 +438,46 @@ void main() {
     await eventually(() => stateOf(mac).activeDeviceId == phoneId);
     await eventually(() => !macPlayback.current.isPlaying);
     await eventually(() => stateOf(mac).playback?.currentTrackId == 'z');
+  });
+
+  /// The Mac restarts on another port; the phone keeps retrying the old one.
+  Future<(ProviderContainer, ProviderContainer)> macMovedAway() async {
+    final (mac, phone) = await pairedDevices(_FakePlayback(), _FakePlayback());
+    final macController = mac.read(connectControllerProvider.notifier);
+    await macController.setEnabled(false);
+    await eventually(() => !stateOf(phone).isConnected);
+    await macController.setEnabled(true);
+    await eventually(() => stateOf(mac).isConnected);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(stateOf(phone).isConnected, isFalse);
+    return (mac, phone);
+  }
+
+  test('coming back to the front reconnects to the Mac', () async {
+    final (mac, phone) = await macMovedAway();
+
+    resumes.add(null);
+
+    await eventually(() => stateOf(phone).isConnected);
+    await eventually(() => stateOf(mac).devices.length == 2);
+  });
+
+  test('the Mac seen at a new address is reached there', () async {
+    final (mac, phone) = await macMovedAway();
+
+    lan.hosts.add([lan.advertised!]);
+
+    await eventually(() => stateOf(phone).isConnected);
+    await eventually(() => stateOf(mac).devices.length == 2);
+  });
+
+  test('coming back while connected keeps the connection', () async {
+    final (mac, phone) = await pairedDevices(_FakePlayback(), _FakePlayback());
+
+    resumes.add(null);
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    await eventually(() => stateOf(phone).isConnected);
+    await eventually(() => stateOf(mac).devices.length == 2);
   });
 }

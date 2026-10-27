@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +41,19 @@ final connectHostDiscoveryProvider = Provider<ConnectHostDiscovery>(
 
 /// The port the Mac tries first; tests use any free port.
 final connectHostPortProvider = Provider<int>((ref) => kConnectPreferredPort);
+
+/// Fires each time the app comes back to the front. iOS suspends an app
+/// that is not playing, and a socket it held looks open afterwards while
+/// it is dead.
+final connectAppResumedProvider = Provider<Stream<void>>((ref) {
+  final resumes = StreamController<void>.broadcast();
+  final listener = AppLifecycleListener(onResume: () => resumes.add(null));
+  ref.onDispose(() {
+    listener.dispose();
+    unawaited(resumes.close());
+  });
+  return resumes.stream;
+});
 
 final connectEnabledStoreProvider = Provider<ConnectEnabledStore>(
   (ref) => const SharedPreferencesConnectEnabledStore(),
@@ -200,6 +214,8 @@ class ConnectController extends Notifier<ConnectState> {
   ConnectClient? _client;
   StreamSubscription<List<ConnectDiscoveredHost>>? _discoverySubscription;
   StreamSubscription<ConnectPlaybackChange>? _playbackSubscription;
+  StreamSubscription<void>? _resumeSubscription;
+  Uri? _clientBaseUrl;
   String? _deviceId;
   Future<void> _transition = Future<void>.value();
 
@@ -213,9 +229,19 @@ class ConnectController extends Notifier<ConnectState> {
     _discovery = ref.read(connectHostDiscoveryProvider);
     ref.onDispose(() {
       _disposed = true;
+      unawaited(_resumeSubscription?.cancel());
       unawaited(_releaseResources());
     });
     final isHost = ref.watch(connectIsHostProvider);
+    // Breadcrumbs for field problems; release builds stay quiet.
+    if (!kReleaseMode) {
+      ConnectClient.logger ??= (message) => debugPrint('[Connect] $message');
+    }
+    if (!isHost) {
+      _resumeSubscription = ref
+          .read(connectAppResumedProvider)
+          .listen((_) => unawaited(reconnect()));
+    }
     unawaited(_load());
     return ConnectState(isHost: isHost, deviceName: _localDeviceName(isHost));
   }
@@ -315,6 +341,25 @@ class ConnectController extends Notifier<ConnectState> {
     }
     final updated2 = await _store.knownHosts();
     _patch((current) => current.copyWith(knownHosts: updated2));
+  }
+
+  /// Client: connects to the paired Mac again now: when the app comes back
+  /// to the front, or when its card is tapped. A socket that is still open
+  /// is reopened (after a suspension it can look open while it is dead);
+  /// otherwise Bonjour is searched afresh and the Mac is reached at the
+  /// address it is seen at, or at its last one.
+  Future<void> reconnect() => _serialized(_reconnect);
+
+  Future<void> _reconnect() async {
+    if (!state.enabled || state.isHost || state.knownHosts.isEmpty) return;
+    final client = _client;
+    if (client != null && client.isConnected) {
+      await client.refreshState();
+      return;
+    }
+    await _stopDiscovery();
+    await _disconnectClient();
+    await _startDiscovery();
   }
 
   /// Applies [change] unless the controller is gone; async work can finish
@@ -433,7 +478,28 @@ class ConnectController extends Notifier<ConnectState> {
 
   void _onHostsDiscovered(List<ConnectDiscoveredHost> hosts) {
     _patch((current) => current.copyWith(discoveredHosts: hosts));
-    if (_client != null) return;
+    final client = _client;
+    if (client != null) {
+      // Still trying an address the Mac is no longer at: go where it is.
+      if (client.isConnected) return;
+      for (final host in hosts) {
+        final known = state.knownHosts.where((k) => k.hostId == host.hostId);
+        final baseUrl = host.baseUrl;
+        if (known.isNotEmpty &&
+            baseUrl != null &&
+            host.hostId == state.connectedHostId &&
+            baseUrl != _clientBaseUrl) {
+          unawaited(
+            _serialized(() async {
+              await _disconnectClient();
+              await _connectToKnownHost(known.first, baseUrl);
+            }),
+          );
+          return;
+        }
+      }
+      return;
+    }
     for (final host in hosts) {
       final known = state.knownHosts.where((k) => k.hostId == host.hostId);
       final baseUrl = host.baseUrl;
@@ -446,7 +512,14 @@ class ConnectController extends Notifier<ConnectState> {
 
   Future<void> _connectToKnownHost(ConnectKnownHost host, Uri baseUrl) async {
     if (!state.enabled) return;
-    if (state.connectedHostId == host.hostId && _client != null) return;
+    final client = _client;
+    // A client still retrying an old address must not keep this host from
+    // being reached where Bonjour sees it now.
+    if (state.connectedHostId == host.hostId &&
+        client != null &&
+        (client.isConnected || _clientBaseUrl == baseUrl)) {
+      return;
+    }
     await _disconnectClient();
     await _openClient(
       baseUrl: baseUrl,
@@ -485,6 +558,7 @@ class ConnectController extends Notifier<ConnectState> {
       },
     );
     _client = client;
+    _clientBaseUrl = baseUrl;
     await _playbackSubscription?.cancel();
     _playbackSubscription = playback.changes.listen(
       (change) => _onPlaybackChanged(client, change),
@@ -596,6 +670,7 @@ class ConnectController extends Notifier<ConnectState> {
   Future<void> _disconnectClient() async {
     final client = _client;
     _client = null;
+    _clientBaseUrl = null;
     _endMirror();
     await _playbackSubscription?.cancel();
     _playbackSubscription = null;
@@ -622,11 +697,7 @@ class ConnectController extends Notifier<ConnectState> {
     await _playbackSubscription?.cancel();
     _playbackSubscription = null;
     await client?.dispose();
-    await _discoverySubscription?.cancel();
-    if (_discoverySubscription != null) {
-      _discoverySubscription = null;
-      await _discovery?.stop();
-    }
+    await _stopDiscovery();
     final server = _server;
     _server = null;
     if (server != null) {
@@ -637,13 +708,17 @@ class ConnectController extends Notifier<ConnectState> {
     _hub = null;
   }
 
+  Future<void> _stopDiscovery() async {
+    final subscription = _discoverySubscription;
+    if (subscription == null) return;
+    _discoverySubscription = null;
+    await subscription.cancel();
+    await _discovery?.stop();
+  }
+
   Future<void> _stopAll() async {
     await _disconnectClient();
-    await _discoverySubscription?.cancel();
-    if (_discoverySubscription != null) {
-      _discoverySubscription = null;
-      await _discovery?.stop();
-    }
+    await _stopDiscovery();
     final server = _server;
     _server = null;
     if (server != null) {

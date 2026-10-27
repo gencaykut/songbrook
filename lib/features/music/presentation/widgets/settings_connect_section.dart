@@ -103,7 +103,8 @@ class _ConnectSettings extends ConsumerWidget {
               : discovered.containsKey(known.hostId)
               ? strings.connectNotConnected
               : strings.connectNotFound,
-          onTap: null,
+          // A tap tries again at once instead of waiting for the next retry.
+          onTap: connected ? null : () => controller.reconnect(),
           trailing: TextButton(
             onPressed: () => controller.forgetHost(known.hostId),
             child: Text(strings.connectForget),
