@@ -144,6 +144,7 @@ part 'library_csv_transfer_controller.dart';
 part 'lyrics_offset_controller.dart';
 part 'playback_history_tracker.dart';
 part 'player/player_queue_components.dart';
+part 'player/player_connect.dart';
 part 'player/player_playback_coordinators.dart';
 part 'player/playback_history_track_factory.dart';
 part 'player_controller.dart';

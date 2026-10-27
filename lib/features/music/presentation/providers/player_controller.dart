@@ -758,6 +758,106 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     await _playRemoteTrack(track);
   }
 
+  /// Songbrook Connect handoff: shows [queue] at [index], paused at
+  /// [position], without starting audio, so this device can start at once
+  /// when the handoff commits (`seek` then `resume`). The song's stream is
+  /// resolved here: one this device cannot play fails the handoff while the
+  /// other device is still playing. Returns false if a newer selection
+  /// replaced the prepared queue meanwhile.
+  Future<bool> prepareRemoteQueue(
+    List<TrackInfo> queue,
+    int index, {
+    Duration position = Duration.zero,
+  }) async {
+    if (queue.isEmpty) {
+      throw ArgumentError.value(queue, 'queue', 'Nothing to prepare.');
+    }
+    final start = index.clamp(0, queue.length - 1);
+    _prepareQueueSourceTransition();
+    _resetQueueNavigation();
+    _clearRecommendationQueueExtension();
+    ref.read(remotePlaybackCacheProvider).cancelPlaybackWarmups();
+    _previousRemoteTrackForCache = _playingRemoteTrack;
+    _remotePrefetch.invalidate();
+    _invalidateCrossfadePreparations();
+    _remoteQueueEntries.beginGeneration();
+    _useNativeLocalQueue = true;
+    _activeLocalQueueSourceId = null;
+    _activeRemoteQueueSourceId = null;
+    _queue = List<_QueueItem>.unmodifiable(
+      queue.map(_remoteQueueEntries.newRemoteItem),
+    );
+    _queueIndex = start;
+    _resetShuffleHistory();
+    _publishPlaybackQueue();
+    final requestId = _holdPausedSelection(position);
+    _activePlaybackIsRemote = true;
+    final track = queue[start];
+    state = AsyncData(
+      _remoteLoadingSnapshot(
+        track,
+      ).copyWith(status: PlayerStatus.paused, position: position),
+    );
+    await ref.read(playerServiceProvider).pause();
+    await _resolveRemoteTrack(track);
+    return !_disposed && _isCurrentPlayRequest(requestId);
+  }
+
+  /// What [restoreConnectPoint] puts back: the queue and the paused player
+  /// as they were before a Songbrook Connect handoff was prepared here.
+  Object connectRestorePoint() => _ConnectRestorePoint(
+    queue: _queue,
+    index: _queueIndex,
+    snapshot: state.value,
+    activePlaybackIsRemote: _activePlaybackIsRemote,
+    useNativeLocalQueue: _useNativeLocalQueue,
+    localQueueSourceId: _activeLocalQueueSourceId,
+    remoteQueueSourceId: _activeRemoteQueueSourceId,
+  );
+
+  /// Undoes [prepareRemoteQueue] after a cancelled handoff. The restored
+  /// song is reloaded when playback resumes.
+  Future<void> restoreConnectPoint(Object point) async {
+    if (point is! _ConnectRestorePoint) return;
+    _prepareQueueSourceTransition();
+    _resetQueueNavigation();
+    _clearRecommendationQueueExtension();
+    _remotePrefetch.invalidate();
+    _invalidateCrossfadePreparations();
+    _queue = point.queue;
+    _queueIndex = point.index;
+    _activePlaybackIsRemote = point.activePlaybackIsRemote;
+    _useNativeLocalQueue = point.useNativeLocalQueue;
+    _activeLocalQueueSourceId = point.localQueueSourceId;
+    _activeRemoteQueueSourceId = point.remoteQueueSourceId;
+    _resetShuffleHistory();
+    _publishPlaybackQueue();
+    final snapshot = point.snapshot;
+    _holdPausedSelection(snapshot?.position ?? Duration.zero);
+    if (snapshot != null) {
+      state = AsyncData(
+        snapshot.copyWith(status: PlayerStatus.paused, playWhenReady: false),
+      );
+    }
+    await ref.read(playerServiceProvider).pause();
+    if (snapshot?.wantsToPlay == true) await resume();
+  }
+
+  /// Leaves the selected queue entry paused with no source loaded, the way a
+  /// pause before a song starts does; [resume] loads it at [position].
+  int _holdPausedSelection(Duration position) {
+    _userPaused = true;
+    _explicitlyStopped = false;
+    _releasePlaybackIntent();
+    final requestId = ++_playRequestId;
+    _changingLocalTrackRequestId = null;
+    _pendingRemoteSnapshot = null;
+    _remoteRetry.resetLoadAndFailureState();
+    _resumeNeedsReload = true;
+    _resumePlaybackPosition = position;
+    return requestId;
+  }
+
   /// Starts a recommendation shelf without splitting downloaded and remote
   /// entries into separate one-item queues.
   Future<void> playRecommendation(

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:bstream_music/features/music/presentation/providers/connect_controller.dart';
+import 'package:bstream_music/features/music/presentation/providers/connect_playback.dart';
 import 'package:bstream_music/services/connect/connect_discovery.dart';
+import 'package:bstream_music/services/connect/connect_models.dart';
 import 'package:bstream_music/services/connect/connect_pairing_client.dart';
 import 'package:bstream_music/services/connect/connect_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,6 +77,80 @@ class _FakeDiscovery implements ConnectHostDiscovery {
   Future<void> stop() async {}
 }
 
+/// A player that records what Connect asks of it.
+class _FakePlayback implements ConnectPlayback {
+  final _changes = StreamController<ConnectPlaybackChange>.broadcast();
+  final commands = <String>[];
+  final applied = <ConnectPlaybackSnapshot>[];
+  var pausedForTransfer = 0;
+  ConnectPlaybackSnapshot current = ConnectPlaybackSnapshot.fromJson(const {});
+
+  void play(List<String> ids, {int index = 0, int positionMs = 0}) {
+    current = ConnectPlaybackSnapshot.fromJson({
+      'queue': [
+        for (final id in ids) {'id': id, 'title': 'Song $id', 'artist': 'A'},
+      ],
+      'currentIndex': index,
+      'positionMs': positionMs,
+      'durationMs': 200000,
+      'isPlaying': true,
+      'updatedAt': DateTime.now().toUtc().toIso8601String(),
+    });
+    _changes.add(const ConnectPlaybackChange(started: true));
+  }
+
+  void _set({bool? isPlaying, int? positionMs}) {
+    current = current.copyWith(
+      isPlaying: isPlaying,
+      positionMs: positionMs,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    _changes.add(
+      ConnectPlaybackChange(
+        started: isPlaying == true,
+        stopped: isPlaying == false,
+      ),
+    );
+  }
+
+  @override
+  Set<String> get supportedCommands => kConnectPlayerCommands;
+
+  @override
+  Stream<ConnectPlaybackChange> get changes => _changes.stream;
+
+  @override
+  ConnectPlaybackSnapshot snapshot() => current;
+
+  @override
+  Future<void> apply(ConnectPlaybackSnapshot snapshot) async {
+    applied.add(snapshot);
+    current = snapshot;
+  }
+
+  @override
+  Future<void> handleCommand(
+    String command,
+    Map<String, dynamic> arguments,
+  ) async {
+    commands.add(command);
+    switch (command) {
+      case ConnectCommand.pause:
+        _set(isPlaying: false);
+      case ConnectCommand.play:
+        _set(isPlaying: true);
+      case ConnectCommand.seek:
+        _set(positionMs: arguments['positionMs'] as int);
+    }
+  }
+
+  @override
+  Future<void> pauseForTransfer() async {
+    pausedForTransfer++;
+    _set(isPlaying: false);
+  }
+}
+
 void main() {
   late _FakeLan lan;
   late _MemorySecureStore macKeychain;
@@ -99,6 +175,7 @@ void main() {
     required bool isHost,
     required _MemorySecureStore keychain,
     bool enabled = false,
+    _FakePlayback? playback,
   }) {
     var ids = 0;
     final container = ProviderContainer(
@@ -116,6 +193,7 @@ void main() {
         ),
         connectBroadcasterProvider.overrideWithValue(lan),
         connectHostDiscoveryProvider.overrideWithValue(_FakeDiscovery(lan)),
+        connectPlaybackProvider.overrideWithValue(playback ?? _FakePlayback()),
       ],
     );
     containers.add(container);
@@ -233,5 +311,108 @@ void main() {
     await mac.read(connectControllerProvider.notifier).setEnabled(false);
     expect(stateOf(mac).isConnected, isFalse);
     expect(lan.advertised, isNull);
+  });
+
+  /// A Mac with [macPlayback] and a phone with [phonePlayback], paired and
+  /// connected to each other.
+  Future<(ProviderContainer, ProviderContainer)> pairedDevices(
+    _FakePlayback macPlayback,
+    _FakePlayback phonePlayback,
+  ) async {
+    final mac = device(
+      isHost: true,
+      keychain: macKeychain,
+      enabled: true,
+      playback: macPlayback,
+    );
+    await eventually(() => stateOf(mac).isConnected);
+    final phone = device(
+      isHost: false,
+      keychain: phoneKeychain,
+      enabled: true,
+      playback: phonePlayback,
+    );
+    await eventually(() => stateOf(phone).discoveredHosts.isNotEmpty);
+    mac.read(connectControllerProvider.notifier).beginPairing();
+    await phone
+        .read(connectControllerProvider.notifier)
+        .pairWithHost(
+          stateOf(phone).discoveredHosts.single,
+          stateOf(mac).pairingCode!,
+        );
+    await eventually(
+      () =>
+          stateOf(phone).devices.length == 2 &&
+          stateOf(mac).devices.length == 2,
+    );
+    return (mac, phone);
+  }
+
+  test('playing on the Mac makes it the owner the phone mirrors', () async {
+    final macPlayback = _FakePlayback();
+    final (mac, phone) = await pairedDevices(macPlayback, _FakePlayback());
+    final macId = stateOf(mac).connectedHostId;
+
+    macPlayback.play(['a', 'b', 'c'], index: 1, positionMs: 5000);
+
+    await eventually(() => stateOf(phone).activeDeviceId == macId);
+    await eventually(() => stateOf(phone).playback?.currentTrackId == 'b');
+    final mirrored = stateOf(phone).playback!;
+    expect(mirrored.queue.map((track) => track['id']), ['a', 'b', 'c']);
+    expect(mirrored.isPlaying, isTrue);
+    expect(mirrored.positionMs, greaterThanOrEqualTo(5000));
+  });
+
+  test('the phone pauses and seeks the music playing on the Mac', () async {
+    final macPlayback = _FakePlayback();
+    final (_, phone) = await pairedDevices(macPlayback, _FakePlayback());
+    macPlayback.play(['a', 'b']);
+    await eventually(() => stateOf(phone).playback?.isPlaying == true);
+    final remote = phone.read(connectControllerProvider.notifier);
+
+    remote.sendCommand(ConnectCommand.pause);
+    await eventually(() => stateOf(phone).playback?.isPlaying == false);
+    remote.sendCommand(ConnectCommand.seek, {'positionMs': 42000});
+    await eventually(() => stateOf(phone).playback?.positionMs == 42000);
+    expect(macPlayback.commands, [ConnectCommand.pause, ConnectCommand.seek]);
+  });
+
+  test('playback moves to the phone: prepared paused, then started', () async {
+    final macPlayback = _FakePlayback();
+    final phonePlayback = _FakePlayback();
+    final (mac, phone) = await pairedDevices(macPlayback, phonePlayback);
+    macPlayback.play(['a', 'b'], index: 1, positionMs: 30000);
+    await eventually(() => stateOf(phone).playback?.isPlaying == true);
+    final phoneId = stateOf(
+      phone,
+    ).devices.firstWhere((device) => device.type == 'mobile').id;
+
+    phone.read(connectControllerProvider.notifier).transferTo(phoneId);
+
+    await eventually(() => stateOf(mac).activeDeviceId == phoneId);
+    await eventually(() => phonePlayback.current.isPlaying);
+    // Loaded without playing first, so the Mac kept playing until then.
+    expect(phonePlayback.applied.single.isPlaying, isFalse);
+    expect(phonePlayback.applied.single.currentTrackId, 'b');
+    expect(phonePlayback.current.positionMs, greaterThanOrEqualTo(30000));
+    expect(macPlayback.pausedForTransfer, greaterThanOrEqualTo(1));
+    expect(macPlayback.current.isPlaying, isFalse);
+  });
+
+  test('playing on the phone takes over from the Mac', () async {
+    final macPlayback = _FakePlayback();
+    final phonePlayback = _FakePlayback();
+    final (mac, phone) = await pairedDevices(macPlayback, phonePlayback);
+    macPlayback.play(['a']);
+    await eventually(() => stateOf(phone).playback?.isPlaying == true);
+    final phoneId = stateOf(
+      phone,
+    ).devices.firstWhere((device) => device.type == 'mobile').id;
+
+    phonePlayback.play(['z']);
+
+    await eventually(() => stateOf(mac).activeDeviceId == phoneId);
+    await eventually(() => !macPlayback.current.isPlaying);
+    await eventually(() => stateOf(mac).playback?.currentTrackId == 'z');
   });
 }

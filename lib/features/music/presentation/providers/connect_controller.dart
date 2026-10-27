@@ -14,6 +14,7 @@ import '../../../../services/connect/connect_hub.dart';
 import '../../../../services/connect/connect_models.dart';
 import '../../../../services/connect/connect_pairing_client.dart';
 import '../../../../services/connect/connect_store.dart';
+import 'connect_playback.dart';
 
 /// The feature's name, the same in every language.
 const String kConnectProductName = 'Songbrook Connect';
@@ -82,6 +83,8 @@ class ConnectState {
     this.isConnected = false,
     this.devices = const [],
     this.activeDeviceId,
+    this.playback,
+    this.playbackReceivedAt,
     this.errorMessage,
   });
 
@@ -109,6 +112,12 @@ class ConnectState {
   final List<ConnectDevice> devices;
   final String? activeDeviceId;
 
+  /// The session's playback as the owner last published it.
+  final ConnectPlaybackSnapshot? playback;
+
+  /// When [playback] arrived, on this device's clock.
+  final DateTime? playbackReceivedAt;
+
   /// An error code or a message for diagnostics; see [pairingRemovedError].
   final String? errorMessage;
 
@@ -129,6 +138,8 @@ class ConnectState {
     bool? isConnected,
     List<ConnectDevice>? devices,
     Object? activeDeviceId = _unset,
+    Object? playback = _unset,
+    Object? playbackReceivedAt = _unset,
     Object? errorMessage = _unset,
   }) => ConnectState(
     loaded: loaded ?? this.loaded,
@@ -152,6 +163,12 @@ class ConnectState {
     activeDeviceId: identical(activeDeviceId, _unset)
         ? this.activeDeviceId
         : activeDeviceId as String?,
+    playback: identical(playback, _unset)
+        ? this.playback
+        : playback as ConnectPlaybackSnapshot?,
+    playbackReceivedAt: identical(playbackReceivedAt, _unset)
+        ? this.playbackReceivedAt
+        : playbackReceivedAt as DateTime?,
     errorMessage: identical(errorMessage, _unset)
         ? this.errorMessage
         : errorMessage as String?,
@@ -164,13 +181,15 @@ const _unset = Object();
 /// server, the Bonjour advertisement and the Mac's own session client; on a
 /// phone the discovery of paired Macs and the session client.
 ///
-/// Playback is not attached yet: devices see each other but advertise no
-/// commands and publish no playback.
+/// The device whose player is in use owns the session: it publishes its
+/// queue and state, and runs the commands the other devices send. Playing
+/// something here makes this device the owner.
 class ConnectController extends Notifier<ConnectState> {
   ConnectHub? _hub;
   ConnectHostServer? _server;
   ConnectClient? _client;
   StreamSubscription<List<ConnectDiscoveredHost>>? _discoverySubscription;
+  StreamSubscription<ConnectPlaybackChange>? _playbackSubscription;
   String? _deviceId;
   Future<void> _transition = Future<void>.value();
 
@@ -438,17 +457,16 @@ class ConnectController extends Notifier<ConnectState> {
     required String secret,
   }) async {
     final deviceId = await _ensureDeviceId();
+    final playback = ref.read(connectPlaybackProvider);
     final client = ConnectClient(
       deviceId: deviceId,
       deviceName: state.deviceName,
       clientType: _clientType,
-      // Playback is attached in a later stage; until then this device
-      // advertises no commands and has nothing to publish.
-      supportedCommands: const <String>{},
-      snapshotProvider: () => ConnectPlaybackSnapshot.fromJson(const {}),
-      applySnapshot: (_) async {},
-      handleCommand: (_, _) async {},
-      pauseForTransfer: () async {},
+      supportedCommands: playback.supportedCommands,
+      snapshotProvider: playback.snapshot,
+      applySnapshot: playback.apply,
+      handleCommand: playback.handleCommand,
+      pauseForTransfer: playback.pauseForTransfer,
       onChanged: _onClientChanged,
       // The host rejected this device's pairing (it was removed on the Mac).
       onAuthenticationRequired: () {
@@ -457,6 +475,10 @@ class ConnectController extends Notifier<ConnectState> {
       },
     );
     _client = client;
+    await _playbackSubscription?.cancel();
+    _playbackSubscription = playback.changes.listen(
+      (change) => _onPlaybackChanged(client, change),
+    );
     await client.connect(
       baseUrl: '$baseUrl',
       sessionTokenProvider: () => createConnectAuthToken(
@@ -465,7 +487,23 @@ class ConnectController extends Notifier<ConnectState> {
         secret: secret,
       ),
     );
+    // Music already playing here takes over the session; the hub holds the
+    // request until this device is welcomed.
+    if (playback.snapshot().isPlaying) client.requestLocalTakeover();
     _onClientChanged();
+  }
+
+  void _onPlaybackChanged(ConnectClient client, ConnectPlaybackChange change) {
+    if (!identical(client, _client)) return;
+    if (change.started && !client.isThisDeviceActive) {
+      client.requestLocalTakeover();
+      return;
+    }
+    if (change.stopped && client.hasPendingLocalTakeover) {
+      client.cancelLocalTakeover();
+      return;
+    }
+    if (client.isThisDeviceActive) client.publishState();
   }
 
   Future<void> _onPairingRemoved(String hostId) async {
@@ -484,13 +522,29 @@ class ConnectController extends Notifier<ConnectState> {
         isConnected: client.isConnected,
         devices: List.unmodifiable(client.devices),
         activeDeviceId: client.activeDeviceId,
+        playback: client.remoteSnapshot,
+        playbackReceivedAt: client.remoteSnapshotAt,
       ),
     );
+  }
+
+  /// Sends a playback command to the device that owns the session. Commands
+  /// are retried until that device answers, so they survive a brief drop.
+  void sendCommand(String command, [Map<String, dynamic>? arguments]) {
+    _client?.sendCommand(command, arguments);
+  }
+
+  /// Moves playback to [deviceId]: it loads the same song, position and
+  /// queue, then starts while the current owner goes quiet.
+  void transferTo(String deviceId) {
+    _client?.transferTo(deviceId);
   }
 
   Future<void> _disconnectClient() async {
     final client = _client;
     _client = null;
+    await _playbackSubscription?.cancel();
+    _playbackSubscription = null;
     await client?.dispose();
     _patch(
       (current) => current.copyWith(
@@ -498,6 +552,8 @@ class ConnectController extends Notifier<ConnectState> {
         isConnected: false,
         devices: const [],
         activeDeviceId: null,
+        playback: null,
+        playbackReceivedAt: null,
       ),
     );
   }
@@ -506,6 +562,8 @@ class ConnectController extends Notifier<ConnectState> {
   Future<void> _releaseResources() async {
     final client = _client;
     _client = null;
+    await _playbackSubscription?.cancel();
+    _playbackSubscription = null;
     await client?.dispose();
     await _discoverySubscription?.cancel();
     if (_discoverySubscription != null) {

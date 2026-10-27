@@ -12,11 +12,13 @@ import 'package:bstream_music/features/music/domain/entities/playlist_entry.dart
 import 'package:bstream_music/features/music/domain/entities/track_info.dart';
 import 'package:bstream_music/features/music/domain/repositories/library_repository.dart';
 import 'package:bstream_music/features/music/domain/repositories/music_repository.dart';
+import 'package:bstream_music/features/music/presentation/providers/connect_playback.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/features/music/presentation/widgets/mini_player.dart';
 import 'package:bstream_music/features/music/presentation/widgets/player_panel.dart';
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
 import 'package:bstream_music/services/downloader/fallback_audio_resolver.dart';
+import 'package:bstream_music/services/connect/connect_models.dart';
 import 'package:bstream_music/services/media_session/desktop_media_session.dart';
 import 'package:bstream_music/services/player/player_service.dart';
 import 'package:bstream_music/services/sponsorblock/sponsorblock_client.dart';
@@ -31,6 +33,176 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+  });
+
+  group('Songbrook Connect', () {
+    test('a prepared queue shows paused and plays where it was', () async {
+      final player = _FakePlayerService();
+      final resolver = _GatedAudioResolver(const []);
+      final container = _container(player, audioResolver: resolver);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final queue = [_unresolvedRemoteTrack('a'), _unresolvedRemoteTrack('b')];
+
+      final current = await controller.prepareRemoteQueue(
+        queue,
+        1,
+        position: const Duration(seconds: 30),
+      );
+
+      expect(current, isTrue);
+      expect(resolver.calls, ['b']);
+      expect(player.playedRemote, isEmpty);
+      final prepared = container.read(playerControllerProvider).value!;
+      expect(prepared.trackId, 'b');
+      expect(prepared.status, PlayerStatus.paused);
+      expect(prepared.wantsToPlay, isFalse);
+      expect(prepared.position, const Duration(seconds: 30));
+      expect(container.read(playbackQueueProvider).currentIndex, 1);
+
+      // The handoff commit: seek to the owner's latest position, then play.
+      await controller.seek(const Duration(seconds: 31));
+      expect(player.lastSeekPosition, isNull);
+      await controller.resume();
+      await _flushCompletion();
+      expect(player.playedRemote.single.id, 'b');
+      expect(player.lastSeekPosition, const Duration(seconds: 31));
+      expect(
+        container.read(playerControllerProvider).value?.wantsToPlay,
+        isTrue,
+      );
+    });
+
+    test('a song this device cannot resolve fails the prepare', () async {
+      final player = _FakePlayerService();
+      final container = _container(
+        player,
+        audioResolver: _SequencedAudioResolver([
+          StateError('blocked'),
+          StateError('blocked'),
+          StateError('blocked'),
+        ]),
+      );
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+
+      await expectLater(
+        controller.prepareRemoteQueue([_unresolvedRemoteTrack('x')], 0),
+        throwsA(anything),
+      );
+      expect(player.playedRemote, isEmpty);
+    });
+
+    test('the published queue marks files only this device has', () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final download = _track(1).copyWith(sourceId: 'dQw4w9WgXcQ');
+      final file = _track(2);
+      await controller.playLocal(download, queue: [download, file]);
+      await _flushCompletion();
+
+      final snapshot = container.read(connectPlaybackProvider).snapshot();
+
+      expect(snapshot.queue, hasLength(2));
+      expect(snapshot.queue[0]['id'], 'dQw4w9WgXcQ');
+      expect(
+        snapshot.queue[0]['url'],
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+      expect(snapshot.queue[1]['localOnly'], isTrue);
+      expect(snapshot.queue[1].containsKey('url'), isFalse);
+      expect(snapshot.currentIndex, 0);
+      expect(snapshot.isPlaying, isTrue);
+      // Unchanged queues are sent once: the same list until it changes.
+      expect(
+        container.read(connectPlaybackProvider).snapshot().queue,
+        same(snapshot.queue),
+      );
+    });
+
+    test('a cancelled handoff puts the previous queue back', () async {
+      final player = _FakePlayerService();
+      final container = _container(
+        player,
+        audioResolver: _GatedAudioResolver(const []),
+      );
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final playback = container.read(connectPlaybackProvider);
+      final own = [_queuedRemoteTrack('mine-1'), _queuedRemoteTrack('mine-2')];
+      await controller.playRemote(own[1], queue: own);
+      await controller.pause();
+      await _flushCompletion();
+      final before = playback.snapshot();
+
+      await playback.apply(
+        ConnectPlaybackSnapshot.fromJson({
+          'queue': [
+            {'id': 'theirs', 'title': 'Theirs', 'artist': 'B'},
+          ],
+          'currentIndex': 0,
+          'positionMs': 1000,
+        }),
+      );
+      expect(container.read(playerControllerProvider).value?.trackId, 'theirs');
+
+      await playback.apply(before);
+
+      final queue = container.read(playbackQueueProvider);
+      expect(queue.entries.map((entry) => entry.id), ['mine-1', 'mine-2']);
+      expect(queue.currentIndex, 1);
+      final restored = container.read(playerControllerProvider).value!;
+      expect(restored.trackId, 'mine-2');
+      expect(restored.wantsToPlay, isFalse);
+    });
+
+    test('commands from another device drive the player', () async {
+      final player = _FakePlayerService();
+      final container = _container(
+        player,
+        audioResolver: _GatedAudioResolver(const []),
+      );
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final playback = container.read(connectPlaybackProvider);
+
+      await playback.handleCommand(ConnectCommand.playContext, {
+        'snapshot': {
+          'queue': [
+            {'id': 'one', 'title': 'One', 'artist': 'A'},
+            {'id': 'file', 'title': 'File', 'artist': 'A', 'localOnly': true},
+            {'id': 'two', 'title': 'Two', 'artist': 'A'},
+          ],
+          'currentIndex': 0,
+          'positionMs': 0,
+          'isPlaying': true,
+        },
+      });
+      await _waitUntil(() => player.playedRemote.isNotEmpty);
+      expect(player.playedRemote.last.id, 'one');
+      expect(
+        container.read(playbackQueueProvider).entries.map((entry) => entry.id),
+        ['one', 'two'],
+      );
+
+      await playback.handleCommand(ConnectCommand.next, const {});
+      await _waitUntil(() => player.playedRemote.last.id == 'two');
+
+      await playback.handleCommand(ConnectCommand.pause, const {});
+      expect(playback.snapshot().isPlaying, isFalse);
+      await playback.handleCommand(ConnectCommand.toggleShuffle, const {});
+      expect(playback.snapshot().shuffle, isTrue);
+      await playback.handleCommand(ConnectCommand.cycleRepeat, const {});
+      expect(playback.snapshot().repeatMode, 'all');
+      await playback.handleCommand(ConnectCommand.playQueueIndex, {'index': 0});
+      await _waitUntil(() => player.playedRemote.last.id == 'one');
+    });
   });
 
   group('background playback continuity', () {
