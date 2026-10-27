@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2668 test geçer (27 Ekim); macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
+- `flutter test`: 2672 test geçer (27 Ekim); macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
   - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
   - 2'si `/var` ile `/private/var` yol karşılaştırması.
   - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
@@ -124,9 +124,10 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - **Songbrook Connect (26–27 Ekim, tamamlandı):** iPhone ↔ Mac çalma eşitleme; tasarım, aşamalar, bulunan hatalar [docs/songbrook-connect.md](docs/songbrook-connect.md), gerçek cihaz testi [docs/manual-test-connect.md](docs/manual-test-connect.md) (5 bölüm, hepsi geçti). Hub Mac'te (`ConnectHostServer`, port 47821, Bonjour `_songbrook._tcp`), iPhone kumanda/oynatıcı istemci; 6 haneli kodla eşleşme, HMAC belirteç; Ariami (MIT) protokolü uyarlandı. Ariami'den bilinçli sapma: failover oturumu duraklatılmış devreder, dönen eski sahip susturulmaz, hâlâ çalan cihaz yansıtmak yerine sahipliği geri alır. Yansıtma `PlayerController` içinde (`showRemotePlayback`, `state` getter/setter ezilir), cihaz seçici `ConnectDevicesButton`. Bilinen eksikler: yansıtan iPhone'un kilit ekranından Mac'i yönetmek (sessiz ses döngüsüyle yapılabilir), uzak kuyruğu düzenlemek; kitaplık/favori eşitlemesi yapılmayacak (kullanıcı kararı). macOS Yerel Ağ izni güncellemeden/yeni derlemeden sonra yeniden sorulabiliyor; izin verilmeden Connect başlamıyor.
 - **Connect testinde çıkan genel düzeltmeler (27 Ekim):** Mac'te erken sarmanın kaybolması (`MediaKitPlayerService._confirmSeek`), shuffle/repeat açıkken sarı/kapalıyken beyaz (`AppColors.playbackToggleOnFor/OffFor`), macOS Anahtar Zinciri -34018 (Connect ve YouTube Music oturumu `LoginKeychainMacOsOptions`; Mac'te YouTube Music girişi düzeltmeden sonra elle denenmedi).
 
+- **Android'de kaydırıp kapatınca çalmayı durdurma (27 Ekim, kullanıcı kararı):** Upstream'de çalma sürüyordu. Artık Ayarlar → Çalma'da yalnız Android'de görünen "Uygulama kapatılınca çalmayı durdur" anahtarı var (`settings.stopPlaybackOnTaskRemoved`, varsayılan açık). audio_service'in `onTaskRemoved` olayı `DesktopMediaSessionCallbacks.taskRemoved` üzerinden `PlayerController.stop()`'u çağırıyor. Yalnız bu cihazın oynatıcısı durur; yansıtılan Connect oturumu sürer. Oynatıcı durunca durum boşa düşüyor, audio_service de servisi ve bildirimi kapatıyor. Samsung M51'de denendi: açıkken şarkı, medya oturumu ve ön plan servisi kapandı; kapalıyken görev silindi, çalma sürdü. Not: telefonda YouTube uygulaması ses odağını alırsa Songbrook duraklıyor (beklenen davranış).
+
 ### Kullanıcıdan bekleyen kararlar
 
-- **Android'de uygulamayı kaydırıp kapatınca çalma sürüyor (27 Ekim, kullanıcı sordu):** upstream davranışı (Spotify/YT Music gibi; `onTaskRemoved` yok). Önerilen: Ayarlar → Çalma'da "Uygulama kapatılınca çalmayı durdur" anahtarı, varsayılan "dur"; alternatif her zaman dur ya da olduğu gibi bırak. Kullanıcının seçimi bekleniyor.
 - **Upstream'e PR:** İki WebKit düzeltmesi (`a6a7403`) upstream'de de geçerli; arama sayfalaması upstream'in `youtube_music/` klasörüne dokunuyor. PR dışa dönük iş, önce sor.
 - **Repoyu public yapmak:** İlk sürümden sonra; önce sor.
 
