@@ -2126,7 +2126,9 @@ class _AppleMusicControls extends ConsumerWidget {
               ? strings.deactivateShuffle
               : strings.activateShuffle,
           iconSize: utilityIconSize,
-          color: snapshot.shuffleEnabled ? active : secondary,
+          color: snapshot.shuffleEnabled
+              ? AppColors.playbackToggleOnFor(context)
+              : AppColors.playbackToggleOffFor(context),
           icon: Icons.shuffle_rounded,
           onPressed: hasTrack
               ? () =>
@@ -2143,8 +2145,8 @@ class _AppleMusicControls extends ConsumerWidget {
           },
           iconSize: utilityIconSize,
           color: snapshot.repeatMode == PlaybackRepeatMode.off
-              ? secondary
-              : active,
+              ? AppColors.playbackToggleOffFor(context)
+              : AppColors.playbackToggleOnFor(context),
           icon: snapshot.repeatMode == PlaybackRepeatMode.one
               ? Icons.repeat_one_rounded
               : Icons.repeat_rounded,
@@ -5390,11 +5392,7 @@ class _PlaybackButtons extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeColor = Theme.of(context).colorScheme.primary;
     final controlColor = AppColors.playbackControlForegroundFor(context);
-    final inactiveColor = AppColors.playbackSecondaryControlForegroundFor(
-      context,
-    );
     return LayoutBuilder(
       key: const ValueKey('player-playback-controls'),
       builder: (context, constraints) {
@@ -5542,7 +5540,9 @@ class _PlaybackButtons extends ConsumerWidget {
               ? strings.deactivateShuffle
               : strings.activateShuffle,
           iconSize: secondaryControlIconSize,
-          color: snapshot.shuffleEnabled ? activeColor : inactiveColor,
+          color: snapshot.shuffleEnabled
+              ? AppColors.playbackToggleOnFor(context)
+              : AppColors.playbackToggleOffFor(context),
           icon: Icons.shuffle_rounded,
           onPressed: hasTrack
               ? () =>
@@ -5559,8 +5559,8 @@ class _PlaybackButtons extends ConsumerWidget {
           },
           iconSize: secondaryControlIconSize,
           color: snapshot.repeatMode == PlaybackRepeatMode.off
-              ? inactiveColor
-              : activeColor,
+              ? AppColors.playbackToggleOffFor(context)
+              : AppColors.playbackToggleOnFor(context),
           icon: snapshot.repeatMode == PlaybackRepeatMode.one
               ? Icons.repeat_one_rounded
               : Icons.repeat_rounded,

@@ -827,11 +827,6 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
             ? (fittedPrimaryButtonSize * 0.80).clamp(40.0, 74.0)
             : (fittedPrimaryButtonSize * 0.92).clamp(44.0, 84.0);
         final foreground = AppColors.playbackControlForegroundFor(context);
-        final secondary = AppColors.playbackSecondaryControlForegroundFor(
-          context,
-        );
-        final active = Theme.of(context).colorScheme.primary;
-
         return Align(
           alignment: Alignment.center,
           child: SizedBox(
@@ -849,7 +844,9 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
                           ? strings.deactivateShuffle
                           : strings.activateShuffle,
                       iconSize: compact ? (smallPhone ? 25 : 23) : 25,
-                      color: shuffleEnabled ? active : secondary,
+                      color: shuffleEnabled
+                          ? AppColors.playbackToggleOnFor(context)
+                          : AppColors.playbackToggleOffFor(context),
                       icon: Icons.shuffle_rounded,
                       onPressed: hasTrack
                           ? () => ref
@@ -951,8 +948,8 @@ class _ClassicVinylTransportControls extends ConsumerWidget {
                       },
                       iconSize: compact ? (smallPhone ? 25 : 23) : 25,
                       color: repeatMode == PlaybackRepeatMode.off
-                          ? secondary
-                          : active,
+                          ? AppColors.playbackToggleOffFor(context)
+                          : AppColors.playbackToggleOnFor(context),
                       icon: repeatMode == PlaybackRepeatMode.one
                           ? Icons.repeat_one_rounded
                           : Icons.repeat_rounded,

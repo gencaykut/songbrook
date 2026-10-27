@@ -347,8 +347,8 @@ class MiniPlayer extends ConsumerWidget {
       icon: Icons.shuffle_rounded,
       iconSize: 26,
       color: presentation.shuffleEnabled
-          ? AppColors.downloadAccentFor(context)
-          : null,
+          ? AppColors.playbackToggleOnFor(context)
+          : AppColors.playbackToggleOffFor(context),
       onPressed: () =>
           ref.read(playerControllerProvider.notifier).toggleShuffle(),
     );
@@ -364,8 +364,8 @@ class MiniPlayer extends ConsumerWidget {
           : Icons.repeat_rounded,
       iconSize: 26,
       color: presentation.repeatMode == PlaybackRepeatMode.off
-          ? null
-          : AppColors.downloadAccentFor(context),
+          ? AppColors.playbackToggleOffFor(context)
+          : AppColors.playbackToggleOnFor(context),
       onPressed: () =>
           ref.read(playerControllerProvider.notifier).cycleRepeatMode(),
     );

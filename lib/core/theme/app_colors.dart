@@ -760,6 +760,21 @@ abstract final class AppColors {
     );
   }
 
+  /// Shuffle and repeat while on: a yellow that cannot be mistaken for the
+  /// off state at a glance (a darker one on light surfaces).
+  static Color playbackToggleOnFor(BuildContext context) {
+    return Theme.of(context).colorScheme.brightness == Brightness.dark
+        ? const Color(0xFFFFD02E)
+        : const Color(0xFFA86F00);
+  }
+
+  /// Shuffle and repeat while off: plain white on dark surfaces.
+  static Color playbackToggleOffFor(BuildContext context) {
+    return Theme.of(context).colorScheme.brightness == Brightness.dark
+        ? Colors.white
+        : playbackSecondaryControlForegroundFor(context);
+  }
+
   static Color playIconForegroundFor(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return colors.brightness == Brightness.light
