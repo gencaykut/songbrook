@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/storage/login_keychain_options.dart';
 import 'connect_host_server.dart';
 
 /// Minimal key-value seam over the platform keychain, so tests stay in Dart.
@@ -12,22 +13,6 @@ abstract interface class ConnectSecureStore {
   Future<void> write(String key, String value);
 
   Future<void> delete(String key);
-}
-
-/// macOS: the login keychain instead of the data protection keychain. The
-/// latter needs a keychain-access-groups entitlement, which a Developer ID
-/// app only gets with a provisioning profile; without it every call fails
-/// with -34018. flutter_secure_storage_darwin 0.2.0 reads the switch as
-/// `useDataProtectionKeyChain` while the Dart side sends
-/// `usesDataProtectionKeychain`, so both spellings are sent.
-class LoginKeychainMacOsOptions extends MacOsOptions {
-  const LoginKeychainMacOsOptions() : super(usesDataProtectionKeychain: false);
-
-  @override
-  Map<String, String> toMap() => <String, String>{
-    ...super.toMap(),
-    'useDataProtectionKeyChain': 'false',
-  };
 }
 
 class FlutterConnectSecureStore implements ConnectSecureStore {

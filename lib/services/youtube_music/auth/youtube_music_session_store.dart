@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/storage/login_keychain_options.dart';
 import 'youtube_music_auth_models.dart';
 
 abstract interface class YouTubeMusicSessionStore {
@@ -78,6 +79,9 @@ class FlutterYouTubeMusicSecureKeyValueStore
         migrateOnAlgorithmChange: true,
       ),
       wOptions: WindowsOptions(useBackwardCompatibility: false),
+      // Songbrook: without it every keychain call fails with -34018 on the
+      // Mac, and signing in to YouTube Music cannot be kept.
+      mOptions: LoginKeychainMacOsOptions(),
     ),
   }) : this._(storage);
 
