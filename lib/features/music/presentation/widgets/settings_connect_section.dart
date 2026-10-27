@@ -35,6 +35,13 @@ class _ConnectSettings extends ConsumerWidget {
                   : strings.connectFailed,
               style: appListCardSubtitleStyle(context),
             ),
+            // The cause, for reporting a problem; it is not translated.
+            if (state.errorMessage != ConnectState.pairingRemovedError)
+              SelectableText(
+                state.errorMessage!,
+                key: const ValueKey('settings-connect-error-detail'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
           ],
           if (state.isHost) ...[
             const SizedBox(height: appCardGap),
