@@ -1,6 +1,6 @@
 # Songbrook Connect: tasarım ve plan
 
-Durum (26 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1. aşama tamam.
+Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–3. aşamalar tamam.
 
 ## İlerleme
 
@@ -14,6 +14,16 @@ Durum (26 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirm
   - `ConnectController` (`connect_controller.dart`): Mac'te hub + sunucu + yayın + Mac'in kendi istemcisi (döngü adresi); telefonda keşif, kodla eşleşme, bilinen Mac'e otomatik bağlanma (Bonjour yoksa son adres). Ayar varsayılan kapalı (`SharedPreferences`). Henüz oynatma yok: cihazlar komut bildirmiyor ve durum yayınlamıyor.
   - Canlı doğrulama (26 Ekim): `integration_test/claude_connect_host_test.dart` (macOS) ile `claude_connect_client_test.dart` (iOS simülatörü) birlikte; kod bir dosya üzerinden geçer (`--dart-define=CONNECT_CODE_FILE=…`), anahtarlar bellekte. Simülatör Mac'i Bonjour'da buldu, Mac'in LAN adresine bağlandı, eşleşme + bağlantı ~0,3 sn. `claude_bonjour_probe_test.dart` Bonsoir yayınını tek başına dener.
   - macOS yerel ağ izni şart: izin verilmeden Bonjour kaydı sessizce askıda kalıyor (ne başladı ne hata olayı). Sistem Ayarları → Gizlilik ve Güvenlik → Yerel Ağ. Gerçek iPhone'la henüz denenmedi.
+- **3. aşama (tamam, 27 Ekim):** Oynatıcı Connect'e bağlı; arayüz henüz yok (4. aşama).
+  - Köprü `connect_playback.dart` (`ConnectPlayback`, `PlayerConnectPlayback`): `ConnectController` her bağlantıda istemciye anlık görüntüyü, komutları ve devretme adımlarını buradan verir. Testlerde `connectPlaybackProvider` sahteyle değiştirilir.
+  - Yayın: kuyruk `PlayerControllerConnect.connectQueue` (`player/player_connect.dart`) ile okunur. Kuyruk değişmedikçe aynı liste kalır, ve v3 kuyruğu yalnızca değişince gönderir. Şarkı alanları: `id` (videoId), `title`, `artist`, `album`, `thumbnail`, `durationMs`, `url`. Yalnızca bu cihazdaki dosyalar (videoId'si olmayan yerel/dış dosya) `localOnly: true` ile gönderilir ve başka cihazda atlanır. Shuffle kuyruğu yeniden sıralamadığı için `backingOrder` hep sıralı. `isPlaying` = `wantsToPlay`. Durum değişince yayınlanır; konum saniyede en fazla bir kez gönderilir.
+  - Sahiplik: bu cihazda çalma başlayınca (`wantsToPlay` false→true) cihaz sahip değilse `requestLocalTakeover`. Bağlanırken zaten çalıyorsa da bu çağrılır. Onaydan önce duraklatılırsa `cancelLocalTakeover`. Sahiplik başka cihaza geçince `pauseForTransfer` → `pause()`.
+  - Komutlar: play, pause, toggle, next, previous, seek, set_volume, toggle_shuffle, cycle_repeat, play_queue_index, play_context. Kuyruk düzenleme (remove/insert/clear) henüz bildirilmiyor. Çalmayı başlatan komutlar beklenmeden çalıştırılır (`_start`); şarkının açılması saniyeler sürebilir ve gönderen cihaz o arada komutu tekrarlardı.
+  - Hazırla: `PlayerController.prepareRemoteQueue(queue, index, position:)` kuyruğu kurar ve şarkıyı duraklatılmış gösterir. Kaynak yüklenmez; durum, şarkı başlamadan duraklatıldığındakiyle aynıdır (`_holdPausedSelection`). Stream burada çözümlenir: bu cihazın çalamadığı şarkıda devretme başarısız olur, öbür cihaz çalmayı sürdürür. Onay geldiğinde istemci `seek` (ertelenmiş konumu günceller) ve `play` (`resume` yükler, sonra o konuma sarar) gönderir. İptalde `apply`, bu cihazın yayınladığı anlık görüntüyle çağrılır; köprü bunu `Expando` ile `connectRestorePoint()`'e eşler. Önceki kuyruk, yerel dosyalarıyla birlikte aynen geri konur (`restoreConnectPoint`).
+  - `ConnectController.sendCommand`/`transferTo` ve `ConnectState.playback` (sahibin son anlık görüntüsü) 4. aşamanın arayüzü için hazır.
+  - Testler: `connect_controller_test.dart` (sahte oynatıcıyla sahiplik, komut, devretme, devralma), `player_controller_test.dart` "Songbrook Connect" grubu (gerçek denetleyiciyle hazırla, çözümleme hatası, yayın biçimi, geri alma, komutlar).
+  - Canlı doğrulama (27 Ekim, `integration_test/claude_connect_playback_test.dart`, macOS): Mac'in gerçek oynatıcısı canlı arama kuyruğunu çalıyor. İkinci bir Connect cihazı gerçek yerel WebSocket üzerinden bağlanıyor; iPhone yerine kayıt tutan bir oynatıcı kullanılıyor. Bu cihaz duraklattı, devam ettirdi, sonraki şarkıya geçti ve sardı; her komut ölçüm aralığı olan 100 ms içinde uygulandı. Telefona devretmede telefon şarkıyı duraklatılmış hazırladı, sonra başladı; Mac sustu. Mac'e geri devretmede Mac aynı şarkı ve konumdan devam etti (1:02 + telefonda geçen 2 sn → 1:04). Gerçek iPhone ya da simülatörle denenmedi.
+  - Bilinen: Bir şarkının ilk anlarında yapılan sarma, oynatıcının kendisinde kayboluyor; doğrudan `seek` de aynı anda kayboluyor, yani Connect'e özgü değil. Devretme hedefinde şarkı yüklendikten sonra sarıldığı için baştan bir an duyulabilir. Henüz çözümlenmemiş bir şarkıyı devretmek normal başlatma süresi kadar sürer (~1–3 sn).
 
 ## Amaç
 
