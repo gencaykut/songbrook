@@ -17,6 +17,9 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
   Favoriler cihazlar arasında eşitlenmiyor: Connect yalnızca çalmayı
   eşitler, kitaplık her cihazda ayrıdır. Kullanıcı kararı: kitaplık eşitleme
   yapılmayacak (iş yüküne değmez).
+- Bölüm 3 (27 Ekim): iki yönde ve kumandadan devretme, şarkı sürümünün
+  devredilmesi, devretmeden sonra otomatik geçiş. Yansıtan cihazda şarkı
+  sürümü adı eksikti, düzeltildi (`ec05915`).
 - iPhone çalarken kısa bağlantı kopması: tek cihaz çalıyor, kilit ekranı
   düğmeleri iPhone'u yönetiyor.
 
@@ -75,15 +78,15 @@ Hazırlık: Mac'te bir şarkı çalıyor, iPhone'da Songbrook açık.
 
 ## Bölüm 3: Devretme ayrıntıları
 
-1. [ ] Mac çalarken Mac'teki cihaz düğmesine bas, iPhone'u seç.
+1. [x] Mac çalarken Mac'teki cihaz düğmesine bas, iPhone'u seç.
    Olmalı: çalma iPhone'a geçiyor, aynı yerden. (Önceki denemede iPhone'dan
    seçmiştin; bu kez Mac'ten.)
-2. [ ] iPhone çalarken iPhone'daki cihaz düğmesinden Mac'i seç.
+2. [x] iPhone çalarken iPhone'daki cihaz düğmesinden Mac'i seç.
    Olmalı: çalma Mac'e geçiyor, aynı yerden.
-3. [ ] Bir müzik videosu çal (örneğin resmi bir klip; başlığın yanında "Şarkı
+3. [x] Bir müzik videosu çal (örneğin resmi bir klip; başlığın yanında "Şarkı
    sürümü" yazar), sonra öbür cihaza devret.
    Olmalı: öbür cihazda da "Şarkı sürümü" yazıyor.
-4. [ ] Devrettikten sonra şarkının bitmesini bekle (ya da sonuna sar).
+4. [x] Devrettikten sonra şarkının bitmesini bekle (ya da sonuna sar).
    Olmalı: sıradaki şarkı yeni cihazda kendiliğinden başlıyor.
 
 ## Bölüm 4: Kilit, arka plan, kopma
