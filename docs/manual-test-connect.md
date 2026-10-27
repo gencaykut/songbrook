@@ -13,6 +13,10 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
   6 haneli kodla eşleşme.
 - Mac'ten iPhone'a ve iPhone'dan Mac'e devretme; ikisi de kaldığı yerden
   sürüyor.
+- Bölüm 1 ve 2 (27 Ekim): iPhone'dan Mac'i yönetmek ve şarkı seçmek.
+  Favoriler cihazlar arasında eşitlenmiyor: Connect yalnızca çalmayı
+  eşitler, kitaplık her cihazda ayrıdır. Kullanıcı kararı: kitaplık eşitleme
+  yapılmayacak (iş yüküne değmez).
 - iPhone çalarken kısa bağlantı kopması: tek cihaz çalıyor, kilit ekranı
   düğmeleri iPhone'u yönetiyor.
 
@@ -42,31 +46,31 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
 
 Hazırlık: Mac'te bir şarkı çal. iPhone'da Songbrook'u aç, oynatıcıyı aç.
 
-1. [ ] iPhone oynatıcısına bak.
+1. [x] iPhone oynatıcısına bak.
    Olmalı: Mac'teki şarkı görünüyor, başlıkta "<Mac adı> üzerinde çalıyor",
    süre ilerliyor, iPhone'dan ses gelmiyor.
-2. [ ] iPhone'da duraklat, sonra devam et.
+2. [x] iPhone'da duraklat, sonra devam et.
    Olmalı: Mac duruyor ve devam ediyor.
-3. [ ] iPhone'da ileri, sonra geri düğmesine bas.
+3. [x] iPhone'da ileri, sonra geri düğmesine bas.
    Olmalı: Mac şarkı değiştiriyor, iPhone yeni şarkıyı gösteriyor.
-4. [ ] iPhone'da ilerleme çubuğunu ortaya sürükle.
+4. [x] iPhone'da ilerleme çubuğunu ortaya sürükle.
    Olmalı: Mac o yere atlıyor.
-5. [ ] iPhone'da karıştırma (shuffle) ve tekrar (repeat) düğmelerine bas.
+5. [x] iPhone'da karıştırma (shuffle) ve tekrar (repeat) düğmelerine bas.
    Olmalı: Mac'in oynatıcısında da değişiyor.
-6. [ ] Mac'te kendin duraklat, sonra şarkı değiştir.
+6. [x] Mac'te kendin duraklat, sonra şarkı değiştir.
    Olmalı: iPhone birkaç saniye içinde aynısını gösteriyor.
 
 ## Bölüm 2: iPhone'dan şarkı seçmek
 
 Hazırlık: Mac'te bir şarkı çalıyor, iPhone'da Songbrook açık.
 
-1. [ ] iPhone'da kuyruk panelini aç, listeden başka bir şarkıya dokun.
+1. [x] iPhone'da kuyruk panelini aç, listeden başka bir şarkıya dokun.
    Olmalı: Mac o şarkıya geçiyor.
-2. [ ] iPhone'da Ara'dan bir şarkı bul ve dokun.
+2. [x] iPhone'da Ara'dan bir şarkı bul ve dokun.
    Olmalı: şarkı Mac'te çalıyor, iPhone'da değil.
-3. [ ] Kuyruk panelinin altındaki "Benzer"den bir şarkıya dokun.
+3. [x] Kuyruk panelinin altındaki "Benzer"den bir şarkıya dokun.
    Olmalı: Mac'te çalmaya başlıyor, kuyruktaki diğer şarkılar duruyor.
-4. [ ] iPhone oynatıcısında yıldız (favori) düğmesine bas.
+4. [x] iPhone oynatıcısında yıldız (favori) düğmesine bas.
    Olmalı: Mac'te çalan şarkı iPhone'un favorilerine ekleniyor.
 
 ## Bölüm 3: Devretme ayrıntıları
