@@ -2969,6 +2969,42 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '小组件、自定义、性能优化、新增语言等更多内容。',
     'ウィジェット、カスタマイズ、パフォーマンス、言語などの新機能。',
   ],
+  'Devices': <String>['Dispositivos', 'Appareils', '기기', '设备', 'デバイス'],
+  'This device': <String>[
+    'Este dispositivo',
+    'Cet appareil',
+    '이 기기',
+    '此设备',
+    'このデバイス',
+  ],
+  'Playing': <String>[
+    'Reproduzindo',
+    'Lecture en cours',
+    '재생 중',
+    '正在播放',
+    '再生中',
+  ],
+  'Tap to play here': <String>[
+    'Toque para tocar aqui',
+    'Touchez pour lire ici',
+    '탭하여 여기서 재생',
+    '轻点以在此播放',
+    'タップしてここで再生',
+  ],
+  'Playing on ZXQPH0X': <String>[
+    'Tocando em ZXQPH0X',
+    'Lecture sur ZXQPH0X',
+    'ZXQPH0X에서 재생 중',
+    '正在 ZXQPH0X 上播放',
+    'ZXQPH0X で再生中',
+  ],
+  'Play something first to move it to another device.': <String>[
+    'Toque algo primeiro para passar para outro dispositivo.',
+    'Lancez d’abord une lecture pour la transférer vers un autre appareil.',
+    '다른 기기로 옮기려면 먼저 무언가를 재생하세요.',
+    '请先播放内容，再将其转到其他设备。',
+    '別のデバイスに移すには、まず何かを再生してください。',
+  ],
 };
 
 /// The English keys with catalog translations, so tests can check that every

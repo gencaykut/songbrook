@@ -19,6 +19,7 @@ import 'package:bstream_music/features/music/presentation/widgets/player_panel.d
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
 import 'package:bstream_music/services/downloader/fallback_audio_resolver.dart';
 import 'package:bstream_music/services/connect/connect_models.dart';
+import 'package:bstream_music/services/connect/remote_playback.dart';
 import 'package:bstream_music/services/media_session/desktop_media_session.dart';
 import 'package:bstream_music/services/player/player_service.dart';
 import 'package:bstream_music/services/sponsorblock/sponsorblock_client.dart';
@@ -202,6 +203,166 @@ void main() {
       expect(playback.snapshot().repeatMode, 'all');
       await playback.handleCommand(ConnectCommand.playQueueIndex, {'index': 0});
       await _waitUntil(() => player.playedRemote.last.id == 'one');
+    });
+  });
+
+  group('Songbrook Connect mirroring', () {
+    ConnectRemotePlayback macPlayback({bool isPlaying = true}) =>
+        ConnectRemotePlayback(
+          snapshot: ConnectPlaybackSnapshot.fromJson({
+            'queue': [
+              {'id': 'm1', 'title': 'Mac One', 'artist': 'A', 'durationMs': 1},
+              {'id': 'm2', 'title': 'Mac Two', 'artist': 'A'},
+            ],
+            'currentIndex': 1,
+            'positionMs': 40000,
+            'durationMs': 180000,
+            'isPlaying': isPlaying,
+            'shuffle': false,
+            'repeatMode': 'off',
+            'volume': 0.5,
+          }),
+          deviceId: 'mac',
+          deviceName: 'MacBook Pro',
+          deviceType: 'desktop',
+        );
+
+    test('the player shows the Mac and sends its controls there', () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final own = [_queuedRemoteTrack('mine')];
+      await controller.playRemote(own.single, queue: own);
+      await controller.pause();
+      await _flushCompletion();
+      final pausesBefore = player.pauseCalls;
+      final remote = _RecordingRemoteControl();
+
+      controller
+        ..attachConnectRemote(remote)
+        ..showRemotePlayback(macPlayback());
+
+      final shown = container.read(playerControllerProvider).value!;
+      expect(shown.trackId, 'm2');
+      expect(shown.title, 'Mac Two');
+      expect(shown.remoteDeviceName, 'MacBook Pro');
+      expect(shown.wantsToPlay, isTrue);
+      expect(shown.position, greaterThanOrEqualTo(const Duration(seconds: 40)));
+      expect(shown.duration, const Duration(minutes: 3));
+      final queue = container.read(playbackQueueProvider);
+      expect(queue.entries.map((entry) => entry.id), ['m1', 'm2']);
+      expect(queue.currentIndex, 1);
+      // This device's own player is untouched underneath.
+      expect(controller.localPlaybackSnapshot?.trackId, 'mine');
+
+      await controller.togglePlayPause();
+      expect(remote.sent.last.command, ConnectCommand.pause);
+      expect(
+        container.read(playerControllerProvider).value?.wantsToPlay,
+        isFalse,
+      );
+      await controller.playNext();
+      await controller.seek(const Duration(seconds: 90));
+      expect(
+        container.read(playerControllerProvider).value?.position,
+        const Duration(seconds: 90),
+      );
+      controller
+        ..toggleShuffle()
+        ..setRepeatMode(PlaybackRepeatMode.one);
+      await controller.playQueueIndex(0);
+      expect(remote.sent.map((sent) => sent.command), [
+        ConnectCommand.pause,
+        ConnectCommand.next,
+        ConnectCommand.seek,
+        ConnectCommand.toggleShuffle,
+        ConnectCommand.cycleRepeat,
+        ConnectCommand.cycleRepeat,
+        ConnectCommand.playQueueIndex,
+      ]);
+      expect(remote.sent[2].arguments, {'positionMs': 90000});
+
+      // A song picked here plays on the Mac, with its queue.
+      final picked = [_queuedRemoteTrack('p1'), _queuedRemoteTrack('p2')];
+      await controller.playRemote(picked[1], queue: picked);
+      final context = remote.sent.last;
+      expect(context.command, ConnectCommand.playContext);
+      final snapshot = ConnectPlaybackSnapshot.fromJson(
+        Map<String, dynamic>.from(context.arguments!['snapshot'] as Map),
+      );
+      expect(snapshot.queue.map((track) => track['id']), ['p1', 'p2']);
+      expect(snapshot.currentIndex, 1);
+      expect(container.read(playerControllerProvider).value?.trackId, 'p2');
+
+      expect(player.pauseCalls, pausesBefore);
+      expect(player.playedRemote.map((track) => track.id), ['mine']);
+    });
+
+    test('returning to this device shows its own playback again', () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final own = [_queuedRemoteTrack('mine-1'), _queuedRemoteTrack('mine-2')];
+      await controller.playRemote(own.first, queue: own);
+      await controller.pause();
+      await _flushCompletion();
+
+      controller
+        ..attachConnectRemote(_RecordingRemoteControl())
+        ..showRemotePlayback(macPlayback());
+      controller
+        ..attachConnectRemote(null)
+        ..hideRemotePlayback();
+
+      final local = container.read(playerControllerProvider).value!;
+      expect(local.trackId, 'mine-1');
+      expect(local.remoteDeviceName, isNull);
+      expect(
+        container.read(playbackQueueProvider).entries.map((entry) => entry.id),
+        ['mine-1', 'mine-2'],
+      );
+    });
+
+    test('a handoff to this device prepares it behind the mirror', () async {
+      final player = _FakePlayerService();
+      final container = _container(
+        player,
+        audioResolver: _GatedAudioResolver(const []),
+      );
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final remote = _RecordingRemoteControl();
+      controller
+        ..attachConnectRemote(remote)
+        ..showRemotePlayback(macPlayback());
+
+      // While the handoff is applied, controls act on this device.
+      remote.forwarding = false;
+      await container
+          .read(connectPlaybackProvider)
+          .apply(macPlayback(isPlaying: false).snapshot);
+      expect(
+        container.read(playerControllerProvider).value?.remoteDeviceName,
+        'MacBook Pro',
+      );
+      await controller.seek(const Duration(seconds: 41));
+      await controller.resume();
+      await _flushCompletion();
+      expect(remote.sent, isEmpty);
+      expect(player.playedRemote.single.id, 'm2');
+
+      controller
+        ..attachConnectRemote(null)
+        ..hideRemotePlayback();
+      final local = container.read(playerControllerProvider).value!;
+      expect(local.trackId, 'm2');
+      expect(local.wantsToPlay, isTrue);
+      expect(player.lastSeekPosition, const Duration(seconds: 41));
     });
   });
 
@@ -7140,4 +7301,15 @@ class _FixedSponsorBlockClient extends SponsorBlockClient {
     requested.add(videoId);
     return segments[videoId] ?? const [];
   }
+}
+
+class _RecordingRemoteControl implements ConnectRemoteControl {
+  final sent = <({String command, Map<String, dynamic>? arguments})>[];
+
+  @override
+  bool forwarding = true;
+
+  @override
+  void send(String command, [Map<String, dynamic>? arguments]) =>
+      sent.add((command: command, arguments: arguments));
 }

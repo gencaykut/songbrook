@@ -7,6 +7,7 @@ import 'package:bstream_music/services/connect/connect_client.dart';
 import 'package:bstream_music/services/connect/connect_discovery.dart';
 import 'package:bstream_music/services/connect/connect_models.dart';
 import 'package:bstream_music/services/connect/connect_store.dart';
+import 'package:bstream_music/services/connect/remote_playback.dart';
 import 'package:bstream_music/services/player/player_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -196,12 +197,32 @@ void main() {
     await settle('T1', () => phonePlayback.applied.isNotEmpty);
     log('prepared on phone');
     await settle('phone owns playback', () => phonePlayback.current.isPlaying);
-    await settle('Mac went quiet', () => player()?.wantsToPlay == false);
+    await settle(
+      'Mac went quiet',
+      () => macPlayer.localPlaybackSnapshot?.wantsToPlay == false,
+    );
     log('to phone took ${watch.elapsedMilliseconds - sent}ms');
     final prepared = phonePlayback.applied.single;
     expect(prepared.isPlaying, isFalse);
     expect(prepared.currentTrackId, tracks[1].id);
     expect(prepared.positionMs, greaterThanOrEqualTo(60000));
+    // The Mac's player now shows the phone's playback, and its own
+    // controls go to the phone.
+    await settle(
+      'Mac mirrors the phone',
+      () => player()?.remoteDeviceName != null && player()!.wantsToPlay,
+    );
+    log('Mac mirrors ${player()?.remoteDeviceName}');
+    await macPlayer.pause();
+    await settle(
+      'Mac paused the phone',
+      () => !phonePlayback.current.isPlaying,
+    );
+    await macPlayer.resume();
+    await settle(
+      'Mac resumed the phone',
+      () => phonePlayback.current.isPlaying,
+    );
     // ignore: avoid_print
     print(
       'CLAUDE_CONNECT phone got index=${prepared.currentIndex} '
@@ -215,12 +236,14 @@ void main() {
     await settle(
       'Mac plays again',
       () =>
+          player()?.remoteDeviceName == null &&
           player()?.status == PlayerStatus.playing &&
           player()?.trackId == tracks[1].id,
       seconds: 40,
     );
     log('back to Mac took ${watch.elapsedMilliseconds - sent}ms');
     expect(phonePlayback.current.isPlaying, isFalse);
+    expect(player()?.remoteDeviceName, isNull);
     expect(index(), 1);
     expect(
       player()!.position,
@@ -337,4 +360,10 @@ class _RecordingPlayback implements ConnectPlayback {
 
   @override
   Future<void> pauseForTransfer() async => _set(isPlaying: false);
+
+  ConnectRemotePlayback? mirrored;
+
+  @override
+  void mirror(ConnectRemotePlayback? remote, ConnectRemoteControl? control) =>
+      mirrored = remote;
 }

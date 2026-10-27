@@ -35,6 +35,7 @@ import '../pages/remote_collection_detail_page.dart';
 import 'animated_artwork_motion.dart';
 import 'audio_routing_menus.dart';
 import 'classic_vinyl_deck.dart';
+import 'connect_devices_button.dart';
 import 'favorite_star_badge.dart';
 import 'lyrics_page_route.dart';
 import 'now_playing_equalizer.dart';
@@ -2678,7 +2679,9 @@ class _PlayerHeader extends StatelessWidget {
                 children: [
                   Text(
                     key: const ValueKey('player-tab-title'),
-                    strings.nowPlaying,
+                    snapshot.remoteDeviceName == null
+                        ? strings.nowPlaying
+                        : strings.connectPlayingOn(snapshot.remoteDeviceName!),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -2708,8 +2711,9 @@ class _PlayerHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Mirrors the collapse slot so the title stays centred.
-          if (collapse != null) const SizedBox.square(dimension: 48),
+          // Mirrors the collapse slot so the title stays centred; Songbrook
+          // Connect's device button takes it while devices are connected.
+          _HeaderIconSlot(child: ConnectDevicesButton(color: controlColor)),
           _HeaderIconSlot(
             child: snapshot.isExternal
                 ? const SizedBox.shrink()

@@ -525,6 +525,13 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Open Songbrook on your Mac and turn on Songbrook Connect. Both must be on the same Wi-Fi network.':
       'Mac\'inde Songbrook\'u aç ve Songbrook Connect\'i aç. İkisi aynı Wi-Fi ağında olmalı.',
   'Tap to pair': 'Eşleştirmek için dokun',
+  'Devices': 'Cihazlar',
+  'This device': 'Bu cihaz',
+  'Playing': 'Çalıyor',
+  'Tap to play here': 'Burada çalmak için dokun',
+  'Playing on ZXQPH0X': 'ZXQPH0X üzerinde çalıyor',
+  'Play something first to move it to another device.':
+      'Başka bir cihaza geçirmek için önce bir şey çal.',
   'Enter the code your Mac shows': 'Mac\'inde görünen kodu gir',
   'On the Mac: Settings → Songbrook Connect → Add a device.':
       'Mac\'te: Ayarlar → Songbrook Connect → Cihaz ekle.',

@@ -40,6 +40,8 @@ import '../../../../services/player/media_kit_player_service.dart';
 import '../../../../services/player/loudness_normalization.dart';
 import '../../../../services/player/player_service.dart';
 import '../../../../services/sponsorblock/sponsorblock_client.dart';
+import '../../../../services/connect/connect_models.dart';
+import '../../../../services/connect/remote_playback.dart';
 import '../../../../services/recommendations/recommendations.dart';
 import '../../../../services/sharing/bstream_track_link.dart';
 import '../../../../services/sharing/incoming_track_link_service.dart';

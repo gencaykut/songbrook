@@ -28,6 +28,7 @@ class PlayerSnapshot {
     this.repeatMode = PlaybackRepeatMode.off,
     this.isBuffering = false,
     this.isSongVersion = false,
+    this.remoteDeviceName,
   });
 
   final PlayerStatus status;
@@ -62,6 +63,10 @@ class PlayerSnapshot {
   /// the song's.
   final bool isSongVersion;
 
+  /// Songbrook Connect: the other device this playback is happening on.
+  /// Null when it plays here.
+  final String? remoteDeviceName;
+
   /// Playback is wanted but no audio is coming out yet: a song that is still
   /// being resolved or loaded, or one that is filling its buffer.
   bool get isWaitingForAudio =>
@@ -87,6 +92,7 @@ class PlayerSnapshot {
     PlaybackRepeatMode? repeatMode,
     bool? isBuffering,
     bool? isSongVersion,
+    Object? remoteDeviceName = _unsetPlayerSnapshotValue,
   }) {
     return PlayerSnapshot(
       status: status ?? this.status,
@@ -128,6 +134,9 @@ class PlayerSnapshot {
       repeatMode: repeatMode ?? this.repeatMode,
       isBuffering: isBuffering ?? this.isBuffering,
       isSongVersion: isSongVersion ?? this.isSongVersion,
+      remoteDeviceName: identical(remoteDeviceName, _unsetPlayerSnapshotValue)
+          ? this.remoteDeviceName
+          : remoteDeviceName as String?,
     );
   }
 }

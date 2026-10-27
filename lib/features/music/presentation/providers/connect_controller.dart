@@ -14,7 +14,9 @@ import '../../../../services/connect/connect_hub.dart';
 import '../../../../services/connect/connect_models.dart';
 import '../../../../services/connect/connect_pairing_client.dart';
 import '../../../../services/connect/connect_store.dart';
+import '../../../../services/connect/remote_playback.dart';
 import 'connect_playback.dart';
+import 'music_providers.dart' show ConnectRemoteControl;
 
 /// The feature's name, the same in every language.
 const String kConnectProductName = 'Songbrook Connect';
@@ -82,6 +84,7 @@ class ConnectState {
     this.connectedHostId,
     this.isConnected = false,
     this.devices = const [],
+    this.selfDeviceId,
     this.activeDeviceId,
     this.playback,
     this.playbackReceivedAt,
@@ -110,6 +113,9 @@ class ConnectState {
 
   /// Every Songbrook device in the session, this one included.
   final List<ConnectDevice> devices;
+
+  /// This device's id in [devices].
+  final String? selfDeviceId;
   final String? activeDeviceId;
 
   /// The session's playback as the owner last published it.
@@ -137,6 +143,7 @@ class ConnectState {
     Object? connectedHostId = _unset,
     bool? isConnected,
     List<ConnectDevice>? devices,
+    Object? selfDeviceId = _unset,
     Object? activeDeviceId = _unset,
     Object? playback = _unset,
     Object? playbackReceivedAt = _unset,
@@ -160,6 +167,9 @@ class ConnectState {
         : connectedHostId as String?,
     isConnected: isConnected ?? this.isConnected,
     devices: devices ?? this.devices,
+    selfDeviceId: identical(selfDeviceId, _unset)
+        ? this.selfDeviceId
+        : selfDeviceId as String?,
     activeDeviceId: identical(activeDeviceId, _unset)
         ? this.activeDeviceId
         : activeDeviceId as String?,
@@ -517,10 +527,12 @@ class ConnectController extends Notifier<ConnectState> {
   void _onClientChanged() {
     final client = _client;
     if (client == null) return;
+    _syncMirror(client);
     _patch(
       (current) => current.copyWith(
         isConnected: client.isConnected,
         devices: List.unmodifiable(client.devices),
+        selfDeviceId: client.deviceId,
         activeDeviceId: client.activeDeviceId,
         playback: client.remoteSnapshot,
         playbackReceivedAt: client.remoteSnapshotAt,
@@ -528,10 +540,51 @@ class ConnectController extends Notifier<ConnectState> {
     );
   }
 
+  ConnectPlaybackSnapshot? _mirroredSnapshot;
+  ConnectPlayback? _mirroringPlayback;
+
+  /// While another device owns the session, this device's player shows its
+  /// playback and sends its controls there.
+  void _syncMirror(ConnectClient client) {
+    final playback = ref.read(connectPlaybackProvider);
+    final owner = client.activeDevice;
+    final snapshot = client.remoteSnapshot;
+    if (!client.isSessionReady ||
+        owner == null ||
+        owner.id == client.deviceId ||
+        snapshot == null ||
+        snapshot.queue.isEmpty) {
+      _endMirror();
+      return;
+    }
+    // Device-list updates repeat the last snapshot; showing it again would
+    // undo the player's optimistic view of a command still on its way.
+    if (identical(snapshot, _mirroredSnapshot)) return;
+    _mirroredSnapshot = snapshot;
+    _mirroringPlayback = playback;
+    playback.mirror(
+      ConnectRemotePlayback(
+        snapshot: snapshot,
+        deviceId: owner.id,
+        deviceName: owner.name,
+        deviceType: owner.type,
+        receivedAt: client.remoteSnapshotAt,
+      ),
+      _ClientRemoteControl(client),
+    );
+  }
+
   /// Sends a playback command to the device that owns the session. Commands
   /// are retried until that device answers, so they survive a brief drop.
   void sendCommand(String command, [Map<String, dynamic>? arguments]) {
     _client?.sendCommand(command, arguments);
+  }
+
+  void _endMirror() {
+    final playback = _mirroringPlayback;
+    _mirroredSnapshot = null;
+    _mirroringPlayback = null;
+    playback?.mirror(null, null);
   }
 
   /// Moves playback to [deviceId]: it loads the same song, position and
@@ -543,6 +596,7 @@ class ConnectController extends Notifier<ConnectState> {
   Future<void> _disconnectClient() async {
     final client = _client;
     _client = null;
+    _endMirror();
     await _playbackSubscription?.cancel();
     _playbackSubscription = null;
     await client?.dispose();
@@ -562,6 +616,9 @@ class ConnectController extends Notifier<ConnectState> {
   Future<void> _releaseResources() async {
     final client = _client;
     _client = null;
+    // Providers are going away with this one; the player needs no reset.
+    _mirroredSnapshot = null;
+    _mirroringPlayback = null;
     await _playbackSubscription?.cancel();
     _playbackSubscription = null;
     await client?.dispose();
@@ -605,6 +662,22 @@ class ConnectController extends Notifier<ConnectState> {
       );
     }
   }
+}
+
+class _ClientRemoteControl implements ConnectRemoteControl {
+  _ClientRemoteControl(this._client);
+
+  final ConnectClient _client;
+
+  @override
+  bool get forwarding =>
+      _client.isConnected &&
+      !_client.isApplyingRemoteState &&
+      !_client.isThisDeviceActive;
+
+  @override
+  void send(String command, [Map<String, dynamic>? arguments]) =>
+      _client.sendCommand(command, arguments);
 }
 
 String _localDeviceName(bool isHost) {

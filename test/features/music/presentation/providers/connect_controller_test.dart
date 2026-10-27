@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:bstream_music/features/music/presentation/providers/connect_controller.dart';
 import 'package:bstream_music/features/music/presentation/providers/connect_playback.dart';
+import 'package:bstream_music/features/music/presentation/providers/music_providers.dart'
+    show ConnectRemoteControl;
 import 'package:bstream_music/services/connect/connect_discovery.dart';
 import 'package:bstream_music/services/connect/connect_models.dart';
 import 'package:bstream_music/services/connect/connect_pairing_client.dart';
 import 'package:bstream_music/services/connect/connect_store.dart';
+import 'package:bstream_music/services/connect/remote_playback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -142,6 +145,15 @@ class _FakePlayback implements ConnectPlayback {
       case ConnectCommand.seek:
         _set(positionMs: arguments['positionMs'] as int);
     }
+  }
+
+  ConnectRemotePlayback? mirrored;
+  ConnectRemoteControl? control;
+
+  @override
+  void mirror(ConnectRemotePlayback? remote, ConnectRemoteControl? control) {
+    mirrored = remote;
+    this.control = control;
   }
 
   @override
@@ -361,6 +373,12 @@ void main() {
     expect(mirrored.queue.map((track) => track['id']), ['a', 'b', 'c']);
     expect(mirrored.isPlaying, isTrue);
     expect(mirrored.positionMs, greaterThanOrEqualTo(5000));
+    // The phone's player shows the Mac's playback; the Mac shows its own.
+    final phonePlayback = phone.read(connectPlaybackProvider) as _FakePlayback;
+    await eventually(() => phonePlayback.mirrored?.deviceId == macId);
+    expect(phonePlayback.mirrored!.snapshot.currentTrackId, 'b');
+    expect(phonePlayback.control!.forwarding, isTrue);
+    expect(macPlayback.mirrored, isNull);
   });
 
   test('the phone pauses and seeks the music playing on the Mac', () async {
@@ -397,6 +415,9 @@ void main() {
     expect(phonePlayback.current.positionMs, greaterThanOrEqualTo(30000));
     expect(macPlayback.pausedForTransfer, greaterThanOrEqualTo(1));
     expect(macPlayback.current.isPlaying, isFalse);
+    // Roles swap: the Mac now shows the phone's playback.
+    await eventually(() => macPlayback.mirrored?.deviceId == phoneId);
+    expect(phonePlayback.mirrored, isNull);
   });
 
   test('playing on the phone takes over from the Mac', () async {

@@ -116,6 +116,7 @@ class MiniPlayer extends ConsumerWidget {
           title: snapshot?.title,
           artist: snapshot?.artist,
           isSongVersion: snapshot?.isSongVersion ?? false,
+          remoteDeviceName: snapshot?.remoteDeviceName,
           trackId: snapshot?.trackId,
           sourceUrl: snapshot?.sourceUrl,
           thumbnailUrl: snapshot?.thumbnailUrl,
@@ -259,7 +260,11 @@ class MiniPlayer extends ConsumerWidget {
                 const SizedBox(height: 3),
                 Text(
                   compactErrorText ??
-                      (presentation.isSongVersion
+                      (presentation.remoteDeviceName != null
+                          ? strings.connectPlayingOn(
+                              presentation.remoteDeviceName!,
+                            )
+                          : presentation.isSongVersion
                           ? '${presentation.artist ?? AppConstants.displayName}'
                                 ' · ${strings.songVersionLabel}'
                           : presentation.artist ?? AppConstants.displayName),

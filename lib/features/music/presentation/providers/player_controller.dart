@@ -327,6 +327,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       _recommendationExtension.invalidate();
       _remotePrefetch.dispose();
       _cancelPlaybackRecoveryTimer();
+      _remoteProgressTimer?.cancel();
       _changingLocalTrackRequestId = null;
       unawaited(historyShutdownRegistration.dispose());
       unawaited(subscription.cancel());
@@ -728,6 +729,21 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     List<TrackInfo>? queue,
     String? queueSourceId,
   }) async {
+    if (_remoteView != null) {
+      final tracks = queue == null || queue.isEmpty ? [track] : queue;
+      var index = tracks.indexWhere(
+        (item) =>
+            item.url == track.url ||
+            (track.id.isNotEmpty && item.id == track.id),
+      );
+      final items = [
+        if (index < 0) ConnectQueueTrack(track: track, portable: true),
+        for (final item in tracks)
+          ConnectQueueTrack(track: item, portable: true),
+      ];
+      if (index < 0) index = 0;
+      if (_playOnConnectItems(items, index)) return;
+    }
     _prepareQueueSourceTransition();
     _resetQueueNavigation();
     _clearRecommendationQueueExtension();
@@ -858,6 +874,183 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     return requestId;
   }
 
+  ConnectRemoteControl? _connectRemote;
+  ConnectRemotePlayback? _remoteView;
+  AsyncValue<PlayerSnapshot>? _localStateWhileRemote;
+  Timer? _remoteProgressTimer;
+
+  /// While another Songbrook device plays, listeners see its playback and
+  /// this device's own player state is kept aside: everything inside the
+  /// controller keeps working on the local player, which stays paused.
+  @override
+  AsyncValue<PlayerSnapshot> get state =>
+      _remoteView == null ? super.state : _localStateWhileRemote!;
+
+  @override
+  set state(AsyncValue<PlayerSnapshot> value) {
+    if (_remoteView != null) {
+      _localStateWhileRemote = value;
+      return;
+    }
+    super.state = value;
+  }
+
+  /// Whether the player shows another device's playback (Songbrook Connect).
+  bool get isShowingRemotePlayback => _remoteView != null;
+
+  ConnectRemotePlayback? get remotePlayback => _remoteView;
+
+  /// This device's own player state, also while it shows another device's.
+  PlayerSnapshot? get localPlaybackSnapshot => state.value;
+
+  /// Where controls go while [showRemotePlayback] is in effect.
+  void attachConnectRemote(ConnectRemoteControl? control) {
+    _connectRemote = control;
+  }
+
+  /// Shows [view], the playback of the device that owns the Connect session,
+  /// in place of this device's: play, pause, skips, seeks and newly picked
+  /// songs are sent to that device instead.
+  void showRemotePlayback(ConnectRemotePlayback view) {
+    final previous = _remoteView;
+    if (previous == null) _localStateWhileRemote = super.state;
+    _remoteView = view;
+    super.state = AsyncData(_remotePlayerSnapshot(view));
+    if (previous == null ||
+        !identical(previous.snapshot.queue, view.snapshot.queue) ||
+        previous.snapshot.currentIndex != view.snapshot.currentIndex) {
+      ref.read(playbackQueueProvider.notifier).replace([
+        for (var index = 0; index < view.snapshot.queue.length; index++)
+          _connectQueueEntry(view.snapshot.queue[index], index),
+      ], view.snapshot.currentIndex);
+    }
+    _remoteProgressTimer?.cancel();
+    _remoteProgressTimer = view.snapshot.isPlaying
+        ? Timer.periodic(const Duration(milliseconds: 500), (_) {
+            final current = _remoteView;
+            if (_disposed || current == null) return;
+            super.state = AsyncData(_remotePlayerSnapshot(current));
+          })
+        : null;
+  }
+
+  /// Back to this device's own playback, as it was left.
+  void hideRemotePlayback() {
+    if (_remoteView == null) return;
+    _remoteView = null;
+    _remoteProgressTimer?.cancel();
+    _remoteProgressTimer = null;
+    final local = _localStateWhileRemote;
+    _localStateWhileRemote = null;
+    if (local != null && !_disposed) super.state = local;
+    _publishPlaybackQueue();
+  }
+
+  PlayerSnapshot _remotePlayerSnapshot(ConnectRemotePlayback view) {
+    final snapshot = view.snapshot;
+    final track = view.currentTrackJson;
+    final trackDurationMs = (track?['durationMs'] as num?)?.toInt() ?? 0;
+    final durationMs = snapshot.durationMs > 0
+        ? snapshot.durationMs
+        : trackDurationMs;
+    return PlayerSnapshot(
+      status: track == null
+          ? PlayerStatus.idle
+          : snapshot.isPlaying
+          ? PlayerStatus.playing
+          : PlayerStatus.paused,
+      playWhenReady: snapshot.isPlaying,
+      title: track?['title'] as String?,
+      artist: track?['artist'] as String?,
+      album: track?['album'] as String?,
+      trackId: track?['id'] as String?,
+      queueEntryId: 'connect:${snapshot.currentIndex}',
+      sourceUrl: track?['url'] as String?,
+      thumbnailUrl: track?['thumbnail'] as String?,
+      position: Duration(milliseconds: view.positionMs),
+      duration: durationMs > 0 ? Duration(milliseconds: durationMs) : null,
+      volume: snapshot.volume,
+      isRemote: true,
+      shuffleEnabled: snapshot.shuffle,
+      repeatMode: connectRepeatMode(snapshot.repeatMode),
+      remoteDeviceName: view.deviceName,
+    );
+  }
+
+  /// Sends [command] to the device that is playing, when this one only
+  /// shows its playback; [optimistic] shows the expected result at once
+  /// (that device's next update stays authoritative).
+  bool _forwardToConnect(
+    String command, [
+    Map<String, dynamic>? arguments,
+    ConnectPlaybackSnapshot Function(
+      ConnectPlaybackSnapshot snapshot,
+      int positionMs,
+    )?
+    optimistic,
+  ]) {
+    final view = _remoteView;
+    final remote = _connectRemote;
+    if (view == null || remote == null || !remote.forwarding) return false;
+    remote.send(command, arguments);
+    if (optimistic != null) {
+      showRemotePlayback(
+        view.copyWithSnapshot(optimistic(view.snapshot, view.positionMs)),
+      );
+    }
+    return true;
+  }
+
+  /// Plays [queue] from [index] on the device that is playing, when this
+  /// one only shows its playback.
+  bool _playOnConnect(List<Map<String, dynamic>> queue, int index) {
+    final view = _remoteView;
+    final remote = _connectRemote;
+    if (view == null ||
+        remote == null ||
+        !remote.forwarding ||
+        index < 0 ||
+        index >= queue.length) {
+      return false;
+    }
+    // A long queue is cut around the chosen song to the protocol's limit.
+    const limit = ConnectPlaybackSnapshot.maxQueueLength;
+    final start = queue.length <= limit
+        ? 0
+        : (index - limit ~/ 2).clamp(0, queue.length - limit);
+    final window = queue.length <= limit
+        ? queue
+        : queue.sublist(start, start + limit);
+    final current = view.snapshot;
+    final snapshot = ConnectPlaybackSnapshot(
+      queue: window,
+      currentIndex: index - start,
+      positionMs: 0,
+      durationMs: (window[index - start]['durationMs'] as num?)?.toInt() ?? 0,
+      isPlaying: true,
+      shuffle: current.shuffle,
+      repeatMode: current.repeatMode,
+      volume: current.volume,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    remote.send(ConnectCommand.playContext, {'snapshot': snapshot.toJson()});
+    showRemotePlayback(view.copyWithSnapshot(snapshot));
+    return true;
+  }
+
+  bool _playOnConnectItems(List<ConnectQueueTrack> queue, int index) {
+    if (_remoteView == null || index < 0 || index >= queue.length) {
+      return false;
+    }
+    // A file only this device has plays here, which takes over playback.
+    if (!queue[index].portable) return false;
+    return _playOnConnect([
+      for (final entry in queue)
+        connectTrackJson(entry.track, portable: entry.portable),
+    ], index);
+  }
+
+  /// Starts a recommendation shelf without splitting downloaded and remote
   /// Starts a recommendation shelf without splitting downloaded and remote
   /// entries into separate one-item queues.
   Future<void> playRecommendation(
@@ -866,6 +1059,18 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     String? queueSourceId,
     RecommendationQueueExtender? queueExtender,
   }) async {
+    if (_remoteView != null) {
+      final items = queue.isEmpty ? [selected] : queue;
+      final index = items.indexWhere(
+        (item) => _sameRecommendationPlaybackItem(item, selected),
+      );
+      if (_playOnConnectItems([
+        for (final item in items)
+          ConnectQueueTrack(track: item.track, portable: true),
+      ], index)) {
+        return;
+      }
+    }
     _prepareQueueSourceTransition();
     _resetQueueNavigation();
     _clearRecommendationQueueExtension();
@@ -915,6 +1120,12 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     required List<CatalogPlaybackItem> queue,
     required String playlistId,
   }) async {
+    if (_remoteView != null &&
+        _playOnConnectItems([
+          for (final item in queue) _connectCatalogItem(item),
+        ], queue.indexWhere((item) => item.entryId == selected.entryId))) {
+      return;
+    }
     _prepareQueueSourceTransition();
     _resetQueueNavigation();
     _clearRecommendationQueueExtension();
@@ -2560,6 +2771,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     bool useNativeQueue = true,
     String? queueSourceId,
   }) async {
+    if (_remoteView != null && _playLocalOnConnect(track, queue)) return;
     _prepareQueueSourceTransition();
     _resetQueueNavigation();
     _clearRecommendationQueueExtension();
@@ -2607,6 +2819,9 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     LocalTrack track, {
     List<LocalTrack>? fallbackQueue,
   }) async {
+    if (_remoteView != null && _playLocalOnConnect(track, fallbackQueue)) {
+      return;
+    }
     final playlistId = track.lastPlayedPlaylistId?.trim();
     if (playlistId != null && playlistId.isNotEmpty) {
       try {
@@ -3065,6 +3280,14 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> pause() async {
+    if (_forwardToConnect(
+      ConnectCommand.pause,
+      null,
+      (snapshot, positionMs) =>
+          snapshot.copyWith(isPlaying: false, positionMs: positionMs),
+    )) {
+      return;
+    }
     final service = ref.read(playerServiceProvider);
     final current = state.value ?? service.currentSnapshot;
     final pendingRemote = _pendingRemoteSnapshot;
@@ -3093,6 +3316,14 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> resume() async {
+    if (_forwardToConnect(
+      ConnectCommand.play,
+      null,
+      (snapshot, positionMs) =>
+          snapshot.copyWith(isPlaying: true, positionMs: positionMs),
+    )) {
+      return;
+    }
     final snapshot =
         state.value ?? ref.read(playerServiceProvider).currentSnapshot;
     if ((_resumeNeedsReload ||
@@ -3123,6 +3354,10 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> togglePlayPause() async {
+    final view = _remoteView;
+    if (view != null && _connectRemote?.forwarding == true) {
+      return view.snapshot.isPlaying ? pause() : resume();
+    }
     final snapshot =
         state.value ?? ref.read(playerServiceProvider).currentSnapshot;
     if (snapshot.wantsToPlay) {
@@ -3133,6 +3368,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> playPrevious() async {
+    if (_forwardToConnect(ConnectCommand.previous)) return;
     _resetQueueNavigation();
     if (_queue.isEmpty) {
       return;
@@ -3161,6 +3397,9 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> playNext({bool automatic = false}) {
+    if (!automatic && _forwardToConnect(ConnectCommand.next)) {
+      return Future<void>.value();
+    }
     final inFlight = _nextNavigationInFlight;
     if (inFlight != null) {
       final startedAt = _nextNavigationStartedAt;
@@ -3255,6 +3494,15 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   /// of the queue. The inserted song keeps its place when the queue's source
   /// (related radio, a playlist) later grows or changes.
   Future<void> playInsertedAfterCurrent(TrackInfo track) async {
+    final view = _remoteView;
+    if (view != null) {
+      final queue = List<Map<String, dynamic>>.of(view.snapshot.queue);
+      final index = view.snapshot.currentIndex < 0
+          ? 0
+          : view.snapshot.currentIndex + 1;
+      queue.insert(index.clamp(0, queue.length), connectTrackJson(track));
+      if (_playOnConnect(queue, index.clamp(0, queue.length - 1))) return;
+    }
     if (_queue.isEmpty || _queueIndex < 0 || _queueIndex >= _queue.length) {
       await playRemote(track, queue: [track]);
       return;
@@ -3324,6 +3572,10 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> playQueueIndex(int index) async {
+    if (index >= 0 &&
+        _forwardToConnect(ConnectCommand.playQueueIndex, {'index': index})) {
+      return;
+    }
     _resetQueueNavigation();
     if (index < 0 || index >= _queue.length || index == _queueIndex) {
       return;
@@ -3344,6 +3596,8 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   /// native next-track behavior stays in sync without restarting the current
   /// item.
   Future<void> reorderQueue(int oldIndex, int newIndex) async {
+    // Another device's queue cannot be reordered from here yet.
+    if (_remoteView != null) return;
     if (oldIndex < 0 ||
         oldIndex >= _queue.length ||
         newIndex < 0 ||
@@ -3404,6 +3658,12 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> seek(Duration position) async {
+    final positionMs = position.inMilliseconds.clamp(0, 86400000);
+    if (_forwardToConnect(ConnectCommand.seek, {
+      'positionMs': positionMs,
+    }, (snapshot, _) => snapshot.copyWith(positionMs: positionMs))) {
+      return;
+    }
     if (_resumeNeedsReload && !_playWhenReady) {
       // A paused restored queue has no native source loaded yet. Seeking must
       // update its deferred resume point, not the outgoing source.
@@ -3436,14 +3696,28 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<void> setVolume(double volume) async {
+    final level = volume.clamp(0.0, 1.0).toDouble();
+    if (_forwardToConnect(ConnectCommand.setVolume, {
+      'volume': level,
+    }, (snapshot, _) => snapshot.copyWith(volume: level))) {
+      return;
+    }
     await ref.read(playerServiceProvider).setVolume(volume);
   }
 
   void toggleShuffle() {
+    if (_forwardToConnect(ConnectCommand.toggleShuffle)) return;
     setShuffleEnabled(!_shuffleEnabled);
   }
 
   void setShuffleEnabled(bool enabled) {
+    final view = _remoteView;
+    if (view != null && _connectRemote?.forwarding == true) {
+      if (view.snapshot.shuffle != enabled) {
+        _forwardToConnect(ConnectCommand.toggleShuffle);
+      }
+      return;
+    }
     if (_shuffleEnabled == enabled) {
       return;
     }
@@ -3457,6 +3731,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   void cycleRepeatMode() {
+    if (_forwardToConnect(ConnectCommand.cycleRepeat)) return;
     setRepeatMode(switch (_repeatMode) {
       PlaybackRepeatMode.off => PlaybackRepeatMode.all,
       PlaybackRepeatMode.all => PlaybackRepeatMode.one,
@@ -3465,6 +3740,14 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   Future<bool> toggleCurrentFavorite() async {
+    final remoteTrackJson = _remoteView?.currentTrackJson;
+    if (remoteTrackJson != null) {
+      final track = trackFromConnectJson(remoteTrackJson);
+      if (track == null) return false;
+      return ref
+          .read(playlistsControllerProvider.notifier)
+          .toggleFavoriteRemote(track);
+    }
     final snapshot =
         state.value ?? ref.read(playerServiceProvider).currentSnapshot;
     if (snapshot.isExternal) return false;
@@ -3501,6 +3784,17 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   void setRepeatMode(PlaybackRepeatMode mode) {
+    final view = _remoteView;
+    if (view != null && _connectRemote?.forwarding == true) {
+      // The other device only cycles off → all → one → off.
+      const order = PlaybackRepeatMode.values;
+      final from = order.indexOf(connectRepeatMode(view.snapshot.repeatMode));
+      final steps = (order.indexOf(mode) - from) % order.length;
+      for (var step = 0; step < steps; step++) {
+        _forwardToConnect(ConnectCommand.cycleRepeat);
+      }
+      return;
+    }
     if (_repeatMode == mode) {
       return;
     }
@@ -3792,6 +4086,8 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
   }
 
   void _publishPlaybackQueue() {
+    // The other device's queue is on show; this one is published on return.
+    if (_remoteView != null) return;
     ref
         .read(playbackQueueProvider.notifier)
         .replace(

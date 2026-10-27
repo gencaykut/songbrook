@@ -1217,6 +1217,17 @@ class AppStrings {
     'Tu Mac quitó este dispositivo. Vuelve a emparejarlo.',
     'Your Mac removed this device. Pair it again.',
   );
+  String get connectDevices => choose('Dispositivos', 'Devices');
+  String get connectThisDevice => choose('Este dispositivo', 'This device');
+  String get connectPlaying => choose('Reproduciendo', 'Playing');
+  String get connectTapToPlayHere =>
+      choose('Toca para reproducir aquí', 'Tap to play here');
+  String connectPlayingOn(String device) =>
+      choose('Reproduciendo en $device', 'Playing on $device');
+  String get connectNothingToMove => choose(
+    'Reproduce algo primero para pasarlo a otro dispositivo.',
+    'Play something first to move it to another device.',
+  );
   String get connectFailed => choose(
     'Songbrook Connect no pudo iniciarse.',
     'Songbrook Connect could not start.',
