@@ -5796,6 +5796,45 @@ void main() {
     },
   );
 
+  for (final stopOnTaskRemoved in [true, false]) {
+    test(
+      'swiping the app away ${stopOnTaskRemoved ? 'stops' : 'keeps'} playback '
+      'as the setting says',
+      () async {
+        final player = _FakePlayerService();
+        final session = _FakeDesktopMediaSession();
+        final container = _container(
+          player,
+          desktopSession: session,
+          settingsController: _CrossfadeSettingsController(
+            SettingsState(
+              downloadDirectory: '/tmp/bstream-player-test',
+              language: AppLanguage.spanish,
+              stopPlaybackOnTaskRemoved: stopOnTaskRemoved,
+            ),
+          ),
+        );
+        addTearDown(container.dispose);
+
+        container.read(desktopMediaSessionProvider);
+        await container.read(settingsControllerProvider.future);
+        await container.read(playerControllerProvider.future);
+        await container
+            .read(playerControllerProvider.notifier)
+            .playLocal(_track(1), queue: [_track(1), _track(2)]);
+        await _waitUntil(() => session.callbacks != null);
+
+        await session.callbacks!.taskRemoved!();
+
+        expect(player.stopCalls, stopOnTaskRemoved ? 1 : 0);
+        expect(
+          container.read(playerControllerProvider).value?.status,
+          stopOnTaskRemoved ? PlayerStatus.stopped : PlayerStatus.playing,
+        );
+      },
+    );
+  }
+
   test(
     'system session reuses queue metadata for positions and refreshes on reorder',
     () async {

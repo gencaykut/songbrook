@@ -609,6 +609,20 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                       .read(settingsControllerProvider.notifier)
                       .setAutoplayEnabled,
                 ),
+                if (AppPlatform.current == AppPlatformType.android) ...[
+                  const SizedBox(height: appCardGap),
+                  _PlaybackSwitchSettings(
+                    key: const ValueKey('settings-inline-stop-on-close'),
+                    switchKey: const ValueKey('settings-stop-on-close-switch'),
+                    enabled: state.stopPlaybackOnTaskRemoved,
+                    icon: Icons.stop_circle_outlined,
+                    title: strings.stopPlaybackOnTaskRemoved,
+                    summary: strings.stopPlaybackOnTaskRemovedSummary,
+                    onEnabledChanged: ref
+                        .read(settingsControllerProvider.notifier)
+                        .setStopPlaybackOnTaskRemoved,
+                  ),
+                ],
                 const SizedBox(height: appCardGap),
                 _PlaybackSwitchSettings(
                   key: const ValueKey('settings-inline-song-versions'),

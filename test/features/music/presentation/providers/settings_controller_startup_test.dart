@@ -105,6 +105,47 @@ void main() {
   });
 
   test(
+    'Stop on task removal defaults on and persists when turned off',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final first = ProviderContainer(
+        overrides: [
+          settingsControllerProvider.overrideWith(
+            () => SettingsController.forPlatform(AppPlatformType.android),
+          ),
+        ],
+      );
+      addTearDown(first.dispose);
+      expect(
+        (await first.read(
+          settingsControllerProvider.future,
+        )).stopPlaybackOnTaskRemoved,
+        isTrue,
+      );
+      await first
+          .read(settingsControllerProvider.notifier)
+          .setStopPlaybackOnTaskRemoved(false);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('settings.stopPlaybackOnTaskRemoved'), isFalse);
+
+      final restored = ProviderContainer(
+        overrides: [
+          settingsControllerProvider.overrideWith(
+            () => SettingsController.forPlatform(AppPlatformType.android),
+          ),
+        ],
+      );
+      addTearDown(restored.dispose);
+      expect(
+        (await restored.read(
+          settingsControllerProvider.future,
+        )).stopPlaybackOnTaskRemoved,
+        isFalse,
+      );
+    },
+  );
+
+  test(
     'audio quality visibility defaults off and preserves an explicit saved value',
     () async {
       SharedPreferences.setMockInitialValues({});

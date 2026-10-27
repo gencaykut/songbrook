@@ -20,6 +20,7 @@ class DesktopMediaSessionCallbacks {
     required this.setShuffleEnabled,
     required this.setRepeatMode,
     required this.playQueueIndex,
+    this.taskRemoved,
   });
 
   final DesktopMediaAction play;
@@ -33,6 +34,9 @@ class DesktopMediaSessionCallbacks {
   final DesktopMediaShuffleAction setShuffleEnabled;
   final DesktopMediaRepeatAction setRepeatMode;
   final DesktopMediaQueueAction playQueueIndex;
+
+  /// Android: the user swiped the app away from Recents.
+  final DesktopMediaAction? taskRemoved;
 }
 
 class DesktopMediaQueueItem {

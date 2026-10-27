@@ -108,6 +108,9 @@ class AudioServiceMediaSessionCallbackBridge {
   Future<void> playQueueIndex(int index) =>
       _callbacks?.playQueueIndex(index) ?? Future<void>.value();
 
+  Future<void> taskRemoved() =>
+      _callbacks?.taskRemoved?.call() ?? Future<void>.value();
+
   Future<void> setShuffleEnabled(bool enabled) =>
       _callbacks?.setShuffleEnabled(enabled) ?? Future<void>.value();
 
@@ -387,6 +390,9 @@ class _DesktopAudioHandler extends BaseAudioHandler with SeekHandler {
     await _callbacks.stop();
     await super.stop();
   }
+
+  @override
+  Future<void> onTaskRemoved() => _callbacks.taskRemoved();
 
   @override
   Future<void> skipToNext() => _callbacks.next();

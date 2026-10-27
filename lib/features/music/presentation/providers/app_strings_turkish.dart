@@ -556,6 +556,9 @@ const Map<String, String> turkishAppStrings = <String, String>{
       'Müzik videolarındaki giriş ve konuşma bölümlerini SponsorBlock topluluk verileriyle (CC BY-NC-SA 4.0) atlar.',
   'When a music video plays, use its song version from YouTube Music if there is one.':
       'Müzik videosu çalınınca, YouTube Music\'te varsa şarkı sürümünü çalar.',
+  'Stop playback when the app is closed': 'Uygulama kapatılınca çalmayı durdur',
+  'Swiping the app away from recent apps stops the music.':
+      'Uygulamayı son uygulamalardan kaydırıp kapatınca müzik durur.',
   'When the queue ends, keep playing similar songs.':
       'Sıra bitince benzer şarkılarla devam eder.',
   "Lowers songs mastered louder than YouTube's reference so playback stays at a steady level.":

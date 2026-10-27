@@ -198,6 +198,33 @@ void main() {
 
       expect(calls, ['active:next']);
     });
+
+    test('forwards a removed task only when callbacks handle it', () async {
+      final calls = <String>[];
+      final bridge = AudioServiceMediaSessionCallbackBridge();
+
+      bridge.attach(_callbacks('plain', calls));
+      await bridge.taskRemoved();
+      bridge.attach(
+        DesktopMediaSessionCallbacks(
+          play: () async {},
+          pause: () async {},
+          togglePlayPause: () async {},
+          next: () async {},
+          previous: () async {},
+          stop: () async {},
+          seek: (_) async {},
+          seekBy: (_) async {},
+          setShuffleEnabled: (_) async {},
+          setRepeatMode: (_) async {},
+          playQueueIndex: (_) async {},
+          taskRemoved: () async => calls.add('handled:taskRemoved'),
+        ),
+      );
+      await bridge.taskRemoved();
+
+      expect(calls, ['handled:taskRemoved']);
+    });
   });
 }
 

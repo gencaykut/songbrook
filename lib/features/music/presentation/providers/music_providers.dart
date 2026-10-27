@@ -650,6 +650,20 @@ final desktopMediaSessionProvider = Provider<DesktopMediaSession?>((ref) {
     },
     playQueueIndex: (index) =>
         ref.read(playerControllerProvider.notifier).playQueueIndex(index),
+    taskRemoved: () async {
+      final stopOnTaskRemoved =
+          ref
+              .read(settingsControllerProvider)
+              .asData
+              ?.value
+              .stopPlaybackOnTaskRemoved ??
+          true;
+      if (stopOnTaskRemoved) {
+        // Stops only this device's player; a Connect session it mirrors keeps
+        // playing on the device that owns it.
+        await ref.read(playerControllerProvider.notifier).stop();
+      }
+    },
   );
   final binding = DesktopMediaSessionBinding(
     session,

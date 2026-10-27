@@ -2531,6 +2531,20 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
         '播放音乐视频时，如果 YouTube Music 有歌曲版本，则改为播放歌曲版本。',
         'ミュージックビデオを再生するとき、YouTube Music に曲バージョンがあればそちらを再生します。',
       ],
+  'Stop playback when the app is closed': <String>[
+    'Parar ao fechar o app',
+    'Arrêter la lecture à la fermeture de l\'app',
+    '앱을 닫으면 재생 중지',
+    '关闭应用时停止播放',
+    'アプリを閉じたら再生を停止',
+  ],
+  'Swiping the app away from recent apps stops the music.': <String>[
+    'Ao deslizar o app para fora dos recentes, a música para.',
+    'Balayer l\'app hors des apps récentes arrête la musique.',
+    '최근 앱에서 앱을 밀어서 닫으면 음악이 멈춥니다.',
+    '从最近使用的应用中划掉本应用时，音乐会停止。',
+    '最近使ったアプリから本アプリをスワイプして閉じると、音楽が止まります。',
+  ],
   'When the queue ends, keep playing similar songs.': <String>[
     'Quando a fila terminar, continua com músicas parecidas.',
     'À la fin de la file, continue avec des titres similaires.',

@@ -1238,6 +1238,14 @@ class AppStrings {
     'Al reproducir un videoclip, usa la versión de la canción de YouTube Music si existe.',
     'When a music video plays, use its song version from YouTube Music if there is one.',
   );
+  String get stopPlaybackOnTaskRemoved => choose(
+    'Detener al cerrar la app',
+    'Stop playback when the app is closed',
+  );
+  String get stopPlaybackOnTaskRemovedSummary => choose(
+    'Al quitar la app de las recientes, la música se detiene.',
+    'Swiping the app away from recent apps stops the music.',
+  );
   String get autoplaySummary => choose(
     'Cuando termina la cola, sigue con canciones similares.',
     'When the queue ends, keep playing similar songs.',
