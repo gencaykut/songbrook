@@ -88,7 +88,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 - Kurulu derlemeler:
   - iPhone (UDID `00008140-0018303E2128401C`, iPhone 16 Pro Max): `ec05915` profil derlemesi.
   - Mac: `dist/connect-test/Songbrook.app` (`cb0476b`, release). Developer ID ile `macos/sign_release_bundle.sh` üzerinden imzalı, notarize değil; yerel ağ izni ve Anahtar Zinciri imzaya bağlı olduğu için ad-hoc `build/` kopyası yerine bu açılmalı. Yeniden üretme: `flutter build macos --release`, `ditto` ile kopyala, `bash macos/sign_release_bundle.sh dist/connect-test/Songbrook.app "Developer ID Application: AYKUT GENC (9K8FGUA9A3)"`, `open`. `/Applications/Songbrook.app` eski 1.2.9 (yeşil ikon); değiştirmek için kullanıcıya sor.
-  - Android (Samsung Galaxy M51): `build/app/outputs/flutter-apk/app-debug.apk` (debug).
+  - Android: Samsung Galaxy M51 ve Xiaomi 14T Pro (HyperOS 3 / Android 16, arm64, adb seri `69X8EADM6H9HVGRO`, 28 Ekim) üzerinde `build/app/outputs/flutter-apk/app-debug.apk` (debug, `95197c3` kodu). Xiaomi'de kurulum için Geliştirici seçeneklerinde "USB üzerinden yükle" de açık olmalı (Mi hesabı ister). İki cihaz bağlıyken `adb -s <seri>` kullan.
 - `dist/Songbrook-1.2.9.dmg` notarize ve staple'lı ama eski; 1.0.0 için yeniden üretilmeli. `songbrook-notary` profili anahtar zincirinde kayıtlı.
 - 1.0.0'ın ilk hali `docs/manual-test-1.0.0.md` ile 25 Ekim'de iPhone'da elle test edildi; aynı dosyanın 10. bölümü (sonradan eklenenler) ayrıca işaretlenmedi, Connect testleri sırasında bu özelliklerin çoğu kullanıldı.
 
