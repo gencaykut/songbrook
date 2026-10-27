@@ -145,6 +145,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 ### Açık kalan küçük konular
 
+- **Kuyruğa ekle / sıradaki olarak çal / kuyruktan kaldır (28 Ekim, kullanıcı: "şimdilik değil"):** Şarkı menülerinde ve kuyrukta yok (yalnız sürükleyip sıralama ve Benzer'den ekle-çal var). TuiTunes (MIT, TypeScript) incelendi; kodu basit, alınacak bir şey yok. Tekrar modları ve kalıcı geçmiş Songbrook'ta zaten daha kapsamlı; komut paleti yalnız Mac'te anlamlı, düşük öncelik. Yapılırsa: karıştırma, kaynak eşitlemesi (`_keepInsertedItems`), Connect'e iletme, çalan şarkıyı kaldırma.
 - `mweb`/`webMusic` CDN 403'ü (BotGuard token üretiliyor ama akış reddediliyor); protokol araştırması, acil değil.
 - Oynatıcı sağ üst menü simgesinin "koyu arka planda görünmemesi" simülatörde üç stilde de (açık tema) üretilemedi; mobilde oynatıcı her zaman koyu temayla sarılıyor. Tekrar görülürse hangi stil/tema/kapakta olduğu not edilmeli.
 - Android'de yedek stream yolları ve ses dengeleme test edilmedi (ortam artık var, telefonda ölçülebilir).
