@@ -285,6 +285,7 @@ class MediaKitPlayerService
   Future<void> _crossfadeVolumeWriteTail = Future<void>.value();
   Future<void> _seekTail = Future<void>.value();
   int _seekRevision = 0;
+  int _backendPositionEvents = 0;
   Duration _standbyPosition = Duration.zero;
   Duration? _standbyDuration;
   int _standbyRetirementGeneration = 0;
@@ -935,6 +936,7 @@ class MediaKitPlayerService
         if (!identical(player, _player) || !_acceptBackendEvent) {
           return;
         }
+        _backendPositionEvents++;
         _emit(_snapshot.copyWith(position: position));
         _maybeStartCrossfade();
       }),
@@ -1327,7 +1329,49 @@ class MediaKitPlayerService
       (_) {},
       onError: (Object _, StackTrace _) {},
     );
-    return operation;
+    return operation.then((_) {
+      unawaited(
+        _confirmSeek(
+          target,
+          requestedGeneration: requestedGeneration,
+          revision: revision,
+        ),
+      );
+    });
+  }
+
+  /// libmpv drops a seek that arrives before the file has loaded: a song
+  /// then plays from its start, as when Songbrook Connect hands playback to
+  /// this Mac (load, then seek to where the other device was). The backend's
+  /// next positions show whether the seek took; a lost one is sent again.
+  /// Without position updates (paused) nothing contradicts it.
+  Future<void> _confirmSeek(
+    Duration target, {
+    required int requestedGeneration,
+    required int revision,
+  }) async {
+    bool superseded() =>
+        !_isCurrentGeneration(requestedGeneration) || revision != _seekRevision;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final events = _backendPositionEvents;
+      for (var wait = 0; wait < 8 && _backendPositionEvents == events; wait++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        if (superseded()) return;
+      }
+      if (_backendPositionEvents == events) return;
+      final position = _snapshot.position;
+      if ((position - target).abs() <= const Duration(seconds: 3)) return;
+      developer.log(
+        'seek to $target did not take (at $position); sending it again',
+        name: 'BStreamPlayback',
+      );
+      await _performSeek(
+        target,
+        requestedGeneration: requestedGeneration,
+        revision: revision,
+      );
+      if (superseded()) return;
+    }
   }
 
   Future<void> _performSeek(

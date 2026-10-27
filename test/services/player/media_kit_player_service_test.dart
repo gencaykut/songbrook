@@ -8,6 +8,59 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 
 void main() {
+  group('a seek sent while the file is still loading', () {
+    Future<(MediaKitPlayerService, _FakeMediaKitBackend)> playing() async {
+      final backend = _FakeMediaKitBackend();
+      final service = MediaKitPlayerService(backend: backend);
+      addTearDown(service.dispose);
+      final play = service.playRemote(_track('a'));
+      await _waitUntil(() => backend.openCalls.length == 1);
+      backend.completeOpen(0);
+      await play;
+      return (service, backend);
+    }
+
+    test('is sent again when the song plays on from its start', () async {
+      final (service, backend) = await playing();
+
+      await service.seek(const Duration(seconds: 60));
+      // libmpv dropped it: the song is playing from its start.
+      backend.emitPosition(const Duration(milliseconds: 400));
+      await _waitUntil(() => backend.seekCalls.length == 2);
+      backend.emitPosition(const Duration(seconds: 60, milliseconds: 100));
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      expect(backend.seekCalls, [
+        const Duration(seconds: 60),
+        const Duration(seconds: 60),
+      ]);
+    });
+
+    test('is not repeated once it took', () async {
+      final (service, backend) = await playing();
+
+      await service.seek(const Duration(seconds: 60));
+      backend.emitPosition(const Duration(seconds: 60, milliseconds: 200));
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      expect(backend.seekCalls, [const Duration(seconds: 60)]);
+    });
+
+    test('is dropped by a newer seek', () async {
+      final (service, backend) = await playing();
+
+      await service.seek(const Duration(seconds: 60));
+      await service.seek(const Duration(seconds: 10));
+      backend.emitPosition(const Duration(seconds: 10, milliseconds: 100));
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      expect(backend.seekCalls, [
+        const Duration(seconds: 60),
+        const Duration(seconds: 10),
+      ]);
+    });
+  });
+
   test(
     'a hung open cannot block a newer selection or overwrite it late',
     () async {
