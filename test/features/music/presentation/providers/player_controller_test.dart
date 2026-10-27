@@ -300,6 +300,73 @@ void main() {
       expect(player.playedRemote.map((track) => track.id), ['mine']);
     });
 
+    test('a song version playing on the Mac is shown as one', () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+
+      controller
+        ..attachConnectRemote(_RecordingRemoteControl())
+        ..showRemotePlayback(
+          ConnectRemotePlayback(
+            snapshot: ConnectPlaybackSnapshot.fromJson({
+              'queue': [
+                {
+                  'id': 'video',
+                  'title': 'Kuzu Kuzu (Official Video)',
+                  'artist': 'TARKAN',
+                  'songTitle': 'Kuzu Kuzu',
+                  'songArtist': 'Tarkan',
+                  'songVersion': true,
+                },
+              ],
+              'currentIndex': 0,
+              'isPlaying': true,
+            }),
+            deviceId: 'mac',
+            deviceName: 'MacBook Pro',
+            deviceType: 'desktop',
+          ),
+        );
+
+      final shown = container.read(playerControllerProvider).value!;
+      expect(shown.title, 'Kuzu Kuzu');
+      expect(shown.artist, 'Tarkan');
+      expect(shown.isSongVersion, isTrue);
+    });
+
+    test('the Mac publishes the song version it plays', () async {
+      final player = _FakePlayerService();
+      final container = _container(player);
+      addTearDown(container.dispose);
+      await container.read(playerControllerProvider.future);
+      final controller = container.read(playerControllerProvider.notifier);
+      final video = TrackInfo(
+        id: 'video',
+        title: 'Kuzu Kuzu (Official Video)',
+        artist: 'TARKAN',
+        url: 'https://www.youtube.com/watch?v=video',
+        thumbnailUrl: 'https://i.ytimg.com/vi/video/hqdefault.jpg',
+        streamUrl: 'https://media.example/song.m4a',
+        songVersionTitle: 'Kuzu Kuzu',
+        songVersionArtist: 'Tarkan',
+      );
+      await controller.playRemote(video, queue: [video]);
+      await _flushCompletion();
+      final playback = container.read(connectPlaybackProvider);
+
+      final first = playback.snapshot();
+      final current = first.queue[first.currentIndex];
+      expect(current['title'], 'Kuzu Kuzu (Official Video)');
+      expect(current['songTitle'], 'Kuzu Kuzu');
+      expect(current['songArtist'], 'Tarkan');
+      expect(current['songVersion'], isTrue);
+      // The queue is sent once, not with every progress update.
+      expect(playback.snapshot().queue, same(first.queue));
+    });
+
     test('returning to this device shows its own playback again', () async {
       final player = _FakePlayerService();
       final container = _container(player);

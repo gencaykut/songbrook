@@ -105,6 +105,8 @@ class PlayerConnectPlayback implements ConnectPlayback {
   List<ConnectQueueTrack>? _encodedFrom;
   List<Map<String, dynamic>> _encodedQueue = const [];
   List<int> _identityOrder = const [];
+  List<Map<String, dynamic>> _publishedQueue = const [];
+  String? _publishedKey;
 
   PlayerController get _controller =>
       _ref.read(playerControllerProvider.notifier);
@@ -138,13 +140,14 @@ class PlayerConnectPlayback implements ConnectPlayback {
       );
     }
     final index = controller.connectQueueIndex;
+    final queueJson = _withSongVersion(_encodedQueue, index, player);
     final snapshot = ConnectPlaybackSnapshot.fromValidatedQueue(
-      queue: _encodedQueue,
+      queue: queueJson,
       // Shuffle picks the next entry without reordering the queue.
       backingOrder: _identityOrder,
-      currentIndex: _encodedQueue.isEmpty
+      currentIndex: queueJson.isEmpty
           ? -1
-          : index.clamp(0, _encodedQueue.length - 1),
+          : index.clamp(0, queueJson.length - 1),
       positionMs: (player?.position.inMilliseconds ?? 0).clamp(0, 86400000),
       durationMs: (player?.duration?.inMilliseconds ?? 0).clamp(0, 86400000),
       isPlaying: player?.wantsToPlay ?? false,
@@ -155,6 +158,46 @@ class PlayerConnectPlayback implements ConnectPlayback {
     );
     _restorePoints[snapshot] = controller.connectRestorePoint();
     return snapshot;
+  }
+
+  /// A music video playing its song version is shown under the song's name
+  /// and artist; the mirroring devices get them on the current entry. The
+  /// list stays the same object until they change, so the queue is not sent
+  /// again on every progress update.
+  List<Map<String, dynamic>> _withSongVersion(
+    List<Map<String, dynamic>> queue,
+    int index,
+    PlayerSnapshot? player,
+  ) {
+    if (player == null ||
+        !player.isSongVersion ||
+        index < 0 ||
+        index >= queue.length) {
+      return queue;
+    }
+    String bounded(String? value) {
+      final text = value?.trim() ?? '';
+      return text.length <= 512 ? text : text.substring(0, 512);
+    }
+
+    final title = bounded(player.title);
+    final artist = bounded(player.artist);
+    final key = '${identityHashCode(queue)}|$index|$title|$artist';
+    if (key != _publishedKey) {
+      _publishedKey = key;
+      _publishedQueue = List<Map<String, dynamic>>.unmodifiable([
+        for (var position = 0; position < queue.length; position++)
+          position == index
+              ? Map<String, dynamic>.unmodifiable({
+                  ...queue[position],
+                  'songTitle': title,
+                  'songArtist': artist,
+                  'songVersion': true,
+                })
+              : queue[position],
+      ]);
+    }
+    return _publishedQueue;
   }
 
   @override

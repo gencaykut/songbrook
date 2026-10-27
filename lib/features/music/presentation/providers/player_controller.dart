@@ -960,8 +960,9 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
           ? PlayerStatus.playing
           : PlayerStatus.paused,
       playWhenReady: snapshot.isPlaying,
-      title: track?['title'] as String?,
-      artist: track?['artist'] as String?,
+      // A music video playing its song version shows the song.
+      title: (track?['songTitle'] ?? track?['title']) as String?,
+      artist: (track?['songArtist'] ?? track?['artist']) as String?,
       album: track?['album'] as String?,
       trackId: track?['id'] as String?,
       queueEntryId: 'connect:${snapshot.currentIndex}',
@@ -974,6 +975,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
       shuffleEnabled: snapshot.shuffle,
       repeatMode: connectRepeatMode(snapshot.repeatMode),
       remoteDeviceName: view.deviceName,
+      isSongVersion: track?['songVersion'] == true,
     );
   }
 
