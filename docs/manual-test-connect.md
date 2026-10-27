@@ -20,6 +20,11 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
 - Bölüm 3 (27 Ekim): iki yönde ve kumandadan devretme, şarkı sürümünün
   devredilmesi, devretmeden sonra otomatik geçiş. Yansıtan cihazda şarkı
   sürümü adı eksikti, düzeltildi (`ec05915`).
+- Bölüm 4 (27 Ekim): kilit, arka plan, görüşme, Mac uygulamasının kapanıp
+  açılması. Mac'teki bağlantı kaydına göre Mac açıldıktan sonra iPhone 1 ve
+  6 sn'de kodsuz yeniden bağlandı. Görüşme ve uygulama geçişleri sırasında
+  iPhone birkaç saniye arayla art arda yeni bağlantı açtı (her ön plana
+  dönüşte bağlantı tazeleniyor); kullanıcı bir sorun görmedi.
 - iPhone çalarken kısa bağlantı kopması: tek cihaz çalıyor, kilit ekranı
   düğmeleri iPhone'u yönetiyor.
 
@@ -91,15 +96,15 @@ Hazırlık: Mac'te bir şarkı çalıyor, iPhone'da Songbrook açık.
 
 ## Bölüm 4: Kilit, arka plan, kopma
 
-1. [ ] Mac çalarken iPhone'u kilitle, 1 dakika bekle, kilidi aç ve Songbrook'u aç.
+1. [x] Mac çalarken iPhone'u kilitle, 1 dakika bekle, kilidi aç ve Songbrook'u aç.
    Olmalı: birkaç saniyede Mac'teki şarkıyı gösteriyor, düğmeler çalışıyor.
-2. [ ] Mac çalarken iPhone'da başka bir uygulamaya geç, 1–2 dakika sonra dön.
+2. [x] Mac çalarken iPhone'da başka bir uygulamaya geç, 1–2 dakika sonra dön.
    Olmalı: aynı şekilde birkaç saniyede bağlanıyor.
-3. [ ] Biri seni arasın (ya da sen birini ara), görüşme bitince Songbrook'a dön.
+3. [x] Biri seni arasın (ya da sen birini ara), görüşme bitince Songbrook'a dön.
    Olmalı: birkaç saniyede bağlanıyor.
-4. [ ] iPhone çalarken Mac'te Songbrook'u kapat (Cmd+Q).
+4. [x] iPhone çalarken Mac'te Songbrook'u kapat (Cmd+Q).
    Olmalı: iPhone çalmayı sürdürüyor.
-5. [ ] Mac'te Songbrook'u yeniden aç.
+5. [x] Mac'te Songbrook'u yeniden aç.
    Olmalı: iPhone kod sormadan yeniden bağlanıyor, iPhone çalmayı sürdürüyor.
 
 ## Bölüm 5: Eşleşme ve genel
