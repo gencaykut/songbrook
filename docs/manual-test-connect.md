@@ -25,6 +25,8 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
   6 sn'de kodsuz yeniden bağlandı. Görüşme ve uygulama geçişleri sırasında
   iPhone birkaç saniye arayla art arda yeni bağlantı açtı (her ön plana
   dönüşte bağlantı tazeleniyor); kullanıcı bir sorun görmedi.
+- Bölüm 5 (27 Ekim): eşleşmeyi kaldırma, yanlış/doğru kodla yeniden
+  eşleşme, Connect kapalıyken tek cihazda çalma. Tüm liste tamamlandı.
 - iPhone çalarken kısa bağlantı kopması: tek cihaz çalıyor, kilit ekranı
   düğmeleri iPhone'u yönetiyor.
 
@@ -109,12 +111,12 @@ Hazırlık: Mac'te bir şarkı çalıyor, iPhone'da Songbrook açık.
 
 ## Bölüm 5: Eşleşme ve genel
 
-1. [ ] Mac'te Ayarlar → Songbrook Connect → iPhone'un yanındaki kaldır düğmesi.
+1. [x] Mac'te Ayarlar → Songbrook Connect → iPhone'un yanındaki kaldır düğmesi.
    Olmalı: iPhone'da "Mac'in bu cihazı kaldırdı" yazıyor.
-2. [ ] Mac'te "Cihaz ekle", iPhone'da Mac'e dokun, önce yanlış bir kod gir.
+2. [x] Mac'te "Cihaz ekle", iPhone'da Mac'e dokun, önce yanlış bir kod gir.
    Olmalı: "kod yanlış" uyarısı, eşleşmiyor.
-3. [ ] Doğru kodu gir.
+3. [x] Doğru kodu gir.
    Olmalı: yeniden eşleşiyor, Bölüm 1'in 2. adımı yine çalışıyor.
-4. [ ] iPhone'da Connect'i kapat, bir şarkı çal, kilit ekranını kullan.
+4. [x] iPhone'da Connect'i kapat, bir şarkı çal, kilit ekranını kullan.
    Olmalı: uygulama eskisi gibi tek başına çalışıyor.
-5. [ ] Yol boyunca gözüne çarpan yanlış çeviri, taşan yazı ya da yanlış ikon.
+5. [x] Yol boyunca gözüne çarpan yanlış çeviri, taşan yazı ya da yanlış ikon.

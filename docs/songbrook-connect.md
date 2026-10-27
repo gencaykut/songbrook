@@ -1,6 +1,6 @@
 # Songbrook Connect: tasarım ve plan
 
-Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–4. aşamalar tamam; 5. aşama (gerçek cihaz testi) sürüyor. Ariami'den bilinçli sapma (27 Ekim): sahip ağdan düşünce failover oturumu duraklatılmış devrediyor ve dönen eski sahibe duraklat gönderilmiyor (Songbrook cihazı ağsız da çalmayı sürdürür); hâlâ çalan cihaz başka sahibi görünce yansıtmak yerine `requestLocalTakeover` yapıyor (`ConnectController._syncMirror`): `985b461` iPhone'a ve Mac'e kuruldu, liste [manual-test-connect.md](manual-test-connect.md).
+Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–5. aşamalar tamam (gerçek iPhone + Mac testi 27 Ekim'de bitti, [manual-test-connect.md](manual-test-connect.md)). Ariami'den bilinçli sapma (27 Ekim): sahip ağdan düşünce failover oturumu duraklatılmış devrediyor ve dönen eski sahibe duraklat gönderilmiyor (Songbrook cihazı ağsız da çalmayı sürdürür); hâlâ çalan cihaz başka sahibi görünce yansıtmak yerine `requestLocalTakeover` yapıyor (`ConnectController._syncMirror`): `985b461` iPhone'a ve Mac'e kuruldu, liste [manual-test-connect.md](manual-test-connect.md).
 
 ## İlerleme
 
@@ -34,6 +34,15 @@ Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirm
   - Testler: `player_controller_test.dart` "Songbrook Connect mirroring" (gösterim, yönlendirme, `play_context`, geri dönüş, yansıtma altında devretme hazırlığı), `connect_controller_test.dart` (yansıtmanın iki yönde yer değiştirmesi), `widgets/connect_devices_button_test.dart` (görünürlük, seçici, oturum yokken).
   - Canlı (27 Ekim, `claude_connect_playback_test.dart`, macOS): telefona devrettikten sonra Mac'in oynatıcısı telefonun çalmasını gösterdi. Mac'te basılan duraklat/devam telefona gitti, Mac'in kendi oynatıcısı duraklatılmış kaldı. Geri devretmede yansıtma kalktı ve Mac kendisi çaldı.
   - Bilinen: Yansıtan cihazın kilit ekranı/medya oturumu kendi duraklatılmış şarkısını gösterir; kilit ekranından uzak cihaz yönetilemez. Uzak kuyruk düzenlenemez (sıralama, silme). Yansıtırken ses kaydırıcısı uzak cihazın sesini değiştirir. Gerçek arayüzle (iPhone + Mac) henüz denenmedi; 5. aşama.
+- **5. aşama (tamam, 27 Ekim):** Gerçek iPhone 16 Pro Max + MacBook Pro, aynı Wi-Fi. Test listesi 5 bölümde tamamlandı. Bulunan ve düzeltilenler:
+  - Mac'te Anahtar Zinciri -34018 (`4fb42c7`).
+  - Kod penceresinin siyah ekran bırakması (`b91e9f5`).
+  - Arka plan/görüşme sonrası "Bağlı değil"de kalma (`139abac`).
+  - Mac'e devredilen şarkının baştan başlaması; libmpv erken sarmayı yok sayıyordu (`35195e6`).
+  - Kısa kopmada iki cihazın aynı anda çalması (`9653db8`).
+  - Shuffle/repeat renkleri (`48ba46e`).
+  - Yansıtan cihazda şarkı sürümü adı (`ec05915`).
+  - Kalan bilinen eksikler: yansıtan iPhone'un kilit ekranından Mac'i yönetmek (sessiz ses döngüsüyle yapılabilir), uzak kuyruğu düzenlemek. Kitaplık/favori eşitlemesi kullanıcı kararıyla yapılmayacak. Bir kez görülen kilit ekranı kapağı eksikliği yeniden üretilemedi, izlemede.
 
 ## Amaç
 
