@@ -7,19 +7,38 @@ süreyi de yaz.
 
 Kısaltmalar: **M** = Mac, **i** = iPhone.
 
+## Bulunan ve düzeltilenler (27 Ekim)
+
+- Mac'te Connect başlamıyordu: Anahtar Zinciri -34018 (`4fb42c7`).
+- Mac'te kod penceresini "Kapat"la kapatınca uygulama siyah ekranda kalıyordu
+  (`b91e9f5`).
+- Telefon görüşmesi ya da arka plandan sonra iPhone "Bağlı değil"de
+  kalabiliyordu: ön plana dönünce ve Mac kartına dokununca yeniden bağlanıyor
+  (`139abac`). Telefonda görüşmeyle henüz denenmedi.
+- iPhone'dan Mac'e devredilen şarkı baştan başlıyordu: libmpv yükleme
+  sırasındaki sarmayı yok sayıyordu (`35195e6`). Telefonda doğrulandı.
+- iPhone çalarken bağlantısı kısa süre kopunca (kilit, Wi-Fi güç tasarrufu)
+  merkez çalmayı Mac'e "çalıyor" olarak devrediyordu; iPhone ağsız çalmayı
+  sürdürdüğü için iki cihaz aynı anda çalıyordu. Dönen iPhone susturulmuyor,
+  Mac'i de yansıtıyordu; kilit ekranındaki duraklat/ileri Mac'e gidiyordu.
+  Artık failover oturumu duraklatılmış devrediyor, dönen cihaz susturulmuyor
+  ve hâlâ çalan cihaz yansıtmaya geçmek yerine sahipliği geri alıyor.
+- Not: macOS güncellemesinden sonra (ve bazen yeni derlemede) Yerel Ağ izni
+  yeniden soruluyor; izin verilene kadar Mac Connect'i başlatmıyor.
+
 ## 1. Açma, izin, eşleştirme
 
-- [ ] **M:** Ayarlar → Songbrook Connect anahtarını aç. macOS "yerel ağdaki
+- [x] **M:** Ayarlar → Songbrook Connect anahtarını aç. macOS "yerel ağdaki
       aygıtları bulma" izni isterse izin ver. (İzin yoksa Mac ağda görünmez:
       Sistem Ayarları → Gizlilik ve Güvenlik → Yerel Ağ → Songbrook.)
-- [ ] **i:** Ayarlar → Songbrook Connect anahtarını aç. iOS yerel ağ izni
+- [x] **i:** Ayarlar → Songbrook Connect anahtarını aç. iOS yerel ağ izni
       isterse izin ver.
-- [ ] **i:** Birkaç saniye içinde Mac'in adı "Eşleştirmek için dokun" ile
+- [x] **i:** Birkaç saniye içinde Mac'in adı "Eşleştirmek için dokun" ile
       listede görünüyor.
-- [ ] **M:** "Cihaz ekle"ye bas; 6 haneli kod çıkıyor.
+- [x] **M:** "Cihaz ekle"ye bas; 6 haneli kod çıkıyor.
 - [ ] **i:** Mac'e dokun, önce yanlış bir kod gir: "kod yanlış" uyarısı çıkıyor,
       eşleşmiyor.
-- [ ] **i:** Doğru kodu gir: pencere kapanıyor, Mac "Bağlı" görünüyor.
+- [x] **i:** Doğru kodu gir: pencere kapanıyor, Mac "Bağlı" görünüyor.
 - [ ] **M:** Kod penceresi kendiliğinden kapanıyor; iPhone'un adı eşleşen
       cihazlarda "Bağlı" görünüyor. iPhone'un adı doğru mu? (Not: Ad
       iPhone'un ağ adından geliyor; ne yazdığını not et.)
@@ -56,12 +75,12 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
 
 ## 4. Devretme
 
-- [ ] **M çalıyor → i:** iPhone'da cihaz düğmesi → "Bu cihaz". iPhone aynı
+- [x] **M çalıyor → i:** iPhone'da cihaz düğmesi → "Bu cihaz". iPhone aynı
       şarkıyı yaklaşık aynı konumdan çalmaya başlıyor, Mac susuyor
       (süre: ___). Arada iki cihaz aynı anda çalmıyor.
 - [ ] **M:** Mac'in oynatıcısı artık "<iPhone adı> üzerinde çalıyor"
       gösteriyor; Mac'ten duraklat/ileri iPhone'u yönetiyor.
-- [ ] **i çalıyor → M:** Mac'te cihaz düğmesi → "Bu cihaz". Mac aynı yerden
+- [x] **i çalıyor → M:** Mac'te cihaz düğmesi → "Bu cihaz". Mac aynı yerden
       devam ediyor, iPhone susuyor ve Mac'i yansıtmaya başlıyor.
 - [ ] Devretmeyi kumandadan yap: Mac çalarken Mac'te cihaz düğmesi →
       iPhone'a dokun (ve tersi).

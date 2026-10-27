@@ -1248,6 +1248,9 @@ void main() {
     });
   });
 
+  // Songbrook: a failover hands the session over paused (see
+  // ConnectHub._tryNextFailoverCandidate); Ariami's tests expected it to keep
+  // playing.
   group('slice 9 safe failover', () {
     test(
       '[immediate_failover_policy] confirmed owner loss starts failover now',
@@ -1268,7 +1271,7 @@ void main() {
 
         final prepare = _transferPrepares(candidate).single;
         expect(prepare.data?['sourceDeviceId'], 'owner');
-        expect(prepare.data?['snapshot']['isPlaying'], isTrue);
+        expect(prepare.data?['snapshot']['isPlaying'], isFalse);
       },
     );
 
@@ -1289,7 +1292,7 @@ void main() {
 
       final prepare = _transferPrepares(controller).single;
       expect(prepare.data?['targetDeviceId'], 'controller');
-      expect(prepare.data?['snapshot']['isPlaying'], isTrue);
+      expect(prepare.data?['snapshot']['isPlaying'], isFalse);
     });
 
     test('[connected_candidate_inherits_playing] a connected fallback resumes '
@@ -1311,7 +1314,7 @@ void main() {
 
       expect(_transferPrepares(older), isEmpty);
       final prepare = _transferPrepares(newer).single;
-      expect(prepare.data?['snapshot']['isPlaying'], isTrue);
+      expect(prepare.data?['snapshot']['isPlaying'], isFalse);
     });
 
     test('[previous_player_is_preferred] the previous playback device beats '
@@ -1335,7 +1338,7 @@ void main() {
       expect(_transferPrepares(newer), isEmpty);
       final prepare = _transferPrepares(previous).single;
       expect(prepare.data?['targetDeviceId'], 'previous');
-      expect(prepare.data?['snapshot']['isPlaying'], isTrue);
+      expect(prepare.data?['snapshot']['isPlaying'], isFalse);
     });
 
     test(
@@ -1379,7 +1382,8 @@ void main() {
         expect(_transferPrepares(previous), isEmpty);
         final failoverPrepare = _transferPrepares(controller).single;
         expect(failoverPrepare.data?['targetDeviceId'], 'controller');
-        expect(failoverPrepare.data?['snapshot']['isPlaying'], isTrue);
+        // Songbrook: the lost owner may still be playing; nothing starts here.
+        expect(failoverPrepare.data?['snapshot']['isPlaying'], isFalse);
       },
     );
 
@@ -1402,7 +1406,7 @@ void main() {
       hub.unregister(owner);
       clock.elapse(Duration.zero);
       final rejected = _transferPrepares(first).single;
-      expect(rejected.data?['snapshot']['isPlaying'], isTrue);
+      expect(rejected.data?['snapshot']['isPlaying'], isFalse);
       hub.handle(
         first,
         WsMessage(
@@ -1415,7 +1419,7 @@ void main() {
       );
 
       final retry = _transferPrepares(next).single;
-      expect(retry.data?['snapshot']['isPlaying'], isTrue);
+      expect(retry.data?['snapshot']['isPlaying'], isFalse);
       hub.handle(
         next,
         WsMessage(
@@ -1449,10 +1453,10 @@ void main() {
       hub.unregister(owner);
       clock.elapse(Duration.zero);
       final secondPrepare = _transferPrepares(second).single;
-      expect(secondPrepare.data?['snapshot']['isPlaying'], isTrue);
+      expect(secondPrepare.data?['snapshot']['isPlaying'], isFalse);
       _rejectTransfer(hub, second, secondPrepare);
       final firstPrepare = _transferPrepares(first).single;
-      expect(firstPrepare.data?['snapshot']['isPlaying'], isTrue);
+      expect(firstPrepare.data?['snapshot']['isPlaying'], isFalse);
       _rejectTransfer(hub, first, firstPrepare);
 
       final settledState = _lastMessage(first, ConnectMessageType.state);
@@ -1491,8 +1495,11 @@ void main() {
       expect(devices.data?['activeDeviceId'], 'owner');
     });
 
-    test('[former_owner_reconnects_paused] the disconnected owner is paused '
-        'when it returns after failover', () {
+    // Songbrook: Ariami paused an owner that returned after a failover. A
+    // Songbrook device streams on its own and may still be playing; it is
+    // left alone and takes the session back itself if it still plays.
+    test('[former_owner_reconnects_unpaused] the disconnected owner is not '
+        'paused when it returns after failover', () {
       final clock = _FakeClock();
       final hub = ConnectHub(now: clock.now, timerFactory: clock.createTimer);
       addTearDown(hub.dispose);
@@ -1521,30 +1528,8 @@ void main() {
 
       final reconnectedOwner = _FakeChannel();
       _registerDevice(hub, reconnectedOwner, 'owner');
-      final pause = reconnectedOwner.messages.singleWhere(
-        (message) =>
-            message.type == ConnectMessageType.command &&
-            message.data?['command'] == ConnectCommand.pause,
-      );
-      expect(pause.data?['activeDeviceId'], 'next-owner');
-      expect(pause.data?['ownerEpoch'], 3);
-
-      hub.handle(
-        reconnectedOwner,
-        WsMessage(
-          type: ConnectMessageType.commandResult,
-          data: <String, dynamic>{
-            'commandId': pause.data?['commandId'],
-            'ok': true,
-            'ownerEpoch': 3,
-          },
-        ),
-      );
-      hub.unregister(reconnectedOwner);
-      final ownerAfterAcknowledgement = _FakeChannel();
-      _registerDevice(hub, ownerAfterAcknowledgement, 'owner');
       expect(
-        ownerAfterAcknowledgement.messages.where(
+        reconnectedOwner.messages.where(
           (message) =>
               message.type == ConnectMessageType.command &&
               message.data?['command'] == ConnectCommand.pause,
@@ -1790,7 +1775,7 @@ void main() {
         Map<String, dynamic>.from(prepare.data?['snapshot'] as Map),
       );
       expect(snapshot.currentTrackId, 'song-1');
-      expect(snapshot.isPlaying, isTrue);
+      expect(snapshot.isPlaying, isFalse);
 
       hub.handle(
         phone,

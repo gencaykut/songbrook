@@ -631,6 +631,15 @@ class ConnectController extends Notifier<ConnectState> {
       _endMirror();
       return;
     }
+    // Only one device plays. This one still does (it kept playing while it
+    // was off the network and another device took the session), so it takes
+    // the session back rather than mirror the other while its own audio and
+    // lock-screen controls carry on unseen.
+    if (playback.snapshot().isPlaying) {
+      if (!client.hasPendingLocalTakeover) client.requestLocalTakeover();
+      _endMirror();
+      return;
+    }
     // Device-list updates repeat the last snapshot; showing it again would
     // undo the player's optimistic view of a command still on its way.
     if (identical(snapshot, _mirroredSnapshot)) return;

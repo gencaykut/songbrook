@@ -1,6 +1,6 @@
 # Songbrook Connect: tasarım ve plan
 
-Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–4. aşamalar tamam; 5. aşama (gerçek cihaz testi) sürüyor: `985b461` iPhone'a ve Mac'e kuruldu, liste [manual-test-connect.md](manual-test-connect.md).
+Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–4. aşamalar tamam; 5. aşama (gerçek cihaz testi) sürüyor. Ariami'den bilinçli sapma (27 Ekim): sahip ağdan düşünce failover oturumu duraklatılmış devrediyor ve dönen eski sahibe duraklat gönderilmiyor (Songbrook cihazı ağsız da çalmayı sürdürür); hâlâ çalan cihaz başka sahibi görünce yansıtmak yerine `requestLocalTakeover` yapıyor (`ConnectController._syncMirror`): `985b461` iPhone'a ve Mac'e kuruldu, liste [manual-test-connect.md](manual-test-connect.md).
 
 ## İlerleme
 

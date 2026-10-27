@@ -385,6 +385,10 @@ class ConnectHub {
       if (target == null || !target.peer.canPlay) continue;
       final snapshot = session.snapshot;
       if (snapshot == null || snapshot.queue.isEmpty) break;
+      // Songbrook: the device that dropped off the network streams on its
+      // own and is most likely still playing. The new owner takes the
+      // session paused instead of playing the song a second time; the lost
+      // device takes it back when it returns still playing.
       _handleTransfer(
         target.socket,
         target.peer,
@@ -393,7 +397,7 @@ class ConnectHub {
           'ownerEpoch': session.ownerEpoch,
         },
         automatic: true,
-        automaticSnapshot: snapshot,
+        automaticSnapshot: snapshot.copyWith(isPlaying: false),
       );
       return;
     }
@@ -1292,6 +1296,10 @@ class ConnectHub {
       session,
       transfer.targetDeviceId,
       requestedBy: transfer.requesterDeviceId,
+      // Songbrook: an automatic failover happens because the owner left the
+      // network, where it can go on playing. It is not told to pause when it
+      // returns; it takes the session back if it is still playing.
+      pauseFormerOwner: !transfer.automatic,
     );
     session.snapshot = transfer.snapshot.compensated(_now());
     session.revision++;
@@ -1609,6 +1617,7 @@ class ConnectHub {
     _ConnectSession session,
     String? nextDeviceId, {
     required String requestedBy,
+    bool pauseFormerOwner = true,
   }) {
     final previousDeviceId = session.activeDeviceId;
     if (previousDeviceId == nextDeviceId) return;
@@ -1664,7 +1673,7 @@ class ConnectHub {
     }
 
     _refreshFormerOwnerPauses(userId, session);
-    if (previousDeviceId != null) {
+    if (previousDeviceId != null && pauseFormerOwner) {
       _trackFormerOwnerPause(
         userId,
         session,

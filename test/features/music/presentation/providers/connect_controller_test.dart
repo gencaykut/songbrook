@@ -480,4 +480,40 @@ void main() {
     await eventually(() => stateOf(phone).isConnected);
     await eventually(() => stateOf(mac).devices.length == 2);
   });
+
+  test(
+    'a playing phone that drops off the network keeps the session',
+    () async {
+      final macPlayback = _FakePlayback();
+      final phonePlayback = _FakePlayback();
+      final (mac, phone) = await pairedDevices(macPlayback, phonePlayback);
+      phonePlayback.play(['a', 'b'], positionMs: 30000);
+      final phoneId = stateOf(phone).selfDeviceId;
+      await eventually(() => stateOf(mac).activeDeviceId == phoneId);
+
+      // The phone's socket dies (Wi-Fi power saving, a call) and comes back;
+      // the hub hands the session to the Mac meanwhile.
+      final drops = <String?>[];
+      final watch = mac.listen(
+        connectControllerProvider.select((state) => state.activeDeviceId),
+        (_, next) => drops.add(next),
+      );
+      addTearDown(watch.close);
+      await phone.read(connectControllerProvider.notifier).reconnect();
+
+      await eventually(
+        () =>
+            stateOf(mac).activeDeviceId == phoneId &&
+            stateOf(phone).activeDeviceId == phoneId,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(stateOf(mac).activeDeviceId, phoneId);
+      // The Mac never started the song a second time.
+      expect(macPlayback.commands, isNot(contains(ConnectCommand.play)));
+      expect(macPlayback.current.isPlaying, isFalse);
+      // The phone plays on and is not mirroring the Mac.
+      expect(phonePlayback.current.isPlaying, isTrue);
+      expect(phonePlayback.mirrored, isNull);
+    },
+  );
 }

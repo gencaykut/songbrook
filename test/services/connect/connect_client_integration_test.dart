@@ -693,97 +693,97 @@ void main() {
     );
   });
 
-  test(
-    'connected replacement continues the song when the player disconnects',
-    () async {
-      var tvPlaying = true;
-      final tv = ConnectClient(
-        deviceId: 'tv',
-        deviceName: 'Living Room Mac',
-        clientType: 'tv',
-        snapshotProvider: () => ConnectPlaybackSnapshot(
-          queue: const [
-            {'id': 'song-a', 'title': 'A'},
-            {'id': 'song-b', 'title': 'B'},
-          ],
-          currentIndex: 1,
-          positionMs: 12000,
-          durationMs: 60000,
-          isPlaying: tvPlaying,
-          shuffle: false,
-          repeatMode: 'off',
-          volume: 1,
-        ),
-        applySnapshot: (_) async {},
-        handleCommand: (_, _) async {},
-        pauseForTransfer: () async => tvPlaying = false,
-      );
-      clients.add(tv);
-
-      // The phone has unrelated stale local playback. Before this fix, losing
-      // the TV cleared its remote mirror and exposed this song instead.
-      var phoneSnapshot = ConnectPlaybackSnapshot(
+  test('connected replacement takes the song over, paused, when the player '
+      'disconnects', () async {
+    var tvPlaying = true;
+    final tv = ConnectClient(
+      deviceId: 'tv',
+      deviceName: 'Living Room Mac',
+      clientType: 'tv',
+      snapshotProvider: () => ConnectPlaybackSnapshot(
         queue: const [
-          {'id': 'unrelated-local-song', 'title': 'Wrong song'},
+          {'id': 'song-a', 'title': 'A'},
+          {'id': 'song-b', 'title': 'B'},
         ],
-        currentIndex: 0,
-        positionMs: 0,
+        currentIndex: 1,
+        positionMs: 12000,
         durationMs: 60000,
-        isPlaying: false,
+        isPlaying: tvPlaying,
         shuffle: false,
         repeatMode: 'off',
         volume: 1,
-      );
-      var phoneStartedPlaying = false;
-      final phone = ConnectClient(
-        deviceId: 'phone',
-        deviceName: 'Phone',
-        clientType: 'mobile',
-        snapshotProvider: () =>
-            phoneSnapshot.copyWith(isPlaying: phoneStartedPlaying),
-        applySnapshot: (snapshot) async => phoneSnapshot = snapshot,
-        handleCommand: (command, arguments) async {
-          if (command == ConnectCommand.seek) {
-            phoneSnapshot = phoneSnapshot.copyWith(
-              positionMs: (arguments['positionMs'] as num).toInt(),
-            );
-          } else if (command == ConnectCommand.play) {
-            phoneStartedPlaying = true;
-          } else if (command == ConnectCommand.pause) {
-            phoneStartedPlaying = false;
-          }
-        },
-        pauseForTransfer: () async => phoneStartedPlaying = false,
-      );
-      clients.add(phone);
+      ),
+      applySnapshot: (_) async {},
+      handleCommand: (_, _) async {},
+      pauseForTransfer: () async => tvPlaying = false,
+    );
+    clients.add(tv);
 
-      final baseUrl = 'http://127.0.0.1:${server.port}';
-      await tv.connect(baseUrl: baseUrl);
-      await phone.connect(baseUrl: baseUrl);
-      await waitFor(() => tv.isConnected && phone.isConnected);
-      tv.publishState(activate: true);
-      await waitFor(
-        () =>
-            phone.activeDeviceId == 'tv' &&
-            phone.remoteSnapshot?.currentTrackId == 'song-b',
-      );
+    // The phone has unrelated stale local playback. Before this fix, losing
+    // the TV cleared its remote mirror and exposed this song instead.
+    var phoneSnapshot = ConnectPlaybackSnapshot(
+      queue: const [
+        {'id': 'unrelated-local-song', 'title': 'Wrong song'},
+      ],
+      currentIndex: 0,
+      positionMs: 0,
+      durationMs: 60000,
+      isPlaying: false,
+      shuffle: false,
+      repeatMode: 'off',
+      volume: 1,
+    );
+    var phoneStartedPlaying = false;
+    final phone = ConnectClient(
+      deviceId: 'phone',
+      deviceName: 'Phone',
+      clientType: 'mobile',
+      snapshotProvider: () =>
+          phoneSnapshot.copyWith(isPlaying: phoneStartedPlaying),
+      applySnapshot: (snapshot) async => phoneSnapshot = snapshot,
+      handleCommand: (command, arguments) async {
+        if (command == ConnectCommand.seek) {
+          phoneSnapshot = phoneSnapshot.copyWith(
+            positionMs: (arguments['positionMs'] as num).toInt(),
+          );
+        } else if (command == ConnectCommand.play) {
+          phoneStartedPlaying = true;
+        } else if (command == ConnectCommand.pause) {
+          phoneStartedPlaying = false;
+        }
+      },
+      pauseForTransfer: () async => phoneStartedPlaying = false,
+    );
+    clients.add(phone);
 
-      // Freeze Connect publishing before the local engine pauses. The hub must
-      // retain the last playing snapshot and continue it on the phone, while the
-      // departing TV itself is silenced before its socket closes.
-      await tv.relinquishPlayback(() async {
-        tvPlaying = false;
-      });
+    final baseUrl = 'http://127.0.0.1:${server.port}';
+    await tv.connect(baseUrl: baseUrl);
+    await phone.connect(baseUrl: baseUrl);
+    await waitFor(() => tv.isConnected && phone.isConnected);
+    tv.publishState(activate: true);
+    await waitFor(
+      () =>
+          phone.activeDeviceId == 'tv' &&
+          phone.remoteSnapshot?.currentTrackId == 'song-b',
+    );
 
-      await waitFor(
-        () =>
-            phone.isThisDeviceActive &&
-            phoneSnapshot.currentTrackId == 'song-b' &&
-            phoneStartedPlaying,
-      );
-      expect(tvPlaying, isFalse);
-      expect(phoneSnapshot.currentTrackId, isNot('unrelated-local-song'));
-      expect(phoneSnapshot.positionMs, greaterThanOrEqualTo(12000));
-    },
-  );
+    // Freeze Connect publishing before the local engine pauses. The hub must
+    // retain the last snapshot and hand it to the phone, while the departing
+    // TV itself is silenced before its socket closes. Songbrook: the phone
+    // takes it paused, since a device that only lost the network is most
+    // likely still playing.
+    await tv.relinquishPlayback(() async {
+      tvPlaying = false;
+    });
+
+    await waitFor(
+      () =>
+          phone.isThisDeviceActive && phoneSnapshot.currentTrackId == 'song-b',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(phoneStartedPlaying, isFalse);
+    expect(tvPlaying, isFalse);
+    expect(phoneSnapshot.currentTrackId, isNot('unrelated-local-song'));
+    expect(phoneSnapshot.positionMs, greaterThanOrEqualTo(12000));
+  });
 }
