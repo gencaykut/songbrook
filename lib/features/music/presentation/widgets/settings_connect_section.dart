@@ -50,7 +50,7 @@ class _ConnectSettings extends ConsumerWidget {
               icon: Icons.add_link_rounded,
               title: strings.connectAddDevice,
               subtitle: strings.connectAddDeviceSummary,
-              onTap: () => _showPairingCode(context, ref),
+              onTap: () => showConnectPairingCodeDialog(context, ref),
             ),
             for (final device in state.pairedDevices) ...[
               const SizedBox(height: appCardGap),
@@ -137,58 +137,6 @@ class _ConnectSettings extends ConsumerWidget {
       ]);
     }
     return rows;
-  }
-
-  Future<void> _showPairingCode(BuildContext context, WidgetRef ref) async {
-    final controller = ref.read(connectControllerProvider.notifier);
-    controller.beginPairing();
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Consumer(
-        builder: (context, ref, _) {
-          final code = ref.watch(
-            connectControllerProvider.select((state) => state.pairingCode),
-          );
-          // Pairing spends the code; the dialog has done its job.
-          if (code == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-            });
-          }
-          return AlertDialog(
-            title: Text(strings.connectPairingCodeTitle),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  code == null
-                      ? ''
-                      : '${code.substring(0, 3)} ${code.substring(3)}',
-                  key: const ValueKey('settings-connect-pairing-code'),
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  strings.connectPairingCodeHint,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: Text(strings.close),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-    controller.cancelPairing();
   }
 
   Future<void> _confirmRemove(

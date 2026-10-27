@@ -26,6 +26,7 @@ import '../../../../services/connect/connect_pairing_client.dart';
 import '../../../../services/storage/library_csv_import_service.dart';
 import '../../../../services/storage/library_csv_service.dart';
 import '../providers/connect_controller.dart';
+import 'connect_pairing_code_dialog.dart';
 import '../providers/music_providers.dart';
 import 'app_update_dialog.dart';
 import 'lyrics_animation_transition.dart';
