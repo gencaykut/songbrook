@@ -1,6 +1,6 @@
 # Songbrook Connect: tasarım ve plan
 
-Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–4. aşamalar tamam; sırada gerçek cihaz testi.
+Durum (27 Ekim 2026): plan onaylandı; şifreleme ilk sürümde yok, eşleştirme 6 haneli kodla. 1–4. aşamalar tamam; 5. aşama (gerçek cihaz testi) sürüyor: `985b461` iPhone'a ve Mac'e kuruldu, liste [manual-test-connect.md](manual-test-connect.md).
 
 ## İlerleme
 
