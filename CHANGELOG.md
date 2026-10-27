@@ -28,6 +28,12 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   related radio and other songs by its artist. Tapping one plays it next and
   keeps the rest of the queue, even when related radio later adds more
   songs.
+- Added Songbrook Connect (iPhone and Mac, same Wi-Fi network): pair an
+  iPhone with the Mac once using a six-digit code. After that, the device
+  that is not playing shows what the other one plays and controls it, and
+  songs picked on it play on the other device. The devices button in the
+  player moves playback, at the same song and position, to another device.
+  Off by default; turn it on under Settings → Songbrook Connect.
 - A music video now plays its song version from YouTube Music when there is
   one, without the video's intro, skits or different mix. Official videos and
   lyric re-uploads that name the artist are matched by title, artist and
