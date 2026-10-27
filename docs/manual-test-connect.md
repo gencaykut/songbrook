@@ -28,6 +28,13 @@ Kısaltmalar: **M** = Mac, **i** = iPhone.
   sırasındaki sarmayı yok sayıyordu (`35195e6`).
 - iPhone çalarken bağlantısı kısa süre kopunca iki cihaz aynı anda çalıyor,
   kilit ekranı düğmeleri Mac'e gidiyordu (`9653db8`). Telefonda doğrulandı.
+- Shuffle ve repeat açık/kapalı ayırt edilmiyordu: açıkken sarı, kapalıyken
+  beyaz (`48ba46e`).
+- İzlemede: bir kez iPhone kilit ekranında kapak görünmedi (iki cihazın aynı
+  anda çaldığı hata sürerken). Sonra doğrudan çalmada ve Mac'ten devretmede
+  kapak göründü; yeniden üretilemedi. Tekrar görülürse şarkıyı ve durumu not
+  et. Uygulamanın kapak sunucusunu `integration_test/claude_lockscreen_artwork_test.dart`
+  dener.
 - Not: macOS güncellemesinden sonra (ve bazen yeni derlemede) Yerel Ağ izni
   yeniden soruluyor; izin verilene kadar Mac Connect'i başlatmıyor.
 
