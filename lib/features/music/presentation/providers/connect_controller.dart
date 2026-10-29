@@ -528,8 +528,10 @@ class ConnectController extends Notifier<ConnectState> {
     );
     _patch((current) => current.copyWith(connectedHostId: host.hostId));
     if (host.lastAddress != baseUrl.host || host.lastPort != baseUrl.port) {
-      await _store.saveKnownHost(
-        host.copyWith(lastAddress: baseUrl.host, lastPort: baseUrl.port),
+      await _store.updateKnownHostAddress(
+        host.hostId,
+        address: baseUrl.host,
+        port: baseUrl.port,
       );
     }
   }

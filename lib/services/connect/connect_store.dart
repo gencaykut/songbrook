@@ -104,56 +104,86 @@ class ConnectStore {
   final ConnectSecureStore _store;
   final String Function() _newId;
 
+  /// Every keychain read-modify-write runs after the previous one, so a
+  /// concurrent forget, pairing or address update cannot write back a list
+  /// read before another change and undo it.
+  Future<void> _tail = Future<void>.value();
+
+  Future<T> _serialized<T>(Future<T> Function() action) {
+    final result = _tail.then((_) => action());
+    _tail = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
   /// Stable for this installation; created on first use.
-  Future<String> deviceId() async {
+  Future<String> deviceId() => _serialized(() async {
     final existing = await _store.read(_deviceIdKey);
     if (existing != null && existing.isNotEmpty) return existing;
     final created = _newId();
     await _store.write(_deviceIdKey, created);
     return created;
-  }
+  });
 
   Future<List<ConnectPairedDevice>> pairedDevices() async => (await _readList(
     _pairedDevicesKey,
   )).map(ConnectPairedDevice.fromJson).toList(growable: false);
 
-  Future<void> savePairedDevice(ConnectPairedDevice device) async {
-    final devices = [
-      for (final existing in await pairedDevices())
-        if (existing.id != device.id) existing,
-      device,
-    ];
-    await _writeList(_pairedDevicesKey, devices.map((d) => d.toJson()));
-  }
+  Future<void> savePairedDevice(ConnectPairedDevice device) =>
+      _serialized(() async {
+        final devices = [
+          for (final existing in await pairedDevices())
+            if (existing.id != device.id) existing,
+          device,
+        ];
+        await _writeList(_pairedDevicesKey, devices.map((d) => d.toJson()));
+      });
 
-  Future<void> removePairedDevice(String deviceId) async {
+  Future<void> removePairedDevice(String deviceId) => _serialized(() async {
     final devices = await pairedDevices();
     await _writeList(
       _pairedDevicesKey,
       devices.where((d) => d.id != deviceId).map((d) => d.toJson()),
     );
-  }
+  });
 
   Future<List<ConnectKnownHost>> knownHosts() async => (await _readList(
     _knownHostsKey,
   )).map(ConnectKnownHost.fromJson).toList(growable: false);
 
-  Future<void> saveKnownHost(ConnectKnownHost host) async {
+  Future<void> saveKnownHost(ConnectKnownHost host) => _serialized(() async {
     final hosts = [
       for (final existing in await knownHosts())
         if (existing.hostId != host.hostId) existing,
       host,
     ];
     await _writeList(_knownHostsKey, hosts.map((h) => h.toJson()));
-  }
+  });
 
-  Future<void> removeKnownHost(String hostId) async {
+  /// Records where a known host was reached. A host forgotten meanwhile stays
+  /// forgotten.
+  Future<void> updateKnownHostAddress(
+    String hostId, {
+    required String address,
+    required int port,
+  }) => _serialized(() async {
+    final hosts = await knownHosts();
+    if (!hosts.any((h) => h.hostId == hostId)) return;
+    await _writeList(_knownHostsKey, [
+      for (final host in hosts)
+        (host.hostId == hostId
+                ? host.copyWith(lastAddress: address, lastPort: port)
+                : host)
+            .toJson(),
+    ]);
+  });
+
+  Future<void> removeKnownHost(String hostId) => _serialized(() async {
     final hosts = await knownHosts();
     await _writeList(
       _knownHostsKey,
       hosts.where((h) => h.hostId != hostId).map((h) => h.toJson()),
     );
-  }
+  });
 
   Future<List<Map<String, dynamic>>> _readList(String key) async {
     final raw = await _store.read(key);

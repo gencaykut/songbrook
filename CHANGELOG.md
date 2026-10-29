@@ -98,6 +98,10 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   and playlist entries, when their folder could not be read or was not there
   (an unmounted drive or a removed SD card). Only a file missing from a
   readable folder now counts as deleted.
+- Fixed Songbrook Connect undoing a change when two happened at once: a
+  device or host forgotten while another was paired, forgotten or reconnected
+  could come back as still paired, and a forgotten Mac could be re-added by a
+  reconnection in progress.
 
 ## 1.2.9+129 — 2026-10-12
 
