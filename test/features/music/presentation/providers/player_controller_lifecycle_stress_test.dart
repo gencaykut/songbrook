@@ -6,6 +6,7 @@ import 'package:bstream_music/features/music/domain/entities/playlist.dart';
 import 'package:bstream_music/features/music/domain/entities/track_info.dart';
 import 'package:bstream_music/features/music/domain/repositories/library_repository.dart';
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
+import 'package:bstream_music/services/recommendations/recommendations.dart';
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
 import 'package:bstream_music/services/player/player_service.dart';
 import 'package:bstream_music/services/storage/local_library_reconciler.dart';
@@ -288,6 +289,9 @@ class _LifecycleSettingsController extends SettingsController {
 }
 
 class _LifecyclePlaybackHistorySink implements PlaybackHistorySink {
+  @override
+  Future<void> persistSkip(PlaybackSkip skip) async {}
+
   const _LifecyclePlaybackHistorySink(this.library);
 
   final _LifecycleLibraryRepository library;

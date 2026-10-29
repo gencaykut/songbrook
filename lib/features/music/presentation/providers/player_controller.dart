@@ -136,6 +136,7 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
     final initialSnapshot = _decorateSnapshot(service.currentSnapshot);
     final historySink = ref.read(playbackHistorySinkProvider);
     final historyTracker = QualifiedPlaybackHistoryTracker(
+      onSkip: historySink.persistSkip,
       onWrite: (write) async {
         await historySink.persist(write);
         if (!_disposed && write.isInitialQualification) {

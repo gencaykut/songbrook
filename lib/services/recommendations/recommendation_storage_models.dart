@@ -51,6 +51,56 @@ class PlaybackEvent {
       recommendationTrackKey(videoId: videoId, trackId: trackId);
 }
 
+/// A song the listener moved away from before its play counted.
+///
+/// Recorded when another song replaced it while it was playing or paused,
+/// with less heard than the qualification threshold. Stopping, failed
+/// streams and closing the app are not skips.
+class PlaybackSkip {
+  PlaybackSkip({
+    required this.sessionId,
+    required this.trackId,
+    required this.title,
+    required List<String> artists,
+    required this.source,
+    required this.skippedAt,
+    required this.listenedMs,
+    this.videoId,
+    List<String?> artistBrowseIds = const <String?>[],
+    this.durationMs,
+  }) : artists = List<String>.unmodifiable(artists),
+       artistBrowseIds = List<String?>.unmodifiable(artistBrowseIds);
+
+  final String sessionId;
+  final String trackId;
+  final String? videoId;
+  final String title;
+  final List<String> artists;
+  final List<String?> artistBrowseIds;
+  final PlaybackEventSource source;
+  final DateTime skippedAt;
+  final int listenedMs;
+  final int? durationMs;
+
+  String get trackKey =>
+      recommendationTrackKey(videoId: videoId, trackId: trackId);
+}
+
+/// How often one song was skipped in a window.
+class PlaybackSkipCount {
+  PlaybackSkipCount({
+    required this.trackKey,
+    required List<String> artists,
+    required this.count,
+    required this.lastSkippedAt,
+  }) : artists = List<String>.unmodifiable(artists);
+
+  final String trackKey;
+  final List<String> artists;
+  final int count;
+  final DateTime lastSkippedAt;
+}
+
 /// A distinct track aggregated from qualifying playback sessions.
 class RecommendationSeed {
   RecommendationSeed({

@@ -237,6 +237,131 @@ void main() {
       await tracker.dispose();
     },
   );
+
+  group('skips', () {
+    late Duration now;
+    late List<PlaybackHistoryWrite> writes;
+    late List<PlaybackSkip> skips;
+    late QualifiedPlaybackHistoryTracker tracker;
+    final song = _track(duration: const Duration(minutes: 3));
+    final next = _track(
+      duration: const Duration(minutes: 3),
+      logicalKey: 'remote:queue:1',
+      videoId: 'nextnextnex',
+    );
+
+    setUp(() async {
+      now = Duration.zero;
+      writes = [];
+      skips = [];
+      var session = 0;
+      tracker = QualifiedPlaybackHistoryTracker(
+        onWrite: (write) async => writes.add(write),
+        onSkip: (skip) async => skips.add(skip),
+        monotonicClock: () => now,
+        sessionIdFactory: () => 'session-${++session}',
+        wallClock: () => DateTime.utc(2026, 10, 29),
+        // The qualification deadline is reached by advancing the clock and
+        // sending another observation, never by a real timer.
+        timerFactory: (duration, callback) =>
+            Timer(const Duration(days: 1), callback),
+      );
+      await tracker.setEnabled(true);
+    });
+
+    tearDown(() => tracker.dispose());
+
+    Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+    test('moving to another song a few seconds in is a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 5);
+      tracker.update(track: next, status: PlayerStatus.loading);
+      await settle();
+
+      expect(writes, isEmpty);
+      expect(skips, hasLength(1));
+      expect(skips.single.sessionId, 'session-1');
+      expect(skips.single.videoId, 'abcdefghijk');
+      expect(skips.single.artists, ['Artist']);
+      expect(skips.single.listenedMs, 5000);
+      expect(skips.single.durationMs, 180000);
+      expect(skips.single.skippedAt, DateTime.utc(2026, 10, 29));
+    });
+
+    test('moving on from a paused song is a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 3);
+      tracker.update(track: song, status: PlayerStatus.paused);
+      now = const Duration(minutes: 5);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(skips.single.listenedMs, 3000);
+    });
+
+    test('the gap before the next queue item still counts', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 5);
+      tracker.update(track: null, status: PlayerStatus.playing);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(skips.single.listenedMs, 5000);
+    });
+
+    test('passing over a song within a second is not a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(milliseconds: 600);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(skips, isEmpty);
+    });
+
+    test('a song that failed before the next one is not a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 5);
+      tracker.update(track: song, status: PlayerStatus.failed);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(skips, isEmpty);
+    });
+
+    test('a song whose play counted is not a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 31);
+      tracker.update(track: song, status: PlayerStatus.playing);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(writes, isNotEmpty);
+      expect(skips, isEmpty);
+    });
+
+    test('stopping or clearing the queue is not a skip', () async {
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 5);
+      tracker.update(track: song, status: PlayerStatus.stopped);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      now = const Duration(seconds: 10);
+      tracker.update(track: null, status: PlayerStatus.idle);
+      await settle();
+
+      expect(skips, isEmpty);
+    });
+
+    test('nothing is recorded while tracking is off', () async {
+      await tracker.setEnabled(false);
+      tracker.update(track: song, status: PlayerStatus.playing);
+      now = const Duration(seconds: 5);
+      tracker.update(track: next, status: PlayerStatus.playing);
+      await settle();
+
+      expect(skips, isEmpty);
+    });
+  });
 }
 
 QualifiedPlaybackHistoryTracker _tracker(
@@ -249,11 +374,15 @@ QualifiedPlaybackHistoryTracker _tracker(
   );
 }
 
-PlaybackHistoryTrack _track({required Duration duration}) {
+PlaybackHistoryTrack _track({
+  required Duration duration,
+  String logicalKey = 'remote:queue:0',
+  String videoId = 'abcdefghijk',
+}) {
   return PlaybackHistoryTrack(
-    logicalKey: 'remote:queue:0',
-    trackId: 'abcdefghijk',
-    videoId: 'abcdefghijk',
+    logicalKey: logicalKey,
+    trackId: videoId,
+    videoId: videoId,
     title: 'Track',
     artists: const ['Artist'],
     artistBrowseIds: const ['UC-artist'],

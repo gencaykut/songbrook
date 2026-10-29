@@ -242,6 +242,68 @@ void main() {
       },
     );
 
+    test('records skips and counts them per song within a window', () async {
+      final now = DateTime.utc(2026, 10, 29, 12);
+      PlaybackSkip skip(String session, String videoId, Duration ago) =>
+          PlaybackSkip(
+            sessionId: session,
+            trackId: videoId,
+            videoId: videoId,
+            title: 'Song $videoId',
+            artists: ['Artist $videoId'],
+            source: PlaybackEventSource.streaming,
+            skippedAt: now.subtract(ago),
+            listenedMs: 4000,
+          );
+
+      await service.recordPlaybackSkip(skip('s1', 'often', Duration.zero));
+      await service.recordPlaybackSkip(
+        skip('s2', 'often', const Duration(days: 3)),
+      );
+      // Writing a session again keeps one row.
+      await service.recordPlaybackSkip(
+        skip('s2', 'often', const Duration(days: 3)),
+      );
+      await service.recordPlaybackSkip(
+        skip('s3', 'once', const Duration(days: 1)),
+      );
+      await service.recordPlaybackSkip(
+        skip('s4', 'longago', const Duration(days: 90)),
+      );
+
+      final recent = await service.getPlaybackSkipCounts(
+        since: now.subtract(const Duration(days: 30)),
+      );
+      expect(recent.map((count) => count.trackKey), ['often', 'once']);
+      expect(recent.map((count) => count.count), [2, 1]);
+      expect(recent.first.artists, ['Artist often']);
+      expect(recent.first.lastSkippedAt, now);
+
+      // Skips are not plays.
+      expect(await service.getMostPlayedTracks(limit: 10), isEmpty);
+
+      await service.prunePlaybackEvents(
+        policy: const PlaybackEventRetentionPolicy(
+          maxAge: Duration(days: 60),
+          maxEvents: 2,
+        ),
+        now: now,
+      );
+      final pruned = await service.getPlaybackSkipCounts(
+        since: now.subtract(const Duration(days: 365)),
+      );
+      expect(pruned.map((count) => count.trackKey), ['often', 'once']);
+      expect(pruned.map((count) => count.count), [1, 1]);
+
+      await service.clearRecommendationHistory();
+      expect(
+        await service.getPlaybackSkipCounts(
+          since: now.subtract(const Duration(days: 365)),
+        ),
+        isEmpty,
+      );
+    });
+
     test('replaces related snapshots, deduplicates and enforces TTL', () async {
       final fetchedAt = DateTime.utc(2026, 8, 20);
       await service.upsertRelatedCandidates(

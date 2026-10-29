@@ -16,6 +16,7 @@ import 'package:bstream_music/features/music/presentation/providers/connect_play
 import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/features/music/presentation/widgets/mini_player.dart';
 import 'package:bstream_music/features/music/presentation/widgets/player_panel.dart';
+import 'package:bstream_music/services/recommendations/recommendations.dart';
 import 'package:bstream_music/services/downloader/audio_stream_resolver.dart';
 import 'package:bstream_music/services/downloader/fallback_audio_resolver.dart';
 import 'package:bstream_music/services/connect/connect_models.dart';
@@ -5835,6 +5836,49 @@ void main() {
     );
   }
 
+  test('skipping a song a moment in records the skip', () async {
+    final player = _FakePlayerService();
+    final repository = _FakeLibraryRepository();
+    final sink = _FakePlaybackHistorySink(repository);
+    final container = _container(
+      player,
+      repository: repository,
+      historySink: sink,
+    );
+    addTearDown(container.dispose);
+    await container.read(settingsControllerProvider.future);
+    await container.read(playerControllerProvider.future);
+    final controller = container.read(playerControllerProvider.notifier);
+    final first = LocalTrack(
+      id: 'skip-1',
+      title: 'Skipped',
+      artist: 'Artist',
+      filePath: 'skip-1.mp3',
+      addedAt: DateTime(2026),
+      duration: const Duration(minutes: 3),
+    );
+    final second = LocalTrack(
+      id: 'skip-2',
+      title: 'Next',
+      artist: 'Artist',
+      filePath: 'skip-2.mp3',
+      addedAt: DateTime(2026),
+      duration: const Duration(minutes: 3),
+    );
+
+    await controller.playLocal(first, queue: [first, second]);
+    await _flushCompletion();
+    // The tracker measures real playing time; a skip needs a second heard.
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    await controller.playNext();
+    await _waitUntil(() => sink.skips.isNotEmpty, reason: 'No skip recorded.');
+
+    expect(sink.skips.single.trackId, 'skip-1');
+    expect(sink.skips.single.title, 'Skipped');
+    expect(sink.skips.single.listenedMs, greaterThanOrEqualTo(1000));
+    expect(sink.writes, isEmpty);
+  });
+
   test(
     'system session reuses queue metadata for positions and refreshes on reorder',
     () async {
@@ -5896,6 +5940,7 @@ ProviderContainer _container(
   SettingsController? settingsController,
   RemotePlaybackRetryDelay? retryDelay,
   List<Duration>? desktopSessionRetryBackoff,
+  _FakePlaybackHistorySink? historySink,
   List<Override> extraOverrides = const [],
 }) {
   final resolvedRepository = repository ?? _FakeLibraryRepository();
@@ -5933,7 +5978,7 @@ ProviderContainer _container(
       ),
       libraryRepositoryProvider.overrideWithValue(resolvedRepository),
       playbackHistorySinkProvider.overrideWithValue(
-        _FakePlaybackHistorySink(resolvedRepository),
+        historySink ?? _FakePlaybackHistorySink(resolvedRepository),
       ),
       localTrackFileProbeProvider.overrideWithValue(
         fileProbe ?? (_) async => LocalTrackFileAvailability.present,
@@ -7366,6 +7411,10 @@ class _FakePlaybackHistorySink implements PlaybackHistorySink {
 
   final _FakeLibraryRepository repository;
   final List<PlaybackHistoryWrite> writes = [];
+  final List<PlaybackSkip> skips = [];
+
+  @override
+  Future<void> persistSkip(PlaybackSkip skip) async => skips.add(skip);
 
   @override
   Future<void> persist(PlaybackHistoryWrite write) async {

@@ -666,6 +666,76 @@ class LocalDatabaseService {
   /// the listening threshold and again when playback completes. The greatest
   /// listened duration and completion state win, while newer metadata enriches
   /// the existing row.
+  /// Records a skip; writing the same session again keeps one row.
+  Future<void> recordPlaybackSkip(PlaybackSkip skip) async {
+    final sessionId = _requiredText(skip.sessionId, 'sessionId');
+    final trackId = _requiredText(skip.trackId, 'trackId');
+    final title = _requiredText(skip.title, 'title');
+    final videoId = _optionalText(skip.videoId);
+    if (skip.listenedMs < 0) {
+      throw ArgumentError.value(
+        skip.listenedMs,
+        'listenedMs',
+        'Must not be negative.',
+      );
+    }
+    final durationMs = skip.durationMs;
+    final db = await database;
+    await db.insert('playback_skips', <String, Object?>{
+      'session_id': sessionId,
+      'track_key': recommendationTrackKey(videoId: videoId, trackId: trackId),
+      'track_id': trackId,
+      'video_id': videoId,
+      'title': title,
+      'artists_json': jsonEncode(_normalizedStrings(skip.artists)),
+      'artist_browse_ids_json': jsonEncode(
+        _normalizedArtistBrowseIds(skip.artistBrowseIds),
+      ),
+      'duration_ms': durationMs == null || durationMs < 0 ? null : durationMs,
+      'source': skip.source.name,
+      'skipped_at': skip.skippedAt.toUtc().toIso8601String(),
+      'listened_ms': skip.listenedMs,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await _prunePlaybackEventsIfDue(inserted: true);
+  }
+
+  /// Songs skipped since [since], most skipped first.
+  Future<List<PlaybackSkipCount>> getPlaybackSkipCounts({
+    required DateTime since,
+  }) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        track_key,
+        COUNT(*) AS skip_count,
+        MAX(skipped_at) AS last_skipped_at,
+        (
+          SELECT latest.artists_json
+          FROM playback_skips AS latest
+          WHERE latest.track_key = skips.track_key
+          ORDER BY latest.skipped_at DESC, latest.session_id DESC
+          LIMIT 1
+        ) AS artists_json
+      FROM playback_skips AS skips
+      WHERE skipped_at >= ?
+      GROUP BY track_key
+      ORDER BY skip_count DESC, last_skipped_at DESC, track_key ASC
+      ''',
+      <Object?>[since.toUtc().toIso8601String()],
+    );
+    return List<PlaybackSkipCount>.unmodifiable(
+      rows.map(
+        (row) => PlaybackSkipCount(
+          trackKey: row['track_key']! as String,
+          artists: _decodeStringList(row['artists_json']),
+          count: _int(row['skip_count']),
+          lastSkippedAt: DateTime.parse(row['last_skipped_at']! as String),
+        ),
+      ),
+    );
+  }
+
   Future<void> recordPlaybackEvent(PlaybackEvent event) async {
     final sessionId = _requiredText(event.sessionId, 'sessionId');
     final trackId = _requiredText(event.trackId, 'trackId');
@@ -830,6 +900,11 @@ class LocalDatabaseService {
           where: 'played_at < ?',
           whereArgs: <Object?>[cutoff],
         );
+        await transaction.delete(
+          'playback_skips',
+          where: 'skipped_at < ?',
+          whereArgs: <Object?>[cutoff],
+        );
       }
 
       var removedByCount = 0;
@@ -842,6 +917,18 @@ class LocalDatabaseService {
             SELECT session_id
             FROM playback_events
             ORDER BY played_at DESC, session_id DESC
+            LIMIT -1 OFFSET ?
+          )
+          ''',
+          <Object?>[maxEvents],
+        );
+        await transaction.rawDelete(
+          '''
+          DELETE FROM playback_skips
+          WHERE session_id IN (
+            SELECT session_id
+            FROM playback_skips
+            ORDER BY skipped_at DESC, session_id DESC
             LIMIT -1 OFFSET ?
           )
           ''',
@@ -1085,6 +1172,7 @@ class LocalDatabaseService {
     final db = await database;
     await db.transaction((transaction) async {
       await transaction.delete('playback_events');
+      await transaction.delete('playback_skips');
       await transaction.delete('related_track_candidates');
       await transaction.delete('recommendation_feed_cache');
       await transaction.update('local_tracks', <String, Object?>{
@@ -2895,6 +2983,27 @@ class LocalDatabaseService {
         is_liked INTEGER CHECK (is_liked IN (0, 1))
       )
     ''');
+    // Added without a schema version: the open-time repair creates it in
+    // existing databases, and older app versions ignore it.
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS playback_skips (
+        session_id TEXT PRIMARY KEY,
+        track_key TEXT NOT NULL,
+        track_id TEXT NOT NULL,
+        video_id TEXT,
+        title TEXT NOT NULL,
+        artists_json TEXT NOT NULL DEFAULT '[]',
+        artist_browse_ids_json TEXT NOT NULL DEFAULT '[]',
+        duration_ms INTEGER,
+        source TEXT NOT NULL,
+        skipped_at TEXT NOT NULL,
+        listened_ms INTEGER NOT NULL DEFAULT 0 CHECK (listened_ms >= 0)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_playback_skips_skipped_track '
+      'ON playback_skips(skipped_at DESC, track_key)',
+    );
     await db.execute('''
       CREATE TABLE IF NOT EXISTS related_track_candidates (
         seed_key TEXT NOT NULL,

@@ -6,8 +6,12 @@ typedef PlaybackHistoryTimerFactory =
 typedef PlaybackHistoryWriteCallback =
     Future<void> Function(PlaybackHistoryWrite write);
 
+typedef PlaybackSkipCallback = Future<void> Function(PlaybackSkip skip);
+
 abstract interface class PlaybackHistorySink {
   Future<void> persist(PlaybackHistoryWrite write);
+
+  Future<void> persistSkip(PlaybackSkip skip);
 }
 
 final playbackHistorySinkProvider = Provider<PlaybackHistorySink>((ref) {
@@ -55,6 +59,10 @@ class _DatabasePlaybackHistorySink implements PlaybackHistorySink {
       Error.throwWithStackTrace(firstError, firstStackTrace!);
     }
   }
+
+  @override
+  Future<void> persistSkip(PlaybackSkip skip) =>
+      _database.recordPlaybackSkip(skip);
 }
 
 /// Canonical catalog metadata for one logical queue item.
@@ -121,6 +129,7 @@ class PlaybackHistoryWrite {
 class QualifiedPlaybackHistoryTracker {
   QualifiedPlaybackHistoryTracker({
     required PlaybackHistoryWriteCallback onWrite,
+    this._onSkip,
     DateTime Function()? wallClock,
     Duration Function()? monotonicClock,
     String Function()? sessionIdFactory,
@@ -139,7 +148,12 @@ class QualifiedPlaybackHistoryTracker {
 
   static const Duration maximumQualificationThreshold = Duration(seconds: 30);
 
+  /// Less than this heard is passing over a song, as when pressing Next
+  /// repeatedly to reach another one, rather than skipping it.
+  static const Duration minimumSkipListen = Duration(seconds: 1);
+
   final PlaybackHistoryWriteCallback _onWrite;
+  final PlaybackSkipCallback? _onSkip;
   final DateTime Function() _wallClock;
   final String Function() _sessionIdFactory;
   final PlaybackHistoryTimerFactory _timerFactory;
@@ -196,11 +210,21 @@ class QualifiedPlaybackHistoryTracker {
     final current = _active;
     if (track == null) {
       _finishActive(completed: false);
+      // Moving to the next queue item briefly reports no track before the
+      // backend loads it. Stopping or an emptied player is not a skip.
+      if (current != null &&
+          status != PlayerStatus.stopped &&
+          status != PlayerStatus.idle) {
+        _recordSkipIfAbandoned(current);
+      }
       return;
     }
 
     if (current == null || current.track.logicalKey != track.logicalKey) {
       _finishActive(completed: false);
+      if (current != null) {
+        _recordSkipIfAbandoned(current);
+      }
       if (status != PlayerStatus.playing) {
         return;
       }
@@ -220,6 +244,7 @@ class QualifiedPlaybackHistoryTracker {
     if (session == null) {
       return;
     }
+    session.lastStatus = status;
 
     if (status == PlayerStatus.playing) {
       _resume(session);
@@ -388,6 +413,40 @@ class QualifiedPlaybackHistoryTracker {
         });
   }
 
+  /// A session replaced by another song while it was playing or paused,
+  /// before its play counted, is a skip. One that failed or was still
+  /// loading is not: the listener did not reject what they heard.
+  void _recordSkipIfAbandoned(_QualifiedPlaybackSession session) {
+    final onSkip = _onSkip;
+    if (onSkip == null ||
+        session.initialQualificationWritten ||
+        session.listened < minimumSkipListen ||
+        session.listened >= qualificationThreshold(session.track.duration) ||
+        (session.lastStatus != PlayerStatus.playing &&
+            session.lastStatus != PlayerStatus.paused)) {
+      return;
+    }
+    final track = session.track;
+    final skip = PlaybackSkip(
+      sessionId: session.sessionId,
+      trackId: track.trackId,
+      videoId: track.videoId,
+      title: track.title,
+      artists: track.artists,
+      artistBrowseIds: track.artistBrowseIds,
+      source: track.source,
+      skippedAt: _wallClock(),
+      listenedMs: session.listened.inMilliseconds,
+      durationMs: track.duration?.inMilliseconds,
+    );
+    _writeTail = _writeTail
+        .catchError((Object _) {})
+        .then((_) => onSkip(skip))
+        .catchError((Object error, StackTrace stackTrace) {
+          debugPrint('Playback skip write failed: $error\n$stackTrace');
+        });
+  }
+
   void _finishActive({required bool completed}) {
     final session = _active;
     if (session == null) {
@@ -430,6 +489,7 @@ class _QualifiedPlaybackSession {
   final DateTime startedAt;
   Duration listened = Duration.zero;
   Duration? playingSince;
+  PlayerStatus? lastStatus;
   bool initialQualificationWritten = false;
   bool completionWritten = false;
   int lastPersistedListenedMs = 0;
