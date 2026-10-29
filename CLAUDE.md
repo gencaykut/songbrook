@@ -29,10 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2672 test geçer (27 Ekim); macOS'ta 47 test ortam nedeniyle kalır. Bunlar kod hatası değil:
-  - 43'ü veritabanı testi: SQLite FFI yalnızca Windows/Linux'ta başlatılıyor; upstream CI'ı Ubuntu'da çalışıyor.
-  - 2'si `/var` ile `/private/var` yol karşılaştırması.
-  - 2'si playlist senkron testi; aynı veritabanı nedeniyle.
+- `flutter test`: 2717 test geçer (29 Ekim); macOS'ta yalnız 2 test (`/var` ile `/private/var` yol karşılaştırması) ortam nedeniyle kalır. Veritabanı testleri macOS'ta `test/flutter_test_config.dart` içindeki FFI ayarıyla çalışır (uygulama FFI'ı yalnız Windows/Linux'ta açıyor).
 
 ## Araştırma araçları
 
@@ -135,7 +132,7 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
 
 29 Ekim'de onaylanan sıra. Hatalar Astra'nın incelemesinden (6 hata, hepsi koddan doğrulandı); her biri önce düzeltilmemiş kodda kalan bir testle, sonra düzeltmeyle, ayrı commit.
 
-0. **Hazırlık: veritabanı testleri macOS'ta:** `LocalDatabaseService._configureDatabaseFactory` FFI'ı yalnız Windows/Linux'ta açıyor; macOS'ta 45 test "databaseFactory not initialized" ile düşüyor.
+0. ✅ **Hazırlık: veritabanı testleri macOS'ta (29 Ekim, yapıldı):** `LocalDatabaseService._configureDatabaseFactory` FFI'ı yalnız Windows/Linux'ta açıyor; macOS'ta 45 test "databaseFactory not initialized" ile düşüyor.
 1. **Hata 1 (P1): erişilemeyen dosyalar kütüphaneden siliniyor:** `probeLocalTrackFile` (`local_library_reconciler.dart`), `FileSystemEntity.type()` izin hatasında da `notFound` döndürüyor (Dart'ta denendi: `type`/`exists` "yok", yalnız `open` `PathAccessException`). Kayıt, geçmiş ve yerel liste bağlantıları siliniyor. Takılı olmayan harici disk / çıkarılmış SD kart da aynı yoldan siliniyor. Silmeyi yalnız üst klasör okunabilir ve dosya yoksa yap.
 2. **Hata 5 (P2, güvenlik yanı): Connect kayıtları birbirini eziyor:** `ConnectStore` oku-değiştir-yaz işlemlerini sıraya almıyor; "Unut" ile `saveKnownHost` (son adres) yarışırsa unutulan cihaz geri gelir; host'ta unutulan istemci eşleşmiş kalabilir. Tüm değişiklikleri tek kuyrukta çalıştır.
 3. **Hata 4 (P2): geri yüklemeden sonra eski çalma listesi içeriği:** `SettingsController.restoreBackupFile`, `catalogPlaylistsProvider`/`catalogPlaylistProvider`'ı yenilemiyor (autoDispose değiller).
