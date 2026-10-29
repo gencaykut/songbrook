@@ -108,6 +108,7 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   ended, after switching tabs while the next page was loading.
 - Fixed lyrics translation failing in Turkish, Portuguese, French, Korean,
   Chinese and Japanese. It only accepted Spanish and English.
+- Fixed SponsorBlock lookups that timed out leaving their connection open.
 
 ## 1.2.9+129 — 2026-10-12
 

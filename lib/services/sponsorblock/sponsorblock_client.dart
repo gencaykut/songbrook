@@ -33,19 +33,30 @@ class SponsorBlockClient {
   final Uri _baseUri;
   final Duration timeout;
   final _segments = <String, Future<List<SponsorBlockSegment>>>{};
+  final _openClients = <HttpClient>{};
 
   Future<List<SponsorBlockSegment>> musicOffTopicSegments(String videoId) {
     return _segments.putIfAbsent(videoId, () async {
+      final client = _clientFactory()..connectionTimeout = timeout;
+      _openClients.add(client);
       try {
-        return await _load(videoId).timeout(timeout);
+        // A server that accepts the connection but never answers would keep
+        // the request open past the timeout; closing the client ends it.
+        return await _load(client, videoId).timeout(timeout);
       } catch (_) {
         _segments.remove(videoId);
         rethrow;
+      } finally {
+        _openClients.remove(client);
+        client.close(force: true);
       }
     });
   }
 
-  Future<List<SponsorBlockSegment>> _load(String videoId) async {
+  Future<List<SponsorBlockSegment>> _load(
+    HttpClient client,
+    String videoId,
+  ) async {
     final prefix = sha256
         .convert(utf8.encode(videoId))
         .toString()
@@ -57,26 +68,25 @@ class SponsorBlockClient {
         'actionTypes': '["skip"]',
       },
     );
-    final client = _clientFactory()..connectionTimeout = timeout;
-    try {
-      final request = await client.getUrl(uri);
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      // No video in the bucket has segments.
-      if (response.statusCode == HttpStatus.notFound) return const [];
-      if (response.statusCode != HttpStatus.ok) {
-        throw HttpException(
-          'SponsorBlock HTTP ${response.statusCode}',
-          uri: uri,
-        );
-      }
-      return parseSponsorBlockSegments(jsonDecode(body), videoId: videoId);
-    } finally {
-      client.close(force: true);
+    final request = await client.getUrl(uri);
+    final response = await request.close();
+    final body = await response.transform(utf8.decoder).join();
+    // No video in the bucket has segments.
+    if (response.statusCode == HttpStatus.notFound) return const [];
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException('SponsorBlock HTTP ${response.statusCode}', uri: uri);
     }
+    return parseSponsorBlockSegments(jsonDecode(body), videoId: videoId);
   }
 
-  void close() => _segments.clear();
+  /// Forgets the answers and ends requests still waiting.
+  void close() {
+    _segments.clear();
+    for (final client in _openClients.toList()) {
+      client.close(force: true);
+    }
+    _openClients.clear();
+  }
 }
 
 /// Picks [videoId]'s skippable `music_offtopic` segments out of a hash
