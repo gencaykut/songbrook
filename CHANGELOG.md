@@ -94,6 +94,10 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
 - Fixed every challenge-based playback fallback (EJS and Web PO token clients)
   failing on iOS and macOS: WebKit's load of the headless harness document was
   cancelled, and BotGuard passed typed-data arguments WebKit rejects.
+- Fixed downloaded songs being removed from the library, with their history
+  and playlist entries, when their folder could not be read or was not there
+  (an unmounted drive or a removed SD card). Only a file missing from a
+  readable folder now counts as deleted.
 
 ## 1.2.9+129 — 2026-10-12
 

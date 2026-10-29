@@ -101,6 +101,103 @@ void main() {
     },
   );
 
+  group('probeLocalTrackFile', () {
+    late Directory directory;
+
+    setUp(() async {
+      directory = await Directory.systemTemp.createTemp('bstream-file-probe-');
+    });
+
+    tearDown(() async {
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['-R', 'u+rwx', directory.path]);
+      }
+      await directory.delete(recursive: true);
+    });
+
+    test('reports a file it can see as present', () async {
+      final file = File(p.join(directory.path, 'song.m4a'));
+      await file.writeAsBytes(const [1]);
+
+      expect(
+        await probeLocalTrackFile(file.path),
+        LocalTrackFileAvailability.present,
+      );
+    });
+
+    test('reports a file absent from a readable folder as missing', () async {
+      expect(
+        await probeLocalTrackFile(p.join(directory.path, 'deleted.m4a')),
+        LocalTrackFileAvailability.missing,
+      );
+    });
+
+    test(
+      'reports a file in a folder it may not read as inaccessible',
+      () async {
+        final locked = Directory(p.join(directory.path, 'locked'));
+        await locked.create();
+        final file = File(p.join(locked.path, 'song.m4a'));
+        await file.writeAsBytes(const [1]);
+        await Process.run('chmod', ['000', locked.path]);
+
+        expect(
+          await probeLocalTrackFile(file.path),
+          LocalTrackFileAvailability.inaccessible,
+        );
+      },
+      // POSIX permissions only; root reads through them.
+      skip: Platform.isWindows,
+    );
+
+    test('reports a file whose folder is gone, like an unmounted drive, as '
+        'inaccessible', () async {
+      expect(
+        await probeLocalTrackFile(
+          p.join(directory.path, 'Volumes', 'Music', 'song.m4a'),
+        ),
+        LocalTrackFileAvailability.inaccessible,
+      );
+    });
+  });
+
+  test('keeps a track whose folder may not be read', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'bstream-library-locked-',
+    );
+    final databaseService = _TestLocalDatabaseService(
+      p.join(directory.path, 'library.db'),
+    );
+    final locked = Directory(p.join(directory.path, 'locked'));
+    addTearDown(() async {
+      await Process.run('chmod', ['-R', 'u+rwx', locked.path]);
+      await databaseService.close();
+      await directory.delete(recursive: true);
+    });
+    final repository = LibraryRepositoryImpl(
+      LocalMusicDataSource(databaseService),
+    );
+    await locked.create();
+    final file = File(p.join(locked.path, 'song.m4a'));
+    await file.writeAsBytes(const [1, 2, 3]);
+    await repository.saveLocalTrack(_track('locked', file.path, played: true));
+    await Process.run('chmod', ['000', locked.path]);
+
+    final result = await LocalLibraryReconciler(
+      repository,
+      probeLocalTrackFile,
+    ).reconcile();
+
+    expect(result.inaccessibleTrackIds, {'locked'});
+    expect(result.removedTrackIds, isEmpty);
+    expect((await repository.getLocalTracks()).map((track) => track.id), [
+      'locked',
+    ]);
+    expect((await repository.getHistory()).map((track) => track.id), [
+      'locked',
+    ]);
+  }, skip: Platform.isWindows);
+
   test('keeps a track when the filesystem check is inaccessible', () async {
     final track = _track('protected', 'protected.m4a');
     final repository = _FakeLibraryRepository(track);

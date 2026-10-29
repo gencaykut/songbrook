@@ -16,9 +16,33 @@ Future<LocalTrackFileAvailability> probeLocalTrackFile(String path) async {
 
   try {
     final type = await FileSystemEntity.type(normalized, followLinks: true);
-    return type == FileSystemEntityType.file
-        ? LocalTrackFileAvailability.present
-        : LocalTrackFileAvailability.missing;
+    if (type == FileSystemEntityType.file) {
+      return LocalTrackFileAvailability.present;
+    }
+    if (type != FileSystemEntityType.notFound) {
+      return LocalTrackFileAvailability.missing;
+    }
+    return await _probeUnseenFile(normalized);
+  } on FileSystemException {
+    return LocalTrackFileAvailability.inaccessible;
+  }
+}
+
+/// `FileSystemEntity.type` also answers notFound when the file cannot be
+/// inspected, for example in a folder the app may not read. Only a file that
+/// is absent from a folder that is there and readable counts as deleted; a
+/// folder that is gone, such as an unmounted drive or a removed SD card, keeps
+/// the library entry.
+Future<LocalTrackFileAvailability> _probeUnseenFile(String path) async {
+  if (!await File(path).parent.exists()) {
+    return LocalTrackFileAvailability.inaccessible;
+  }
+  try {
+    final handle = await File(path).open();
+    await handle.close();
+    return LocalTrackFileAvailability.present;
+  } on PathNotFoundException {
+    return LocalTrackFileAvailability.missing;
   } on FileSystemException {
     return LocalTrackFileAvailability.inaccessible;
   }
