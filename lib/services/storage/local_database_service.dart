@@ -775,6 +775,27 @@ class LocalDatabaseService {
     );
   }
 
+  /// The listening history's most played songs, for the library's listening
+  /// lists. Counts only plays since [since]; with [lastPlayedBefore], only
+  /// songs not played since then; with [minPlayCount], only songs played at
+  /// least that often.
+  Future<List<RecommendationSeed>> getMostPlayedTracks({
+    required int limit,
+    DateTime? since,
+    DateTime? lastPlayedBefore,
+    int minPlayCount = 1,
+  }) {
+    return _recommendationSeeds(
+      since: since,
+      // Only qualified listens are stored; every one of them counts.
+      minListenedMs: 0,
+      limit: limit,
+      order: _RecommendationSeedOrder.mostPlayed,
+      lastPlayedBefore: lastPlayedBefore,
+      minPlayCount: minPlayCount,
+    );
+  }
+
   Future<List<RecommendationSeed>> getRecentRecommendationSeeds({
     int limit = 20,
     DateTime? since,
@@ -1665,6 +1686,8 @@ class LocalDatabaseService {
     required int minListenedMs,
     required int limit,
     required _RecommendationSeedOrder order,
+    DateTime? lastPlayedBefore,
+    int minPlayCount = 1,
   }) async {
     if (limit <= 0) {
       throw ArgumentError.value(limit, 'limit', 'Must be greater than zero.');
@@ -1682,6 +1705,12 @@ class LocalDatabaseService {
       where.add('played_at >= ?');
       arguments.add(since.toUtc().toIso8601String());
     }
+    final having = <String>['COUNT(*) >= ?'];
+    arguments.add(minPlayCount);
+    if (lastPlayedBefore != null) {
+      having.add('MAX(events.played_at) < ?');
+      arguments.add(lastPlayedBefore.toUtc().toIso8601String());
+    }
     arguments.add(limit);
 
     final orderBy = switch (order) {
@@ -1696,6 +1725,13 @@ class LocalDatabaseService {
       ''',
       _RecommendationSeedOrder.recent =>
         '''
+        last_played_at DESC,
+        track_key ASC
+      ''',
+      _RecommendationSeedOrder.mostPlayed =>
+        '''
+        play_count DESC,
+        total_listened_ms DESC,
         last_played_at DESC,
         track_key ASC
       ''',
@@ -1733,6 +1769,7 @@ class LocalDatabaseService {
           ) AS seed_is_liked
         FROM filtered AS events
         GROUP BY events.track_key
+        HAVING ${having.join(' AND ')}
       ),
       ranked AS (
         SELECT
@@ -3133,7 +3170,7 @@ Map<String, Object?> _playlistEntryToMap(PlaylistEntry entry) {
   };
 }
 
-enum _RecommendationSeedOrder { top, recent }
+enum _RecommendationSeedOrder { top, recent, mostPlayed }
 
 RecommendationSeed _recommendationSeedFromAggregatedRow(
   Map<String, Object?> row,

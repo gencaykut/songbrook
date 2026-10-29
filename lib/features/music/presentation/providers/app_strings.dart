@@ -673,6 +673,14 @@ class AppStrings {
   String get downloads => choose('Descargas', 'Downloads');
   String get downloadedSongs =>
       choose('Canciones descargadas', 'Downloaded songs');
+  String get mostPlayed => choose('Lo más escuchado', 'Most played');
+  String get notPlayedLately =>
+      choose('Hace tiempo que no las escuchas', 'Not played lately');
+  String get lastThirtyDays => choose('Últimos 30 días', 'Last 30 days');
+  String get allTime => choose('Desde siempre', 'All time');
+  String timesPlayed(int count) => count == 1
+      ? choose('Escuchada una vez', 'Played once')
+      : choose('Escuchada $count veces', 'Played $count times');
   String get streamOnlySong => choose(
     'No descargada; requiere conexión',
     'Not downloaded; connection required',

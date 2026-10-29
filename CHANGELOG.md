@@ -30,6 +30,11 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   related radio and other songs by its artist. Tapping one plays it next and
   keeps the rest of the queue, even when related radio later adds more
   songs.
+- Added two lists built from the listening history to the library: Most
+  played (last 30 days or all time, with each song's play count) and Not
+  played lately (songs played at least three times but not in 60 days).
+  They play like a queue from the tapped song and stay hidden while
+  recommendation history is off.
 - Added Songbrook Connect (iPhone and Mac, same Wi-Fi network): pair an
   iPhone with the Mac once using a six-digit code. After that, the device
   that is not playing shows what the other one plays and controls it, and

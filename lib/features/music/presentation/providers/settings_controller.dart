@@ -1198,7 +1198,8 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       // Drop the in-memory artist-release cache together with SQLite data.
       // A later qualifying listen creates a completely fresh engine.
       ..invalidate(personalizedHomeFeedSourceProvider)
-      ..invalidate(homeRecommendationsProvider);
+      ..invalidate(homeRecommendationsProvider)
+      ..invalidate(listeningListProvider);
   }
 
   Future<void> setLocalMusicFilters(Set<LocalMusicFilter> filters) async {
@@ -1398,7 +1399,8 @@ class SettingsController extends AsyncNotifier<SettingsState> {
         ..invalidate(catalogPlaylistsProvider)
         ..invalidate(catalogPlaylistProvider)
         ..invalidate(personalizedHomeFeedSourceProvider)
-        ..invalidate(homeRecommendationsProvider);
+        ..invalidate(homeRecommendationsProvider)
+        ..invalidate(listeningListProvider);
     }
   }
 

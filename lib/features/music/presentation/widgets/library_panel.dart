@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -15,7 +16,9 @@ import '../../../../core/utils/share_position_origin.dart';
 import '../../../../core/widgets/app_shared_widgets.dart';
 import '../../../../core/widgets/marquee_text.dart';
 import '../../../../services/player/player_service.dart';
+import '../../../../services/sharing/bstream_track_link.dart';
 import '../../../../services/youtube_music/account/youtube_music_account.dart';
+import '../../../../services/youtube_music/innertube_search_service.dart';
 import '../../domain/entities/catalog_playlist.dart';
 import '../../domain/entities/download_result.dart';
 import '../../domain/entities/local_track.dart';
@@ -24,6 +27,7 @@ import '../../domain/entities/playlist_entry.dart';
 import '../../domain/entities/track_info.dart';
 import '../providers/local_audio_availability.dart';
 import '../providers/music_providers.dart';
+import '../providers/player/related_radio_queue_extender.dart';
 import '../providers/subscribed_artists_controller.dart';
 import '../providers/youtube_music_auth_controller.dart';
 import '../pages/artist_profile_page.dart';
@@ -39,7 +43,7 @@ import 'scrolled_under_tab_frame.dart';
 import 'source_image.dart';
 import 'track_play_button.dart';
 
-enum _LibraryRouteType { root, downloads, playlist }
+enum _LibraryRouteType { root, downloads, playlist, listening }
 
 enum _TrackMenuAction {
   download,
@@ -69,22 +73,33 @@ const EdgeInsets _libraryOverviewContentPadding = EdgeInsets.only(
 );
 
 class _LibraryRoute {
-  const _LibraryRoute.root() : type = _LibraryRouteType.root, playlistId = null;
+  const _LibraryRoute.root()
+    : type = _LibraryRouteType.root,
+      playlistId = null,
+      listeningKind = null;
 
   const _LibraryRoute.downloads()
     : type = _LibraryRouteType.downloads,
-      playlistId = null;
+      playlistId = null,
+      listeningKind = null;
 
   const _LibraryRoute.playlist(this.playlistId)
-    : type = _LibraryRouteType.playlist;
+    : type = _LibraryRouteType.playlist,
+      listeningKind = null;
+
+  const _LibraryRoute.listening(ListeningListKind this.listeningKind)
+    : type = _LibraryRouteType.listening,
+      playlistId = null;
 
   final _LibraryRouteType type;
   final String? playlistId;
+  final ListeningListKind? listeningKind;
 
   String get key => switch (type) {
     _LibraryRouteType.root => 'root',
     _LibraryRouteType.downloads => 'downloads',
     _LibraryRouteType.playlist => 'playlist-$playlistId',
+    _LibraryRouteType.listening => 'listening-${listeningKind!.name}',
   };
 }
 
@@ -195,6 +210,12 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
     final playlists = ref.watch(playlistsControllerProvider);
     final catalogPlaylists = ref.watch(catalogPlaylistsProvider);
     final subscribedArtists = ref.watch(subscribedArtistsProvider);
+    final mostPlayed = ref.watch(
+      listeningListProvider(ListeningListKind.mostPlayedAllTime),
+    );
+    final notPlayedLately = ref.watch(
+      listeningListProvider(ListeningListKind.notPlayedLately),
+    );
     final strings = ref.watch(appStringsProvider);
     final enablesTrackSelection = AppPlatform.isMobileTargetPlatform(
       Theme.of(context).platform,
@@ -237,11 +258,23 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
               playlists: playlists,
               catalogPlaylists: catalogPlaylists,
               subscribedArtists: subscribedArtists,
+              mostPlayed: mostPlayed.value ?? const <ListeningListEntry>[],
+              notPlayedLately:
+                  notPlayedLately.value ?? const <ListeningListEntry>[],
               strings: strings,
               onOpenDownloads: _openDownloads,
+              onOpenListening: _openListening,
               onOpenPlaylist: _openPlaylist,
               onCreatePlaylist: () => _showCreateDialog(context),
               onOpenArtist: _openSubscribedArtist,
+            ),
+            _LibraryRouteType.listening => _ListeningListView(
+              key: ValueKey('library-listening-${_route.listeningKind!.name}'),
+              kind: _route.listeningKind!,
+              libraryTracks: tracks.value ?? const <LocalTrack>[],
+              bottomContentPadding: widget.bottomContentPadding,
+              onBack: _goRoot,
+              onOpenPlayer: widget.onOpenPlayer,
             ),
             _LibraryRouteType.downloads => tracks.when(
               data: (items) => _TrackListView(
@@ -432,6 +465,19 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
     setState(() {
       _routeDirection = 1;
       _route = const _LibraryRoute.downloads();
+    });
+    widget.navigationController?._notifyRouteChanged(_route);
+  }
+
+  void _openListening(ListeningListKind kind) {
+    // The lists stay cached while the library is shown; include the songs
+    // played since.
+    ref.invalidate(listeningListProvider);
+    _selectedTrackIds.clear();
+    _filterController.clear();
+    setState(() {
+      _routeDirection = 1;
+      _route = _LibraryRoute.listening(kind);
     });
     widget.navigationController?._notifyRouteChanged(_route);
   }
@@ -816,8 +862,11 @@ class _LibraryRootView extends StatelessWidget {
     required this.playlists,
     required this.catalogPlaylists,
     required this.subscribedArtists,
+    required this.mostPlayed,
+    required this.notPlayedLately,
     required this.strings,
     required this.onOpenDownloads,
+    required this.onOpenListening,
     required this.onOpenPlaylist,
     required this.onCreatePlaylist,
     required this.onOpenArtist,
@@ -828,8 +877,11 @@ class _LibraryRootView extends StatelessWidget {
   final AsyncValue<List<Playlist>> playlists;
   final AsyncValue<List<CatalogPlaylist>> catalogPlaylists;
   final AsyncValue<List<RemoteSubscribedArtist>> subscribedArtists;
+  final List<ListeningListEntry> mostPlayed;
+  final List<ListeningListEntry> notPlayedLately;
   final AppStrings strings;
   final VoidCallback onOpenDownloads;
+  final ValueChanged<ListeningListKind> onOpenListening;
   final ValueChanged<String> onOpenPlaylist;
   final VoidCallback onCreatePlaylist;
   final ValueChanged<RemoteSubscribedArtist> onOpenArtist;
@@ -878,6 +930,33 @@ class _LibraryRootView extends StatelessWidget {
             ),
           ),
         ),
+        if (mostPlayed.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(6, appCardGap, 6, 0),
+              child: _LibraryEntry(
+                key: const ValueKey('library-most-played-entry'),
+                icon: Icons.trending_up_rounded,
+                title: strings.mostPlayed,
+                subtitle: _listeningSubtitle(mostPlayed),
+                onTap: () =>
+                    onOpenListening(ListeningListKind.mostPlayedRecently),
+              ),
+            ),
+          ),
+        if (notPlayedLately.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(6, appCardGap, 6, 0),
+              child: _LibraryEntry(
+                key: const ValueKey('library-not-played-lately-entry'),
+                icon: Icons.history_rounded,
+                title: strings.notPlayedLately,
+                subtitle: _listeningSubtitle(notPlayedLately),
+                onTap: () => onOpenListening(ListeningListKind.notPlayedLately),
+              ),
+            ),
+          ),
         const SliverToBoxAdapter(child: SizedBox(height: 28)),
         SliverToBoxAdapter(
           child: Padding(
@@ -927,6 +1006,11 @@ class _LibraryRootView extends StatelessWidget {
       ],
     );
   }
+
+  String _listeningSubtitle(List<ListeningListEntry> entries) => [
+    strings.songCount(entries.length),
+    ...entries.take(3).map((entry) => entry.track.title),
+  ].join(' · ');
 }
 
 class _CatalogDisplayItem {
@@ -1625,6 +1709,183 @@ class _CatalogTrackTileState extends ConsumerState<_CatalogTrackTile> {
       case _TrackMenuAction.deleteTrack:
         return;
     }
+  }
+}
+
+/// A list the library builds from the listening history. Tapping a song
+/// plays the list from it, continued by related radio like Home's shelves.
+class _ListeningListView extends ConsumerStatefulWidget {
+  const _ListeningListView({
+    required this.kind,
+    required this.libraryTracks,
+    required this.bottomContentPadding,
+    required this.onBack,
+    required this.onOpenPlayer,
+    super.key,
+  });
+
+  final ListeningListKind kind;
+  final List<LocalTrack> libraryTracks;
+  final double bottomContentPadding;
+  final VoidCallback onBack;
+  final VoidCallback onOpenPlayer;
+
+  @override
+  ConsumerState<_ListeningListView> createState() => _ListeningListViewState();
+}
+
+class _ListeningListViewState extends ConsumerState<_ListeningListView> {
+  late ListeningListKind _kind = widget.kind;
+
+  bool get _isMostPlayed => _kind != ListeningListKind.notPlayedLately;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = ref.watch(appStringsProvider);
+    final entries = ref.watch(listeningListProvider(_kind));
+    final playback = ref.watch(
+      playerControllerProvider.select((player) {
+        final snapshot = player.value;
+        return (trackId: snapshot?.trackId, status: snapshot?.status);
+      }),
+    );
+    final shown = entries.value ?? const <ListeningListEntry>[];
+    return ScrolledUnderTabFrame(
+      surfaceKey: const ValueKey('library-detail-header-surface'),
+      scrollKey: const ValueKey('library-listening-scroll'),
+      header: _DetailHeader(
+        key: const ValueKey('library-detail-header'),
+        title: _isMostPlayed ? strings.mostPlayed : strings.notPlayedLately,
+        subtitle: strings.songCount(shown.length),
+        onBack: widget.onBack,
+      ),
+      slivers: <Widget>[
+        if (_isMostPlayed)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: SegmentedButton<ListeningListKind>(
+                key: const ValueKey('library-listening-window'),
+                // The selected fill comes from the accent, which can be
+                // white; the check keeps the choice visible with any accent.
+                segments: <ButtonSegment<ListeningListKind>>[
+                  ButtonSegment(
+                    value: ListeningListKind.mostPlayedRecently,
+                    label: Text(strings.lastThirtyDays),
+                  ),
+                  ButtonSegment(
+                    value: ListeningListKind.mostPlayedAllTime,
+                    label: Text(strings.allTime),
+                  ),
+                ],
+                selected: <ListeningListKind>{_kind},
+                onSelectionChanged: (selection) =>
+                    setState(() => _kind = selection.single),
+              ),
+            ),
+          ),
+        entries.when(
+          data: (items) => items.isEmpty
+              ? SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      strings.noSongsToShow,
+                      style: TextStyle(
+                        color: AppColors.contentSubtitleFor(context),
+                      ),
+                    ),
+                  ),
+                )
+              : SliverPadding(
+                  padding: EdgeInsets.only(
+                    bottom: widget.bottomContentPadding + 12,
+                  ),
+                  sliver: SliverList.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final entry = items[index];
+                      final track = entry.track;
+                      final isCurrent = playback.trackId == track.id;
+                      return Padding(
+                        key: ValueKey('library-listening-row-${track.id}'),
+                        padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                        child: _LibraryEntry(
+                          icon: Icons.audiotrack_rounded,
+                          leading: _LocalArtwork(
+                            source: track.thumbnailUrl,
+                            fallbackSource: track.catalogThumbnailUrl,
+                          ),
+                          title: track.title,
+                          subtitle:
+                              '${track.artist} · '
+                              '${strings.timesPlayed(entry.playCount)}',
+                          trailing: isCurrent
+                              ? NowPlayingEqualizer(
+                                  isPlaying:
+                                      playback.status == PlayerStatus.playing,
+                                  width: 28,
+                                )
+                              : const SizedBox.shrink(),
+                          onTap: () => _play(items, index),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          loading: () => const SliverToBoxAdapter(child: _LoadingRow()),
+          error: (error, _) =>
+              SliverToBoxAdapter(child: _ErrorRow(error: error)),
+        ),
+      ],
+    );
+  }
+
+  void _play(List<ListeningListEntry> entries, int index) {
+    final queue = [
+      for (final entry in entries)
+        RecommendationPlaybackItem(
+          track: entry.track,
+          localTrack: _localTrackFor(entry.item),
+        ),
+    ];
+    final selected = queue[index];
+    RecommendationQueueExtender? queueExtender;
+    final service = ref.read(youtubeMusicSearchProvider);
+    final link = const BStreamTrackLinkCodec().tryFromTrack(selected.track);
+    if (service is YouTubeMusicRelated && link != null) {
+      queueExtender = buildRelatedRadioQueueExtender(
+        related: service as YouTubeMusicRelated,
+        seedVideoId: link.videoId,
+        initialQueue: queue,
+      );
+    }
+    final playFuture = ref
+        .read(playerControllerProvider.notifier)
+        .playRecommendation(
+          selected,
+          queue: queue,
+          queueSourceId: 'library-listening:${_kind.name}',
+          queueExtender: queueExtender,
+        );
+    widget.onOpenPlayer();
+    unawaited(playFuture);
+  }
+
+  /// The downloaded copy of a song, so it plays from the file.
+  LocalTrack? _localTrackFor(HomeRecommendationTrackItem item) {
+    final localTrackId = item.localTrackId?.trim();
+    final recommendationId = item.track.id.trim();
+    for (final track in widget.libraryTracks) {
+      final sourceId = track.sourceId?.trim();
+      if ((localTrackId != null &&
+              localTrackId.isNotEmpty &&
+              track.id == localTrackId) ||
+          (recommendationId.isNotEmpty && sourceId == recommendationId)) {
+        return track;
+      }
+    }
+    return null;
   }
 }
 

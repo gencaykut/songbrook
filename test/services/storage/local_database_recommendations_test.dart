@@ -170,6 +170,78 @@ void main() {
       },
     );
 
+    test(
+      'most played tracks count plays and filter by window and last play',
+      () async {
+        final now = DateTime.utc(2026, 10, 29, 12);
+        var session = 0;
+        Future<void> play(String id, DateTime at, {int listenedMs = 40000}) {
+          session += 1;
+          return service.recordPlaybackEvent(
+            _event(
+              sessionId: 'session-$session',
+              trackId: id,
+              videoId: id,
+              title: 'Song $id',
+              startedAt: at,
+              playedAt: at.add(const Duration(minutes: 3)),
+              listenedMs: listenedMs,
+            ),
+          );
+        }
+
+        // "old": a favourite months ago, not played since.
+        for (var day = 0; day < 5; day += 1) {
+          await play('old', now.subtract(Duration(days: 120 + day)));
+        }
+        // "steady": played often, also recently.
+        for (var day = 0; day < 4; day += 1) {
+          await play('steady', now.subtract(Duration(days: 2 + day * 40)));
+        }
+        // "new": several plays this week only; a short listen still counts
+        // because only qualified listens are stored.
+        for (var day = 0; day < 3; day += 1) {
+          await play(
+            'new',
+            now.subtract(Duration(days: day)),
+            listenedMs: 9000,
+          );
+        }
+        // "once": played a single time long ago.
+        await play('once', now.subtract(const Duration(days: 200)));
+
+        final allTime = await service.getMostPlayedTracks(limit: 10);
+        expect(allTime.map((seed) => seed.trackKey), [
+          'old',
+          'steady',
+          'new',
+          'once',
+        ]);
+        expect(allTime.map((seed) => seed.playCount), [5, 4, 3, 1]);
+
+        final recent = await service.getMostPlayedTracks(
+          limit: 10,
+          since: now.subtract(const Duration(days: 30)),
+        );
+        expect(recent.map((seed) => seed.trackKey), ['new', 'steady']);
+        expect(recent.map((seed) => seed.playCount), [3, 1]);
+
+        final notLately = await service.getMostPlayedTracks(
+          limit: 10,
+          lastPlayedBefore: now.subtract(const Duration(days: 60)),
+          minPlayCount: 3,
+        );
+        expect(notLately.map((seed) => seed.trackKey), ['old']);
+
+        expect(
+          (await service.getMostPlayedTracks(
+            limit: 2,
+          )).map((seed) => seed.trackKey),
+          ['old', 'steady'],
+        );
+      },
+    );
+
     test('replaces related snapshots, deduplicates and enforces TTL', () async {
       final fetchedAt = DateTime.utc(2026, 8, 20);
       await service.upsertRelatedCandidates(

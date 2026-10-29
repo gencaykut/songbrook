@@ -505,6 +505,12 @@ const Map<String, String> turkishAppStrings = <String, String>{
       'Algılanan sessizlikleri otomatik olarak kısaltır; şarkılar beklemeden başlar ve birbirine geçer.',
   'Normalize volume': 'Ses seviyesini dengele',
   'Autoplay': 'Otomatik oynatma',
+  'Most played': 'En çok dinlediklerin',
+  'Not played lately': 'Bir süredir dinlemediklerin',
+  'Last 30 days': 'Son 30 gün',
+  'All time': 'Tüm zamanlar',
+  'Played once': 'Bir kez dinlendi',
+  'Played ZXQPH0X times': 'ZXQPH0X kez dinlendi',
   'Similar': 'Benzer',
   'Control this Mac\'s music from your iPhone on the same network.':
       'Aynı ağdaki iPhone\'undan bu Mac\'teki müziği yönet.',

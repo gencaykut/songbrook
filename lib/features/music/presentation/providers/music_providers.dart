@@ -143,6 +143,7 @@ part 'download_controller.dart';
 part 'download_directory_migrator.dart';
 part 'local_track_download_helper.dart';
 part 'library_csv_transfer_controller.dart';
+part 'listening_lists.dart';
 part 'lyrics_offset_controller.dart';
 part 'playback_history_tracker.dart';
 part 'player/player_queue_components.dart';
