@@ -102,6 +102,8 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   device or host forgotten while another was paired, forgotten or reconnected
   could come back as still paired, and a forgotten Mac could be re-added by a
   reconnection in progress.
+- Fixed the library showing the old playlists' songs after restoring a backup,
+  until the app was restarted.
 
 ## 1.2.9+129 — 2026-10-12
 

@@ -1395,6 +1395,8 @@ class SettingsController extends AsyncNotifier<SettingsState> {
         ..invalidate(libraryTracksProvider)
         ..invalidate(historyProvider)
         ..invalidate(playlistsControllerProvider)
+        ..invalidate(catalogPlaylistsProvider)
+        ..invalidate(catalogPlaylistProvider)
         ..invalidate(personalizedHomeFeedSourceProvider)
         ..invalidate(homeRecommendationsProvider);
     }
