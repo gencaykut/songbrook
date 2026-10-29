@@ -104,6 +104,8 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   reconnection in progress.
 - Fixed the library showing the old playlists' songs after restoring a backup,
   until the app was restarted.
+- Fixed search results stopping at the first page, with a spinner that never
+  ended, after switching tabs while the next page was loading.
 
 ## 1.2.9+129 — 2026-10-12
 

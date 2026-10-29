@@ -135,6 +135,16 @@ class SearchController extends AsyncNotifier<SearchState> {
       if (current.loadingCategory != null) {
         _searchGeneration++;
         ref.read(remotePlaybackCacheProvider).cancelSearchWarmups();
+        // A next page still loading is discarded with this generation, so
+        // its category must not stay marked as loading more.
+        state = AsyncData(
+          current.copyWith(
+            selectedCategory: category,
+            loadingCategory: null,
+            loadingMoreCategory: null,
+          ),
+        );
+        return;
       }
       state = AsyncData(
         current.copyWith(selectedCategory: category, loadingCategory: null),
@@ -147,6 +157,7 @@ class SearchController extends AsyncNotifier<SearchState> {
     final loadingState = current.copyWith(
       selectedCategory: category,
       loadingCategory: category,
+      loadingMoreCategory: null,
     );
     state = AsyncData(loadingState);
     await _loadCategory(loadingState, category, generation);

@@ -434,6 +434,114 @@ void main() {
       expect(search.loadingMoreCategory, isNull);
     });
 
+    test(
+      'opening another tab while a page loads leaves Songs able to page',
+      () async {
+        final abandoned = Completer<InnerTubeSearchResultPage<InnerTubeSong>>();
+        final catalog = _PagedCatalog(
+          songs: {
+            null: [
+              InnerTubeSearchResultPage(
+                items: [song('a0000000001')],
+                continuation: 'page-2',
+              ),
+            ],
+            'page-2': [
+              abandoned.future,
+              InnerTubeSearchResultPage(items: [song('c0000000001')]),
+            ],
+          },
+          playlists: {
+            null: [
+              InnerTubeSearchResultPage(
+                items: const [
+                  InnerTubePlaylist(browseId: 'VLPLbest0001', title: 'Best'),
+                ],
+              ),
+            ],
+          },
+        );
+        final container = pagedContainer(catalog);
+        await container.read(searchControllerProvider.future);
+        final controller = container.read(searchControllerProvider.notifier);
+
+        await controller.submit('artist');
+        final pending = controller.loadMore();
+        await controller.selectCategory(SearchCategory.playlists);
+        abandoned.complete(
+          InnerTubeSearchResultPage(items: [song('z0000000001')]),
+        );
+        await pending;
+        await controller.selectCategory(SearchCategory.songs);
+
+        var search = container.read(searchControllerProvider).value!;
+        expect(search.isSelectedCategoryLoadingMore, isFalse);
+        expect(search.loadingMoreCategory, isNull);
+
+        await controller.loadMore();
+
+        search = container.read(searchControllerProvider).value!;
+        expect(search.selectedTracks.map((track) => track.id), [
+          'a0000000001',
+          'c0000000001',
+        ]);
+        expect(catalog.songContinuations, [null, 'page-2', 'page-2']);
+      },
+    );
+
+    test('returning to Songs while another tab loads unlocks paging', () async {
+      final abandoned = Completer<InnerTubeSearchResultPage<InnerTubeSong>>();
+      final playlistsLoading =
+          Completer<InnerTubeSearchResultPage<InnerTubePlaylist>>();
+      final catalog = _PagedCatalog(
+        songs: {
+          null: [
+            InnerTubeSearchResultPage(
+              items: [song('a0000000001')],
+              continuation: 'page-2',
+            ),
+          ],
+          'page-2': [
+            abandoned.future,
+            InnerTubeSearchResultPage(items: [song('c0000000001')]),
+          ],
+        },
+        playlists: {
+          null: [playlistsLoading.future],
+        },
+      );
+      final container = pagedContainer(catalog);
+      await container.read(searchControllerProvider.future);
+      final controller = container.read(searchControllerProvider.notifier);
+
+      await controller.submit('artist');
+      final pendingPage = controller.loadMore();
+      final pendingTab = controller.selectCategory(SearchCategory.playlists);
+      await controller.selectCategory(SearchCategory.songs);
+      abandoned.complete(
+        InnerTubeSearchResultPage(items: [song('z0000000001')]),
+      );
+      playlistsLoading.complete(InnerTubeSearchResultPage(items: const []));
+      await Future.wait([pendingPage, pendingTab]);
+
+      expect(
+        container
+            .read(searchControllerProvider)
+            .value!
+            .isSelectedCategoryLoadingMore,
+        isFalse,
+      );
+      await controller.loadMore();
+      expect(
+        container
+            .read(searchControllerProvider)
+            .value!
+            .selectedTracks
+            .map((track) => track.id),
+        ['a0000000001', 'c0000000001'],
+      );
+    });
+
     test('the Playlists tab loads community playlists', () async {
       final catalog = _PagedCatalog(
         songs: {
