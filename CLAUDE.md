@@ -29,7 +29,7 @@ flutter build macos --release
 bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" songbrook-notary
 ```
 
-- `flutter test`: 2717 test geçer (29 Ekim); macOS'ta yalnız 2 test (`/var` ile `/private/var` yol karşılaştırması) ortam nedeniyle kalır. Veritabanı testleri macOS'ta `test/flutter_test_config.dart` içindeki FFI ayarıyla çalışır (uygulama FFI'ı yalnız Windows/Linux'ta açıyor).
+- `flutter test`: 2736 test geçer (29 Ekim); macOS'ta yalnız 2 test (`/var` ile `/private/var` yol karşılaştırması) ortam nedeniyle kalır. Veritabanı testleri macOS'ta `test/flutter_test_config.dart` içindeki FFI ayarıyla çalışır (uygulama FFI'ı yalnız Windows/Linux'ta açıyor).
 
 ## Araştırma araçları
 
