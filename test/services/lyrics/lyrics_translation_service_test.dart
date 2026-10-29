@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bstream_music/features/music/domain/entities/lyrics.dart';
+import 'package:bstream_music/features/music/presentation/providers/music_providers.dart';
 import 'package:bstream_music/services/lyrics/lyrics_translation_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,6 +33,46 @@ void main() {
     expect(session.calls, hasLength(1));
     expect(session.calls.single.detectOnly, isTrue);
     expect(session.closed, isTrue);
+  });
+
+  test('translates into every interface language', () async {
+    for (final language in AppLanguage.values) {
+      final session = _Session(
+        source: language == AppLanguage.english ? 'es' : 'en',
+      );
+      final service = LyricsTranslationService(sessionFactory: () => session);
+      addTearDown(service.dispose);
+      final result = await service
+          .translateDocument(_document(['One']), targetLanguage: language.code)
+          .result;
+      expect(result.syncedLines, [
+        '${language.code}:One',
+      ], reason: language.name);
+      expect(result.alreadyInTargetLanguage, isFalse, reason: language.name);
+    }
+  });
+
+  test('Chinese lyrics count as already in Chinese', () async {
+    final session = _Session(source: 'zh-CN');
+    final service = LyricsTranslationService(sessionFactory: () => session);
+    addTearDown(service.dispose);
+    final result = await service
+        .translateDocument(_document(['我会永远爱你']), targetLanguage: 'zh')
+        .result;
+    expect(result.alreadyInTargetLanguage, isTrue);
+  });
+
+  test('an unknown target language fails without a request', () async {
+    final session = _Session();
+    final service = LyricsTranslationService(sessionFactory: () => session);
+    addTearDown(service.dispose);
+    await expectLater(
+      service
+          .translateDocument(_document(['One']), targetLanguage: 'xx')
+          .result,
+      throwsA(isA<LyricsTranslationException>()),
+    );
+    expect(session.calls, isEmpty);
   });
 
   test(

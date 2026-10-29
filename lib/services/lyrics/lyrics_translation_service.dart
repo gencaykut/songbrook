@@ -138,6 +138,20 @@ class LyricsTranslationRequest {
 
 /// Fetches only on demand, serializes small batches, and keeps eight completed
 /// documents in RAM. No polling, background prefetch, or persisted lyric text.
+/// Google Translate codes the interface languages translate lyrics into.
+/// `zh` is Simplified Chinese; lyrics detected as `zh-CN` count as already
+/// in it.
+const lyricsTranslationTargetLanguages = <String>{
+  'es',
+  'en',
+  'pt',
+  'fr',
+  'ko',
+  'zh',
+  'ja',
+  'tr',
+};
+
 class LyricsTranslationService {
   LyricsTranslationService({
     LyricsTranslationSession Function()? sessionFactory,
@@ -174,7 +188,8 @@ class LyricsTranslationService {
     _active.add(request);
     unawaited(() async {
       try {
-        if (_disposed || !{'es', 'en'}.contains(targetLanguage)) {
+        if (_disposed ||
+            !lyricsTranslationTargetLanguages.contains(targetLanguage)) {
           throw const LyricsTranslationException();
         }
         final view = await Future.any([
