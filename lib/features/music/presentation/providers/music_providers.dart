@@ -140,6 +140,7 @@ export 'player/remote_playback_retry_coordinator.dart';
 export '../../domain/entities/lyrics_romanization_language.dart';
 
 part 'app_strings_provider.dart';
+part 'continue_listening_prewarm.dart';
 part 'download_controller.dart';
 part 'download_directory_migrator.dart';
 part 'local_track_download_helper.dart';
@@ -2001,6 +2002,9 @@ class HomeRecommendationsController
     _personalized = cached == null
         ? const []
         : _homeSectionsFromPersonalizedFeed(cached.feed, strings, preferences);
+    unawaited(
+      ref.read(continueListeningPrewarmProvider).maybePrewarm(_personalized),
+    );
     final artistSource = _artistSource;
     if (artistSource != null && ref.read(homeFeedActivityProvider)) {
       try {
@@ -2161,6 +2165,13 @@ class HomeRecommendationsController
             strings,
             await ref.read(listeningPreferencesLoaderProvider)(),
           );
+          if (ref.mounted) {
+            unawaited(
+              ref
+                  .read(continueListeningPrewarmProvider)
+                  .maybePrewarm(refreshedPersonalized!),
+            );
+          }
         } catch (error, stackTrace) {
           rememberError(error, stackTrace);
         }

@@ -46,6 +46,10 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   skipped go to the end, and songs by artists played at least three times
   in 90 days move up a few places. YouTube's order is otherwise kept, and
   songs already in the queue or picked by the listener are not reordered.
+- On launch, Home resolves the streams of the first three streamed songs on
+  Continue listening in the background, so tapping one starts sooner. Only
+  the stream address is fetched, not audio; it is skipped while a song is
+  already loading.
 - Added Songbrook Connect (iPhone and Mac, same Wi-Fi network): pair an
   iPhone with the Mac once using a six-digit code. After that, the device
   that is not playing shows what the other one plays and controls it, and

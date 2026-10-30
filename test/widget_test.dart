@@ -9734,6 +9734,15 @@ Widget _testApp({
       if (deviceAudioCatalog != null)
         deviceAudioCatalogProvider.overrideWithValue(deviceAudioCatalog),
       // The queue's Similar section would otherwise query YouTube Music.
+      // Prewarming resolves streams over the network after a delay; widget
+      // tests must not leave that timer or request behind.
+      continueListeningPrewarmProvider.overrideWithValue(
+        ContinueListeningPrewarmer(
+          resolve: (track) async => track,
+          playbackIsStarting: () => true,
+          delay: Duration.zero,
+        ),
+      ),
       similarSongsProvider.overrideWith(
         (ref, seed) async => (
           radio: const <InnerTubeSong>[],
