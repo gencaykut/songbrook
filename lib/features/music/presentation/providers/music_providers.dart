@@ -112,6 +112,7 @@ import 'player/catalog_playlist_playback.dart';
 import 'player/playback_identity.dart';
 import 'player/recommendation_playback_item.dart';
 import 'player/recommendation_queue_extension_coordinator.dart';
+import 'player/personalized_queue_extender.dart';
 import 'player/remote_playback_source_factory.dart';
 import 'player/remote_prefetch_coordinator.dart';
 import 'player/similar_songs.dart';
@@ -1991,9 +1992,15 @@ class HomeRecommendationsController
     if (!ref.mounted || epoch != _buildEpoch) {
       return const <HomeRecommendationSection>[];
     }
+    final preferences = cached == null
+        ? ListeningPreferences.empty
+        : await ref.read(listeningPreferencesLoaderProvider)();
+    if (!ref.mounted || epoch != _buildEpoch) {
+      return const <HomeRecommendationSection>[];
+    }
     _personalized = cached == null
         ? const []
-        : _homeSectionsFromPersonalizedFeed(cached.feed, strings);
+        : _homeSectionsFromPersonalizedFeed(cached.feed, strings, preferences);
     final artistSource = _artistSource;
     if (artistSource != null && ref.read(homeFeedActivityProvider)) {
       try {
@@ -2152,6 +2159,7 @@ class HomeRecommendationsController
           refreshedPersonalized = _homeSectionsFromPersonalizedFeed(
             feed,
             strings,
+            await ref.read(listeningPreferencesLoaderProvider)(),
           );
         } catch (error, stackTrace) {
           rememberError(error, stackTrace);
@@ -2238,19 +2246,33 @@ class HomeRecommendationsController
 
 List<HomeRecommendationSection> _homeSectionsFromPersonalizedFeed(
   PersonalizedRecommendationFeed feed,
-  AppStrings strings,
-) {
+  AppStrings strings, [
+  ListeningPreferences preferences = ListeningPreferences.empty,
+]) {
   return List<HomeRecommendationSection>.unmodifiable(
     feed.sections
         .where((section) => section.kind != PersonalizedSectionKind.mixes)
         .map((section) {
-          final items = section.items
+          final converted = section.items
               .map(
                 (item) =>
                     _homeRecommendationItemFromPersonalized(item, strings),
               )
-              .whereType<HomeRecommendationItem>()
-              .toList(growable: false);
+              .whereType<HomeRecommendationItem>();
+          // Continue listening is the listener's own history; the other
+          // shelves are suggestions and follow their preferences.
+          final items =
+              section.kind == PersonalizedSectionKind.continueListening
+              ? converted.toList(growable: false)
+              : preferences.rank(
+                  converted,
+                  trackKey: (item) => item is HomeRecommendationTrackItem
+                      ? playbackItemTrackKey(item.track)
+                      : null,
+                  artists: (item) => item is HomeRecommendationTrackItem
+                      ? trackArtists(item.track)
+                      : const <String>[],
+                );
           return HomeRecommendationSection.items(
             title: switch (section.kind) {
               PersonalizedSectionKind.continueListening =>

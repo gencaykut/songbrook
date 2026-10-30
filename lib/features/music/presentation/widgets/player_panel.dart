@@ -16,6 +16,7 @@ import '../../../../core/utils/image_source.dart';
 import '../../../../core/utils/share_position_origin.dart';
 import '../../../../core/widgets/marquee_text.dart';
 import '../../../../core/widgets/liquid_glass_surface.dart';
+import '../../../../services/recommendations/listening_preferences.dart';
 import '../../../../services/downloader/audio_stream_resolver.dart';
 import '../../../../services/animated_artwork/apple_animated_artwork_resolver.dart';
 import '../../../../services/player/player_service.dart';
@@ -3627,6 +3628,11 @@ class _QueueSimilarSection extends ConsumerWidget {
     if (seed.isEmpty) return const SizedBox.shrink();
 
     final sources = ref.watch(similarSongsProvider(seed));
+    // Songs the listener keeps skipping are left out; YouTube's order is
+    // otherwise kept. Until the history is read the order is unchanged.
+    final preferences =
+        ref.watch(listeningPreferencesProvider).value ??
+        ListeningPreferences.empty;
     final heading = Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
       child: Text(
@@ -3656,9 +3662,15 @@ class _QueueSimilarSection extends ConsumerWidget {
       ),
       error: (_, _) => const SizedBox.shrink(),
       data: (sources) {
+        List<InnerTubeSong> personal(List<InnerTubeSong> songs) =>
+            preferences.rank(
+              songs,
+              trackKey: (song) => song.videoId,
+              artists: (song) => song.artists,
+            );
         final songs = mergeSimilarSongs(
-          radio: sources.radio,
-          artistSongs: sources.artistSongs,
+          radio: personal(sources.radio),
+          artistSongs: personal(sources.artistSongs),
           excludedVideoIds: {
             for (final entry in queue.entries) ?_videoId(entry.id),
           },

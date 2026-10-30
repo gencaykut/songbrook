@@ -1,3 +1,4 @@
+export 'listening_preferences.dart';
 export 'personalized_recommendation_engine.dart';
 export 'recommendation_catalog.dart';
 export 'recommendation_feed_models.dart';

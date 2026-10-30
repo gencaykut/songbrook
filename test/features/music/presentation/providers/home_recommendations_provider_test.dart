@@ -1184,6 +1184,78 @@ void main() {
   );
 
   test(
+    'suggestion shelves leave out songs the listener keeps skipping',
+    () async {
+      PersonalizedTrackItem track(String videoId, String artist) =>
+          PersonalizedTrackItem(
+            trackId: videoId,
+            videoId: videoId,
+            title: 'Song $videoId',
+            artists: [artist],
+          );
+      final feed = PersonalizedRecommendationFeed(
+        generatedAt: DateTime.utc(2026, 10, 30),
+        sections: [
+          PersonalizedRecommendationSection(
+            kind: PersonalizedSectionKind.continueListening,
+            title: 'Continue',
+            items: [track('Skipped0001', 'Someone')],
+          ),
+          PersonalizedRecommendationSection(
+            kind: PersonalizedSectionKind.becauseYouListened,
+            title: 'Because',
+            seedTitle: 'Seed',
+            items: [
+              track('Avoided0001', 'Avoided'),
+              track('Skipped0001', 'Someone'),
+              track('Keep0000001', 'Other'),
+            ],
+          ),
+        ],
+      );
+      final source = _FakePersonalizedHomeFeedSource(
+        CachedPersonalizedRecommendationFeed(feed: feed, isExpired: false),
+      )..refreshCompleter = Completer<PersonalizedRecommendationFeed>();
+      final container = ProviderContainer(
+        overrides: [
+          appStringsProvider.overrideWithValue(
+            const AppStrings(AppLanguage.spanish),
+          ),
+          youtubeMusicAuthControllerProvider.overrideWith(
+            () => _MutableHomeAuthController(
+              const YouTubeMusicAuthState(
+                phase: YouTubeMusicAuthPhase.anonymous,
+                generation: 0,
+              ),
+            ),
+          ),
+          personalizedHomeFeedSourceProvider.overrideWithValue(source),
+          homeArtistRecommendationSourceProvider.overrideWithValue(null),
+          youtubeMusicHomeRecommendationsProvider.overrideWith(
+            (ref) async => const <HomeRecommendationSection>[],
+          ),
+          listeningPreferencesLoaderProvider.overrideWithValue(
+            () async => const ListeningPreferences(
+              rejectedTrackKeys: {'Skipped0001'},
+              avoidedArtists: {'avoided'},
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sections = await container.read(homeRecommendationsProvider.future);
+      List<String> ids(HomeRecommendationSection section) => section.items
+          .cast<HomeRecommendationTrackItem>()
+          .map((item) => item.track.id)
+          .toList();
+
+      expect(ids(sections[0]), ['Skipped0001']);
+      expect(ids(sections[1]), ['Keep0000001', 'Avoided0001']);
+    },
+  );
+
+  test(
     'combined Home ranks recommended artists from listened candidate pools',
     () async {
       PersonalizedTrackItem track({

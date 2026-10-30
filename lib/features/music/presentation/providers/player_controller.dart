@@ -1106,7 +1106,11 @@ class PlayerController extends AsyncNotifier<PlayerSnapshot> {
         queueSourceId.trim().isNotEmpty) {
       _recommendationExtension.configure(
         sourceId: queueSourceId,
-        extender: queueExtender,
+        extender: personalizeQueueExtender(
+          queueExtender,
+          keepFirst: normalizedQueue.length,
+          preferences: ref.read(listeningPreferencesLoaderProvider),
+        ),
       );
     }
     await _playQueueItem(_queue[_queueIndex]);

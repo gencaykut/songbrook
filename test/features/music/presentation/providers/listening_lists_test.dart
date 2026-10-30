@@ -103,6 +103,39 @@ void main() {
     expect(entry.track.url, 'https://www.youtube.com/watch?v=oldfavour01');
   });
 
+  test('preferences come from the history and its skips', () async {
+    for (var index = 0; index < 2; index += 1) {
+      await database.recordPlaybackSkip(
+        PlaybackSkip(
+          sessionId: 'skip-$index',
+          trackId: 'skippedsong',
+          videoId: 'skippedsong',
+          title: 'Skipped',
+          artists: const ['Someone'],
+          source: PlaybackEventSource.streaming,
+          skippedAt: now.subtract(Duration(days: index + 1)),
+          listenedMs: 3000,
+        ),
+      );
+    }
+
+    final enabled = container(historyEnabled: true);
+    await enabled.read(settingsControllerProvider.future);
+    final preferences = await enabled.read(
+      listeningPreferencesLoaderProvider,
+    )();
+    expect(preferences.rejectedTrackKeys, {'skippedsong'});
+    // Six plays of "Artist" in the last 90 days.
+    expect(preferences.preferredArtists, {'artist'});
+
+    final disabled = container(historyEnabled: false);
+    await disabled.read(settingsControllerProvider.future);
+    expect(
+      (await disabled.read(listeningPreferencesLoaderProvider)()).isEmpty,
+      isTrue,
+    );
+  });
+
   test('shows nothing while recommendation history is off', () async {
     final lists = container(historyEnabled: false);
 

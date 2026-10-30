@@ -39,7 +39,13 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   counted: replaced by another song while playing or paused, after at least
   a second and before the play threshold. Stopping, failed streams and
   closing the app are not skips. Skips are kept and cleared with the rest of
-  the history and do not change any list or recommendation yet.
+  the history.
+- Related radio added to a queue, the queue's Similar section and Home's
+  suggestion shelves now follow the listening history: a song skipped twice
+  in 30 days and not played since is left out, songs by artists mostly
+  skipped go to the end, and songs by artists played at least three times
+  in 90 days move up a few places. YouTube's order is otherwise kept, and
+  songs already in the queue or picked by the listener are not reordered.
 - Added Songbrook Connect (iPhone and Mac, same Wi-Fi network): pair an
   iPhone with the Mac once using a six-digit code. After that, the device
   that is not playing shows what the other one plays and controls it, and

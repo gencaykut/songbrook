@@ -1679,6 +1679,10 @@ void main() {
           .read(settingsControllerProvider.notifier)
           .setAutoplayEnabled(true);
       await _waitUntil(() => extensionCalls == 1);
+      // Added songs are ordered by the listener's preferences, read first.
+      await _waitUntil(
+        () => container.read(playbackQueueProvider).entries.length == 2,
+      );
       expect(
         container.read(playbackQueueProvider).entries.map((entry) => entry.id),
         ['autoplay-seed', 'autoplay-related'],
