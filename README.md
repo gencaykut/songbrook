@@ -39,6 +39,19 @@ detail, is kept at [docs/upstream-readme.md](docs/upstream-readme.md).
 - **Songs over music videos.** A music video plays its song version from
   YouTube Music when there is one; otherwise its non-music parts are skipped
   using SponsorBlock.
+- **Queue panel.** On phones the queue opens as a panel over the player, with
+  an Autoplay switch and a Similar section below the queue.
+- **Songbrook Connect.** An iPhone on the same Wi-Fi network controls the
+  Mac's playback, or takes it over and hands it back. See
+  [docs/songbrook-connect.md](docs/songbrook-connect.md).
+- **Uses your listening history, on the device.** The library has Most played
+  and Not played lately lists; songs you keep skipping are left out of
+  related radio, the Similar section and Home's suggestions, and artists you
+  play often move up a little. An optional setting keeps your 50 most played
+  songs downloaded while on Wi-Fi. Nothing leaves the device beyond the song
+  ids YouTube already receives for suggestions.
+- **Android stops when closed.** Swiping the app away from recent apps stops
+  playback, with a switch to keep it playing.
 - **Search pages and playlists.** Search loads further result pages as you
   scroll, up to 200 per category, and a Playlists tab finds YouTube Music
   community playlists.
@@ -146,9 +159,9 @@ flutter analyze
 flutter test
 ```
 
-On macOS, 47 tests fail for environmental reasons: the SQLite FFI database
-tests are set up only on Windows and Linux, and two tests compare `/var` with
-`/private/var`. Upstream CI runs on Ubuntu.
+On macOS, two tests fail for an environmental reason: they compare `/var` with
+`/private/var`. The database tests use SQLite FFI on macOS through
+`test/flutter_test_config.dart`. Upstream CI runs on Ubuntu.
 
 ## Documentation
 
