@@ -175,3 +175,16 @@ mümkünse Android'de de).
       duruyor (Ayarlar → Çalma'daki anahtar açıkken).
 - [ ] Android'de "En çok dinlediklerini indir" Wi-Fi'de çalışıyor ve mobil
       veride beklemeye geçiyor (connectivity_plus Android'de denenmedi).
+
+## 12. iOS ana ekran widget'ı (1 Kasım)
+
+Widget tuşları iOS 17 ve üstünde uygulamayı açmadan çalışıyor (simülatörde
+uygulama arka plandayken beşi de denendi).
+- [ ] Uygulama arka plandayken (çalarken ve duraklatılmışken) orta ve büyük
+      widget'ta önceki, tekrar, çal/duraklat, sonraki, favori: uygulama öne
+      gelmiyor, widget yeni durumu gösteriyor.
+- [ ] Kilitli ekrandan dönüp aynı tuşlar: çalışıyor.
+- [ ] Uygulamayı son uygulamalardan kaydırıp tamamen kapat, sonra widget'ta
+      çal'a bas: uygulama açılıyor ve komut uygulanıyor (simülatörde
+      denenemedi; açılmazsa ya da komut kaybolursa not al).
+- [ ] Küçük widget'a dokununca uygulama açılıyor (bilerek değişmedi).

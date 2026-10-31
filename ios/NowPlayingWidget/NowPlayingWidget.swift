@@ -283,6 +283,7 @@ private struct NowPlayingWidgetView: View {
       .transition(.opacity.animation(.easeInOut(duration: 0.24)))
   }
 
+  @ViewBuilder
   private func control(
     _ symbol: String,
     action name: String,
@@ -290,19 +291,25 @@ private struct NowPlayingWidgetView: View {
     width: CGFloat = 44,
     height: CGFloat = 44
   ) -> some View {
-    Link(destination: action(name)) {
-      Image(systemName: symbol)
-        .font(.system(
-          size: name == "repeat" || name == "favorite" ? 20 : (height >= 50 ? 27 : 23),
-          weight: .bold
-        ))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .foregroundColor(tint)
-        .background(
-          Circle().fill(Color.clear)
-        )
+    let label = Image(systemName: symbol)
+      .font(.system(
+        size: name == "repeat" || name == "favorite" ? 20 : (height >= 50 ? 27 : 23),
+        weight: .bold
+      ))
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .foregroundColor(tint)
+      .background(
+        Circle().fill(Color.clear)
+      )
+    // Before iOS 17 widgets cannot run code, so the button opens the app.
+    if #available(iOS 17.0, *) {
+      Button(intent: SongbrookWidgetControlIntent(action: name)) { label }
+        .buttonStyle(.plain)
+        .frame(width: width, height: height)
+    } else {
+      Link(destination: action(name)) { label }
+        .frame(width: width, height: height)
     }
-    .frame(width: width, height: height)
   }
 }
 

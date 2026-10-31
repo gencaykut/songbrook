@@ -1,6 +1,7 @@
 import Flutter
 import UIKit
 import WidgetKit
+import AppIntents
 import ImageIO
 import CryptoKit
 
@@ -25,6 +26,50 @@ final class BStreamWidgetActionRelay {
   func consume() -> String? {
     defer { pendingAction = nil }
     return pendingAction
+  }
+
+  /// True once Dart has installed its widget action handler.
+  private(set) var isReady = false
+
+  func markReady() {
+    isReady = true
+  }
+
+  /// Runs a widget button's action in the running app. Returns false when
+  /// Flutter has not started, as after a background launch by the system.
+  func dispatch(_ action: String) async -> Bool {
+    guard isReady, let channel else { return false }
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      channel.invokeMethod("widgetAction", arguments: action) { _ in
+        continuation.resume()
+      }
+    }
+    return true
+  }
+
+  /// Keeps the action until Dart registers after the app comes to the front.
+  func queue(_ action: String) {
+    pendingAction = action
+  }
+}
+
+@available(iOS 17.0, *)
+extension SongbrookWidgetControlIntent: ForegroundContinuableIntent {}
+
+@available(iOS 17.0, *)
+@MainActor
+private func installWidgetControl() {
+  SongbrookWidgetControl.perform = { intent in
+    let relay = BStreamWidgetActionRelay.shared
+    if await relay.dispatch(intent.action) { return }
+    // Flutter only starts with the app's window, so a killed app has to come
+    // to the front; the queued action runs once Dart registers.
+    relay.queue(intent.action)
+    if #available(iOS 26.0, *) {
+      try await intent.continueInForeground(alwaysConfirm: false)
+    } else {
+      throw intent.needsToContinueInForegroundError()
+    }
   }
 }
 
@@ -87,6 +132,7 @@ final class BStreamWidgetActionRelay {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    if #available(iOS 17.0, *) { installWidgetControl() }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -209,6 +255,7 @@ final class BStreamWidgetActionRelay {
       case "consumePendingAction":
         result(BStreamWidgetActionRelay.shared.consume())
       case "registerActionHandler":
+        BStreamWidgetActionRelay.shared.markReady()
         result(nil)
       default:
         result(FlutterMethodNotImplemented)
