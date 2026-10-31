@@ -116,6 +116,9 @@ düş: ne yaptın, ne bekledin, ne oldu.
 
 ## 11. 29–31 Ekim: hata düzeltmeleri ve dinleme verisi
 
+1 Kasım'da telefonda test edildi; bulunan tek sorun (widget tuşları
+uygulamayı açıyordu) düzeltildi, bkz. 12. bölüm.
+
 Simülatörde ya da testlerle doğrulananlar burada telefonda yeniden denenir.
 Android ile ilgili maddeler Android telefonda, diğerleri iPhone'da (ve
 mümkünse Android'de de).
