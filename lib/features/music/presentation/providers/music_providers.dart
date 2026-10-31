@@ -166,31 +166,33 @@ part 'settings_controller.dart';
 part 'sleep_timer_controller.dart';
 part 'youtube_music_playlist_sync_controller.dart';
 
+Future<void> _runHomeWidgetAction(Ref ref, String action) async {
+  await ref.read(playerControllerProvider.future);
+  final player = ref.read(playerControllerProvider.notifier);
+  final queueSelection = RegExp(r'^queue:(\d+)$').firstMatch(action);
+  if (queueSelection != null) {
+    final index = int.tryParse(queueSelection.group(1)!);
+    if (index != null) await player.playQueueIndex(index);
+    return;
+  }
+  switch (action) {
+    case 'toggle':
+      await player.togglePlayPause();
+    case 'next':
+      await player.playNext();
+    case 'previous':
+      await player.playPrevious();
+    case 'repeat':
+      player.cycleRepeatMode();
+    case 'favorite':
+      await player.toggleCurrentFavorite();
+  }
+}
+
 final homeScreenWidgetSyncProvider = Provider<void>((ref) {
   if (!AppPlatform.isMobile) return;
   final widgetSync = HomeScreenWidgetSync(
-    onAction: (action) async {
-      await ref.read(playerControllerProvider.future);
-      final player = ref.read(playerControllerProvider.notifier);
-      final queueSelection = RegExp(r'^queue:(\d+)$').firstMatch(action);
-      if (queueSelection != null) {
-        final index = int.tryParse(queueSelection.group(1)!);
-        if (index != null) await player.playQueueIndex(index);
-        return;
-      }
-      switch (action) {
-        case 'toggle':
-          await player.togglePlayPause();
-        case 'next':
-          await player.playNext();
-        case 'previous':
-          await player.playPrevious();
-        case 'repeat':
-          player.cycleRepeatMode();
-        case 'favorite':
-          await player.toggleCurrentFavorite();
-      }
-    },
+    onAction: (action) => _runHomeWidgetAction(ref, action),
   );
 
   void publish() {
@@ -657,6 +659,7 @@ final desktopMediaSessionProvider = Provider<DesktopMediaSession?>((ref) {
     },
     playQueueIndex: (index) =>
         ref.read(playerControllerProvider.notifier).playQueueIndex(index),
+    widgetAction: (action) => _runHomeWidgetAction(ref, action),
     taskRemoved: () async {
       final stopOnTaskRemoved =
           ref

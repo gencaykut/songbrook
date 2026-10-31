@@ -6,6 +6,7 @@ typedef DesktopMediaShuffleAction = Future<void> Function(bool enabled);
 typedef DesktopMediaRepeatAction =
     Future<void> Function(PlaybackRepeatMode mode);
 typedef DesktopMediaQueueAction = Future<void> Function(int index);
+typedef DesktopMediaWidgetAction = Future<void> Function(String action);
 
 class DesktopMediaSessionCallbacks {
   const DesktopMediaSessionCallbacks({
@@ -21,6 +22,7 @@ class DesktopMediaSessionCallbacks {
     required this.setRepeatMode,
     required this.playQueueIndex,
     this.taskRemoved,
+    this.widgetAction,
   });
 
   final DesktopMediaAction play;
@@ -37,6 +39,10 @@ class DesktopMediaSessionCallbacks {
 
   /// Android: the user swiped the app away from Recents.
   final DesktopMediaAction? taskRemoved;
+
+  /// Android: a home-screen widget button sent through the media session,
+  /// so it runs without opening the app.
+  final DesktopMediaWidgetAction? widgetAction;
 }
 
 class DesktopMediaQueueItem {

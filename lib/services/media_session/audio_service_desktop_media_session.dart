@@ -77,6 +77,10 @@ PlaybackState buildAudioServicePlaybackState(DesktopMediaSessionState state) {
 }
 
 @visibleForTesting
+/// Custom media-session action the Android widget sends; must match
+/// `BStreamWidgetPlaybackReceiver.CUSTOM_ACTION_WIDGET`.
+const homeWidgetMediaAction = 'bstream_music.widget_action';
+
 class AudioServiceMediaSessionCallbackBridge {
   DesktopMediaSessionCallbacks? _callbacks;
 
@@ -110,6 +114,9 @@ class AudioServiceMediaSessionCallbackBridge {
 
   Future<void> taskRemoved() =>
       _callbacks?.taskRemoved?.call() ?? Future<void>.value();
+
+  Future<void> widgetAction(String action) =>
+      _callbacks?.widgetAction?.call(action) ?? Future<void>.value();
 
   Future<void> setShuffleEnabled(bool enabled) =>
       _callbacks?.setShuffleEnabled(enabled) ?? Future<void>.value();
@@ -393,6 +400,13 @@ class _DesktopAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> onTaskRemoved() => _callbacks.taskRemoved();
+
+  @override
+  Future<void> customAction(String name, [Map<String, dynamic>? extras]) async {
+    if (name != homeWidgetMediaAction) return;
+    final action = extras?['action'];
+    if (action is String) await _callbacks.widgetAction(action);
+  }
 
   @override
   Future<void> skipToNext() => _callbacks.next();

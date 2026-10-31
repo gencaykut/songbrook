@@ -346,10 +346,10 @@ class BStreamMusicWidget : AppWidgetProvider() {
                 setOnClickPendingIntent(R.id.widget_card, openApp(context))
                 if (title.isNotEmpty()) {
                     setOnClickPendingIntent(R.id.widget_previous, mediaButton(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS))
-                    setOnClickPendingIntent(R.id.widget_repeat, widgetAction(context, "repeat"))
+                    setOnClickPendingIntent(R.id.widget_repeat, BStreamWidgetPlaybackReceiver.controlIntent(context, "repeat"))
                     setOnClickPendingIntent(R.id.widget_play_pause, mediaButton(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE))
                     setOnClickPendingIntent(R.id.widget_next, mediaButton(context, KeyEvent.KEYCODE_MEDIA_NEXT))
-                    setOnClickPendingIntent(R.id.widget_favorite, widgetAction(context, "favorite"))
+                    setOnClickPendingIntent(R.id.widget_favorite, BStreamWidgetPlaybackReceiver.controlIntent(context, "favorite"))
                 } else {
                     setOnClickPendingIntent(R.id.widget_play_pause, openApp(context))
                 }
@@ -516,21 +516,6 @@ class BStreamMusicWidget : AppWidgetProvider() {
             }
             return PendingIntent.getService(
                 context, keyCode, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-        }
-
-        private fun widgetAction(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, MainActivity::class.java).apply {
-                this.action = MainActivity.ACTION_HOME_WIDGET_CONTROL
-                data = Uri.parse("bstreammusic://widget?action=$action")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(MainActivity.EXTRA_HOME_WIDGET_ACTION, action)
-            }
-            return PendingIntent.getActivity(
-                context,
-                9000 + action.hashCode(),
-                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         }

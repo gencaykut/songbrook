@@ -225,6 +225,36 @@ void main() {
 
       expect(calls, ['handled:taskRemoved']);
     });
+
+    test(
+      'forwards home widget actions only when callbacks handle them',
+      () async {
+        final calls = <String>[];
+        final bridge = AudioServiceMediaSessionCallbackBridge();
+
+        bridge.attach(_callbacks('plain', calls));
+        await bridge.widgetAction('repeat');
+        bridge.attach(
+          DesktopMediaSessionCallbacks(
+            play: () async {},
+            pause: () async {},
+            togglePlayPause: () async {},
+            next: () async {},
+            previous: () async {},
+            stop: () async {},
+            seek: (_) async {},
+            seekBy: (_) async {},
+            setShuffleEnabled: (_) async {},
+            setRepeatMode: (_) async {},
+            playQueueIndex: (_) async {},
+            widgetAction: (action) async => calls.add('handled:$action'),
+          ),
+        );
+        await bridge.widgetAction('favorite');
+
+        expect(calls, ['handled:favorite']);
+      },
+    );
   });
 }
 
