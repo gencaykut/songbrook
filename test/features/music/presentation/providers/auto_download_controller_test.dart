@@ -249,6 +249,55 @@ void main() {
       ]);
     });
 
+    test(
+      'drops a pass when Wi-Fi is lost while it reads the library',
+      () async {
+        libraryGate = Completer<void>();
+        final lists = container();
+        await lists.read(settingsControllerProvider.future);
+        await settle();
+
+        network.set(false);
+        await settle();
+        libraryGate!.complete();
+        await settle();
+
+        expect(downloads.requested, isEmpty);
+      },
+    );
+
+    test('starts over once when Wi-Fi returns during a dropped pass', () async {
+      libraryGate = Completer<void>();
+      final lists = container();
+      await lists.read(settingsControllerProvider.future);
+      await settle();
+
+      network.set(false);
+      await settle();
+      network.set(true);
+      await settle();
+      libraryGate!.complete();
+      await settle();
+
+      expect(downloads.requested, hasLength(3));
+    });
+
+    test('drops a pass when the setting is turned off meanwhile', () async {
+      libraryGate = Completer<void>();
+      final lists = container();
+      await lists.read(settingsControllerProvider.future);
+      await settle();
+
+      (lists.read(settingsControllerProvider.notifier)
+              as _FixedSettingsController)
+          .setAutoDownload(false);
+      await settle();
+      libraryGate!.complete();
+      await settle();
+
+      expect(downloads.requested, isEmpty);
+    });
+
     test('does nothing while the setting is off', () async {
       final lists = container(enabled: false);
       await lists.read(settingsControllerProvider.future);

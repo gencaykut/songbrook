@@ -108,7 +108,8 @@ final autoDownloadControllerProvider =
 /// [SettingsState.autoDownloadMostPlayed] is on: once per launch (after
 /// [autoDownloadStartDelayProvider]), at once when the setting is turned on,
 /// and when Wi-Fi returns after a pass waited for it. Downloads still queued
-/// when Wi-Fi is lost or the setting is turned off are cancelled.
+/// when Wi-Fi is lost or the setting is turned off are cancelled, and a pass
+/// still reading the library then stops before changing it.
 class AutoDownloadController extends Notifier<void> {
   /// Tasks this controller created, by task id, until they finish. Songs
   /// the listener was already downloading are not among them.
@@ -116,6 +117,11 @@ class AutoDownloadController extends Notifier<void> {
   bool _ranThisLaunch = false;
   bool _waitingForWifi = false;
   Future<void>? _running;
+
+  /// Bumped when Wi-Fi is lost or the setting is turned off, so a pass still
+  /// reading the library stops before it deletes or downloads anything.
+  int _generation = 0;
+  int? _runningGeneration;
 
   /// Whether the setting was seen off in this launch: turning it on then
   /// starts a pass at once instead of after the launch delay.
@@ -131,6 +137,7 @@ class AutoDownloadController extends Notifier<void> {
     if (enabled != true) {
       // Nothing runs, waits or listens while the setting is off.
       if (enabled == false) _seenDisabled = true;
+      _generation += 1;
       _cancelRequested();
       return;
     }
@@ -148,6 +155,9 @@ class AutoDownloadController extends Notifier<void> {
     final changes = network.unmeteredChanges.listen((unmetered) {
       if (!ref.mounted) return;
       if (!unmetered) {
+        // A pass dropped before it asked for downloads starts over too.
+        if (_running != null) _waitingForWifi = true;
+        _generation += 1;
         _cancelRequested();
       } else if (_waitingForWifi) {
         unawaited(run(force: true));
@@ -164,22 +174,42 @@ class AutoDownloadController extends Notifier<void> {
   /// One pass. Without [force] it runs at most once per launch.
   Future<void> run({bool force = false}) {
     final running = _running;
-    if (running != null) return running;
+    // A pass dropped by Wi-Fi loss or the setting is ending on its own.
+    if (running != null && _runningGeneration == _generation) return running;
     if (_ranThisLaunch && !force) return Future<void>.value();
-    final pass = _run().whenComplete(() => _running = null);
+    final generation = _generation;
+    late final Future<void> pass;
+    pass = _run(generation).whenComplete(() {
+      if (identical(_running, pass)) _running = null;
+    });
     _running = pass;
+    _runningGeneration = generation;
     return pass;
   }
 
-  Future<void> _run() async {
+  /// Whether the pass started in [generation] may still change the library.
+  Future<bool> _stillWanted(int generation) async {
+    if (!ref.mounted || generation != _generation) return false;
+    if (ref.read(settingsControllerProvider).value?.autoDownloadMostPlayed !=
+        true) {
+      return false;
+    }
+    final unmetered = await ref.read(autoDownloadNetworkProvider).isUnmetered();
+    if (!ref.mounted || generation != _generation) return false;
+    if (!unmetered) _waitingForWifi = true;
+    return unmetered;
+  }
+
+  Future<void> _run(int generation) async {
     final settings = await ref.read(settingsControllerProvider.future);
     if (!ref.mounted ||
+        generation != _generation ||
         !settings.autoDownloadMostPlayed ||
         !settings.recommendationHistoryEnabled) {
       return;
     }
     if (!await ref.read(autoDownloadNetworkProvider).isUnmetered()) {
-      _waitingForWifi = true;
+      if (ref.mounted && generation == _generation) _waitingForWifi = true;
       return;
     }
     _waitingForWifi = false;
@@ -225,7 +255,7 @@ class AutoDownloadController extends Notifier<void> {
         protectedVideoIds: protectedVideoIds,
         playingTrackId: ref.read(playerControllerProvider).value?.trackId,
       );
-      if (!ref.mounted) return;
+      if (!await _stillWanted(generation)) return;
 
       if (plan.remove.isNotEmpty) {
         await ref.read(libraryTrackDeleterProvider).delete(plan.remove);
@@ -233,7 +263,7 @@ class AutoDownloadController extends Notifier<void> {
           plan.remove.map((track) => track.id),
         );
       }
-      if (!ref.mounted) return;
+      if (!await _stillWanted(generation)) return;
       if (plan.download.isNotEmpty) {
         await ref
             .read(downloadControllerProvider.notifier)
