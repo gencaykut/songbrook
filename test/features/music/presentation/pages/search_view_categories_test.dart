@@ -2840,7 +2840,10 @@ class _SearchSelectedDownloads extends DownloadController {
   Map<String, DownloadTaskState> build() => const {};
 
   @override
-  Future<int> downloadTracks(Iterable<TrackInfo> tracks) async {
+  Future<int> downloadTracks(
+    Iterable<TrackInfo> tracks, {
+    void Function(DownloadTaskState task)? onQueued,
+  }) async {
     this.tracks = tracks.toList();
     return tracks.length;
   }

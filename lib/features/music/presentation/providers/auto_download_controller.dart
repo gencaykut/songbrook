@@ -110,8 +110,9 @@ final autoDownloadControllerProvider =
 /// and when Wi-Fi returns after a pass waited for it. Downloads still queued
 /// when Wi-Fi is lost or the setting is turned off are cancelled.
 class AutoDownloadController extends Notifier<void> {
-  /// Requested URL → video id, until the download finishes.
-  final _requested = <String, String>{};
+  /// Tasks this controller created, by task id, until they finish. Songs
+  /// the listener was already downloading are not among them.
+  final _requested = <String, ({String url, String videoId})>{};
   bool _ranThisLaunch = false;
   bool _waitingForWifi = false;
   Future<void>? _running;
@@ -233,16 +234,24 @@ class AutoDownloadController extends Notifier<void> {
         );
       }
       if (!ref.mounted) return;
-      for (final track in plan.download) {
-        final videoId = const BStreamTrackLinkCodec()
-            .tryFromTrack(track)
-            ?.videoId;
-        if (videoId != null) _requested[track.url] = videoId;
-      }
       if (plan.download.isNotEmpty) {
         await ref
             .read(downloadControllerProvider.notifier)
-            .downloadTracks(plan.download);
+            .downloadTracks(
+              plan.download,
+              onQueued: (task) {
+                final videoId = const BStreamTrackLinkCodec()
+                    .tryFromTrack(
+                      TrackInfo(id: '', title: '', artist: '', url: task.url),
+                    )
+                    ?.videoId;
+                if (videoId != null) {
+                  _requested[task.taskId] = (url: task.url, videoId: videoId);
+                }
+              },
+            );
+        // A task may have finished before the call returned.
+        if (ref.mounted) _recordFinished(ref.read(downloadControllerProvider));
       }
       if (ref.mounted) ref.invalidate(autoDownloadedTrackIdsProvider);
     } catch (error, stackTrace) {
@@ -252,19 +261,24 @@ class AutoDownloadController extends Notifier<void> {
   }
 
   void _recordFinished(Map<String, DownloadTaskState> tasks) {
-    for (final entry in tasks.entries) {
-      final videoId = _requested[entry.key];
-      if (videoId == null) continue;
-      final task = entry.value;
+    for (final MapEntry(key: taskId, value: request)
+        in _requested.entries.toList()) {
+      final task = tasks[request.url];
+      // Cancelled, or replaced by a download the listener started.
+      if (task == null || task.taskId != taskId) {
+        _requested.remove(taskId);
+        continue;
+      }
       if (task.status == DownloadProgressStatus.failed) {
-        _requested.remove(entry.key);
+        _requested.remove(taskId);
         continue;
       }
       final local = task.localTrack;
       if (task.status != DownloadProgressStatus.completed || local == null) {
         continue;
       }
-      _requested.remove(entry.key);
+      _requested.remove(taskId);
+      final videoId = request.videoId;
       // A song the listener already had stays theirs.
       if (task.reusedExisting) continue;
       unawaited(() async {
@@ -287,8 +301,11 @@ class AutoDownloadController extends Notifier<void> {
   void _cancelRequested() {
     if (_requested.isEmpty) return;
     final downloads = ref.read(downloadControllerProvider.notifier);
-    for (final url in _requested.keys.toList()) {
-      unawaited(downloads.cancelDownload(url));
+    final tasks = ref.read(downloadControllerProvider);
+    for (final MapEntry(key: taskId, value: request) in _requested.entries) {
+      if (tasks[request.url]?.taskId == taskId) {
+        unawaited(downloads.cancelDownload(request.url));
+      }
     }
     _requested.clear();
     // The pass resumes on the next Wi-Fi connection.

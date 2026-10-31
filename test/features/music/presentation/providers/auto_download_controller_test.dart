@@ -76,6 +76,7 @@ void main() {
     late _RecordingDownloads downloads;
     late _RecordingDeleter deleter;
     late List<LocalTrack> library;
+    Completer<void>? libraryGate;
     final now = DateTime.utc(2026, 10, 31, 12);
 
     setUp(() async {
@@ -86,6 +87,7 @@ void main() {
       network = _FakeNetwork(unmetered: true);
       downloads = _RecordingDownloads();
       library = [];
+      libraryGate = null;
       var session = 0;
       for (final (videoId, plays) in [
         ('topsong0001', 3),
@@ -135,7 +137,10 @@ void main() {
               ),
             ),
           ),
-          libraryTracksProvider.overrideWith((ref) async => library),
+          libraryTracksProvider.overrideWith((ref) async {
+            await libraryGate?.future;
+            return library;
+          }),
           playlistsControllerProvider.overrideWith(_NoPlaylists.new),
           catalogPlaylistsProvider.overrideWith(
             (ref) async => const <CatalogPlaylist>[],
@@ -223,6 +228,27 @@ void main() {
       expect(downloads.cancelled, hasLength(3));
     });
 
+    test('leaves a download the listener started to them', () async {
+      library = [_local('mine', 'alreadyhave')];
+      final lists = container();
+      lists.read(downloadControllerProvider);
+      downloads.startManual('topsong0001');
+      await lists.read(settingsControllerProvider.future);
+      await settle();
+
+      expect(downloads.requested.map((track) => track.id), ['second00001']);
+      await _saved(database, [_local('manual-top', 'topsong0001')]);
+      downloads.complete('topsong0001', _local('manual-top', 'topsong0001'));
+      await settle();
+      expect(await database.getAutoDownloadedTrackIds(), isEmpty);
+
+      network.set(false);
+      await settle();
+      expect(downloads.cancelled, [
+        'https://www.youtube.com/watch?v=second00001',
+      ]);
+    });
+
     test('does nothing while the setting is off', () async {
       final lists = container(enabled: false);
       await lists.read(settingsControllerProvider.future);
@@ -289,9 +315,28 @@ class _RecordingDownloads extends DownloadController {
   @override
   Map<String, DownloadTaskState> build() => const {};
 
+  /// A download the listener started from a song menu.
+  void startManual(String videoId) {
+    final url = 'https://www.youtube.com/watch?v=$videoId';
+    state = {
+      ...state,
+      url: DownloadTaskState(
+        url: url,
+        taskId: 'manual-$videoId',
+        mediaType: DownloadMediaType.audio,
+        status: DownloadProgressStatus.running,
+      ),
+    };
+  }
+
   @override
-  Future<int> downloadTracks(Iterable<TrackInfo> tracks) async {
+  Future<int> downloadTracks(
+    Iterable<TrackInfo> tracks, {
+    void Function(DownloadTaskState task)? onQueued,
+  }) async {
     for (final track in tracks) {
+      // Like the real controller, a running download is not queued again.
+      if (state[track.url]?.isCancellable == true) continue;
       requested.add(track);
       state = {
         ...state,
@@ -302,6 +347,7 @@ class _RecordingDownloads extends DownloadController {
           status: DownloadProgressStatus.queued,
         ),
       };
+      onQueued?.call(state[track.url]!);
     }
     return tracks.length;
   }
@@ -357,4 +403,10 @@ class _FixedSettingsController extends SettingsController {
 
   @override
   Future<SettingsState> build() async => initialState;
+
+  void setAutoDownload(bool enabled) {
+    state = AsyncData(
+      state.requireValue.copyWith(autoDownloadMostPlayed: enabled),
+    );
+  }
 }

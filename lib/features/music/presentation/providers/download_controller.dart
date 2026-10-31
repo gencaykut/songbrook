@@ -178,7 +178,12 @@ class DownloadController extends Notifier<Map<String, DownloadTaskState>> {
     );
   }
 
-  Future<int> downloadTracks(Iterable<TrackInfo> tracks) async {
+  /// [onQueued] receives each task this call created; a song already being
+  /// downloaded keeps its own task and is not reported.
+  Future<int> downloadTracks(
+    Iterable<TrackInfo> tracks, {
+    void Function(DownloadTaskState task)? onQueued,
+  }) async {
     final requested = tracks.toList(growable: false);
     const codec = BStreamTrackLinkCodec();
     final generations = _cancellationSnapshot(requested);
@@ -199,14 +204,18 @@ class DownloadController extends Notifier<Map<String, DownloadTaskState>> {
         localsByVideoId.putIfAbsent(id, () => local);
       }
     }
-    return _queueMissingDownloads([
-      for (final track in requested)
-        CatalogPlaybackItem(
-          entryId: track.id,
-          remoteTrack: track,
-          localTrack: localsByVideoId[codec.tryFromTrack(track)?.videoId],
-        ),
-    ], generationsAtRequest: generations);
+    return _queueMissingDownloads(
+      [
+        for (final track in requested)
+          CatalogPlaybackItem(
+            entryId: track.id,
+            remoteTrack: track,
+            localTrack: localsByVideoId[codec.tryFromTrack(track)?.videoId],
+          ),
+      ],
+      generationsAtRequest: generations,
+      onQueued: onQueued,
+    );
   }
 
   Future<int> cancelPlaylistDownloads(Playlist playlist) async {
@@ -227,6 +236,7 @@ class DownloadController extends Notifier<Map<String, DownloadTaskState>> {
     List<CatalogPlaybackItem> items, {
     bool Function()? isCancelled,
     Map<String, int>? generationsAtRequest,
+    void Function(DownloadTaskState task)? onQueued,
   }) async {
     const codec = BStreamTrackLinkCodec();
     final generations =
@@ -272,7 +282,11 @@ class DownloadController extends Notifier<Map<String, DownloadTaskState>> {
           state[remote.url]?.isCancellable == true) {
         continue;
       }
-      await downloadAudio(remote);
+      final created = downloadAudio(remote);
+      // _enqueue publishes the task before its first await.
+      final task = state[remote.url];
+      if (task != null) onQueued?.call(task);
+      await created;
       activeVideoIds.add(identity);
       queued++;
     }

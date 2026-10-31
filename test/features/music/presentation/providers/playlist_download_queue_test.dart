@@ -55,6 +55,32 @@ void main() {
     },
   );
 
+  test('reports only the tasks a selection download created', () async {
+    final downloads = _QueuedDownloads({
+      'https://youtu.be/aaaaaaaaaaa': const DownloadTaskState(
+        url: 'https://youtu.be/aaaaaaaaaaa',
+        taskId: 'listener-task',
+        mediaType: DownloadMediaType.audio,
+        status: DownloadProgressStatus.running,
+      ),
+    });
+    final container = ProviderContainer(
+      overrides: [
+        libraryTracksProvider.overrideWith((ref) async => []),
+        downloadControllerProvider.overrideWith(() => downloads),
+      ],
+    );
+    addTearDown(container.dispose);
+    final reported = <String>[];
+
+    await container.read(downloadControllerProvider.notifier).downloadTracks([
+      for (final id in ['aaaaaaaaaaa', 'bbbbbbbbbbb'])
+        TrackInfo(id: id, title: id, artist: '', url: 'https://youtu.be/$id'),
+    ], onQueued: (task) => reported.add('${task.url} ${task.taskId}'));
+
+    expect(reported, ['https://youtu.be/bbbbbbbbbbb queued-1']);
+  });
+
   test(
     'cancel playlist stops running and queued audio but preserves other tasks',
     () async {
