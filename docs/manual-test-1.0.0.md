@@ -113,3 +113,65 @@ düş: ne yaptın, ne bekledin, ne oldu.
 ### Hız
 - [ ] Bir şarkının başlaması telefonda hâlâ ~3 sn mi? Müzik videolarında ilk
       dokunuşta +0,5–1 sn bekleniyor.
+
+## 11. 29–31 Ekim: hata düzeltmeleri ve dinleme verisi
+
+Simülatörde ya da testlerle doğrulananlar burada telefonda yeniden denenir.
+Android ile ilgili maddeler Android telefonda, diğerleri iPhone'da (ve
+mümkünse Android'de de).
+
+### Hata düzeltmeleri
+- [ ] Ara: şarkı sonuçlarını aşağı kaydır, sonraki sayfa yüklenirken
+      "Çalma listeleri" sekmesine geç, sonra "Şarkılar"a dön ve yine kaydır:
+      yeni sayfa geliyor, yükleniyor halkası sonsuza dek dönmüyor.
+- [ ] Şarkı sözleri → çeviriyi aç (arayüz Türkçe): yabancı dildeki bir şarkının
+      sözleri Türkçeye çevriliyor. Türkçe bir şarkıda "zaten Türkçe" diyor.
+- [ ] Ayarlar → Depolama → yedek al, bir çalma listesine şarkı ekle, yedeği
+      geri yükle: Kitaplık'ta listenin içeriği yedekteki haliyle görünüyor,
+      uygulamayı kapatıp açmadan.
+- [ ] (Mac + iPhone) Connect'te iPhone'dan Mac'i "Unut", hemen ardından
+      yeniden bağlanmayı dene: unutulan Mac listede geri belirmiyor.
+
+### Kitaplık: dinleme listeleri
+- [ ] Kitaplık'ta "En çok dinlediklerin" girişi görünüyor; altında şarkı sayısı
+      ve ilk üç şarkı. Açınca "Son 30 gün"/"Tüm zamanlar" geçişi çalışıyor,
+      seçili sekmede onay işareti var, her şarkıda "N kez dinlendi" yazıyor.
+- [ ] Listede bir şarkıya dokun: o şarkıdan başlayarak liste çalıyor, sonunda
+      benzer şarkılarla devam ediyor.
+- [ ] "Bir süredir dinlemediklerin" (en az 3 kez dinlenip 60 gündür
+      çalınmayanlar) yeterli geçmiş varsa görünüyor; yoksa giriş hiç yok.
+- [ ] Ayarlar → "Öneri geçmişi" kapalıyken bu girişler kayboluyor.
+
+### Atlamalar ve kişiselleştirme
+- [ ] Bir radyo kuyruğunda aynı şarkıyı birkaç saniye dinleyip iki kez geç
+      (farklı günlerde ya da iki ayrı oturumda). Sonra o şarkının radyosu
+      çıkan bir şarkı başlat: atlanan şarkı yeni eklenen radyoda, "Benzer"de
+      ve ana sayfa önerilerinde yok. "Dinlemeye devam et"te hâlâ görünebilir
+      (kendi geçmişin).
+- [ ] Çok dinlediğin bir sanatçının şarkıları radyoda ve "Benzer"de birkaç sıra
+      öne geliyor (belirgin olmayabilir; en fazla 3 sıra).
+- [ ] Duraklat ya da durdur, uygulamayı kapat: bunlar atlama sayılmıyor (fark
+      edilmez; sorun görürsen not al).
+
+### Açılışta ön hazırlık
+- [ ] Uygulamayı kapatıp aç, ana sayfa gelince 2–3 sn bekle ve "Dinlemeye devam
+      et"in ilk şarkısına dokun: başlama, soğuk bir şarkıya göre biraz daha
+      hızlı (fark küçük, simülatörde ortanca ~0,1–0,5 sn).
+
+### En çok dinlediklerini indir
+- [ ] Ayarlar → Depolama → "En çok dinlediklerini indir"i Wi-Fi'deyken aç:
+      birkaç saniye içinde indirmeler başlıyor; İndirilen şarkılar'da bu
+      şarkıların adının yanında küçük indirme simgesi var.
+- [ ] Wi-Fi'yi kapat (mobil veride kal): yeni otomatik indirme başlamıyor,
+      süren indirmeler iptal ediliyor. Wi-Fi'yi açınca devam ediyor.
+- [ ] Otomatik indirilen bir şarkıyı favorilere ekle: listeden düşse bile
+      silinmiyor (bunu denemek zaman alır; görürsen not al).
+- [ ] Elle indirdiğin şarkılar simgesiz ve hiç silinmiyor.
+- [ ] Ayarı kapat: süren otomatik indirmeler duruyor, indirilmiş olanlar
+      yerinde kalıyor.
+
+### Android
+- [ ] Android telefonda uygulamayı son uygulamalardan kaydırıp kapat: çalma
+      duruyor (Ayarlar → Çalma'daki anahtar açıkken).
+- [ ] Android'de "En çok dinlediklerini indir" Wi-Fi'de çalışıyor ve mobil
+      veride beklemeye geçiyor (connectivity_plus Android'de denenmedi).
