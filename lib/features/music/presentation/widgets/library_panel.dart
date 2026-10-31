@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 
 import '../../../../core/platform/app_platform.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -775,7 +773,9 @@ class _LibraryPanelState extends ConsumerState<LibraryPanel> {
       return;
     }
 
-    final deleted = await _deleteLibraryTracks(ref, selectedTracks);
+    final deleted = await ref
+        .read(libraryTrackDeleterProvider)
+        .delete(selectedTracks);
     if (!mounted) {
       return;
     }
@@ -3824,7 +3824,7 @@ class _LocalTrackTileState extends ConsumerState<_LocalTrackTile> {
       return;
     }
 
-    await _deleteLibraryTracks(ref, [track]);
+    await ref.read(libraryTrackDeleterProvider).delete([track]);
 
     if (!context.mounted) {
       return;
@@ -3832,103 +3832,6 @@ class _LocalTrackTileState extends ConsumerState<_LocalTrackTile> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(ref.read(appStringsProvider).songDeleted)),
     );
-  }
-}
-
-Future<int> _deleteLibraryTracks(
-  WidgetRef ref,
-  Iterable<LocalTrack> requestedTracks,
-) async {
-  final requestedIds = requestedTracks.map((track) => track.id).toSet();
-  if (requestedIds.isEmpty) {
-    return 0;
-  }
-
-  final repository = ref.read(libraryRepositoryProvider);
-  final currentTracks = await repository.getLocalTracks();
-  final targets = currentTracks
-      .where((track) => requestedIds.contains(track.id))
-      .toList(growable: false);
-  if (targets.isEmpty) {
-    return 0;
-  }
-
-  // The repository implementation performs this ID + file-path guarded delete
-  // and playlist pruning in one database transaction. Reusing the same
-  // primitive as reconciliation also protects against a stale UI selection.
-  final deletedIds = await repository.purgeMissingLocalTracks(targets);
-  if (deletedIds.isEmpty) {
-    return 0;
-  }
-
-  final deletedTracks = targets
-      .where((track) => deletedIds.contains(track.id))
-      .toList(growable: false);
-  await ref
-      .read(playerControllerProvider.notifier)
-      .removeDeletedLocalTracks(deletedIds);
-  await ref.read(playlistsControllerProvider.notifier).reloadFromRepository();
-  ref
-    ..invalidate(libraryTracksProvider)
-    ..invalidate(historyProvider);
-
-  // Re-read after the transaction and queue replacement so a concurrently
-  // restored/downloaded record sharing a legacy path keeps its file.
-  final survivors = await repository.getLocalTracks();
-  final survivorPaths = survivors
-      .expand((track) => [track.filePath, track.thumbnailPath])
-      .map(_normalizedLocalPath)
-      .whereType<String>()
-      .toSet();
-  final filesToDelete = <String, String>{};
-  for (final target in deletedTracks) {
-    for (final path in [target.filePath, target.thumbnailPath]) {
-      final normalized = _normalizedLocalPath(path);
-      if (normalized != null && !survivorPaths.contains(normalized)) {
-        filesToDelete.putIfAbsent(normalized, () => path!);
-      }
-    }
-  }
-  // Let the list release FileImage listeners before unlinking thumbnails. This
-  // matters on Windows tests and keeps the same code safe if desktop selection
-  // is enabled later; Android itself permits unlinking open files.
-  await WidgetsBinding.instance.endOfFrame;
-  for (final path in filesToDelete.values) {
-    await _deleteFileBestEffort(path);
-  }
-  return deletedIds.length;
-}
-
-String? _normalizedLocalPath(String? path) {
-  final trimmed = path?.trim();
-  if (trimmed == null || trimmed.isEmpty) {
-    return null;
-  }
-  try {
-    final normalized = p.normalize(p.absolute(trimmed));
-    return Platform.isWindows ? normalized.toLowerCase() : normalized;
-  } on FileSystemException {
-    return Platform.isWindows ? trimmed.toLowerCase() : trimmed;
-  }
-}
-
-Future<void> _deleteFileBestEffort(String path) async {
-  final file = File(path);
-  await FileImage(file).evict();
-  await ResizeImage(FileImage(file), width: 256).evict();
-  await ResizeImage(FileImage(file), width: 640).evict();
-  for (var attempt = 0; attempt < 3; attempt++) {
-    try {
-      if (!await file.exists()) {
-        return;
-      }
-      await file.delete();
-      return;
-    } on FileSystemException {
-      if (attempt < 2) {
-        await Future<void>.delayed(const Duration(milliseconds: 40));
-      }
-    }
   }
 }
 
