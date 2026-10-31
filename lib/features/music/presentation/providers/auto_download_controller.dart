@@ -332,12 +332,15 @@ class AutoDownloadController extends Notifier<void> {
     if (_requested.isEmpty) return;
     final downloads = ref.read(downloadControllerProvider.notifier);
     final tasks = ref.read(downloadControllerProvider);
-    for (final MapEntry(key: taskId, value: request) in _requested.entries) {
+    // Each cancel updates the download state at once, and _recordFinished
+    // then edits _requested, so work from a copy.
+    final requested = _requested.entries.toList();
+    _requested.clear();
+    for (final MapEntry(key: taskId, value: request) in requested) {
       if (tasks[request.url]?.taskId == taskId) {
         unawaited(downloads.cancelDownload(request.url));
       }
     }
-    _requested.clear();
     // The pass resumes on the next Wi-Fi connection.
     _waitingForWifi = true;
   }

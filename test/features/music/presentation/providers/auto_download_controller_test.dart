@@ -420,6 +420,9 @@ class _RecordingDownloads extends DownloadController {
   @override
   Future<bool> cancelDownload(String url) async {
     cancelled.add(url);
+    // Like the real controller, the task leaves the state before any await,
+    // which listeners see at once.
+    state = Map<String, DownloadTaskState>.from(state)..remove(url);
     return true;
   }
 }
