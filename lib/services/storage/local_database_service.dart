@@ -666,6 +666,47 @@ class LocalDatabaseService {
   /// the listening threshold and again when playback completes. The greatest
   /// listened duration and completion state win, while newer metadata enriches
   /// the existing row.
+  Future<void> recordAutoDownload({
+    required String localTrackId,
+    required String videoId,
+    required DateTime downloadedAt,
+  }) async {
+    final db = await database;
+    await db.insert('auto_downloads', <String, Object?>{
+      'local_track_id': _requiredText(localTrackId, 'localTrackId'),
+      'video_id': _requiredText(videoId, 'videoId'),
+      'downloaded_at': downloadedAt.toUtc().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Library ids of automatic downloads that are still in the library. Rows
+  /// whose download the listener deleted are dropped.
+  Future<Set<String>> getAutoDownloadedTrackIds() async {
+    final db = await database;
+    return db.transaction((transaction) async {
+      await transaction.rawDelete('''
+        DELETE FROM auto_downloads
+        WHERE local_track_id NOT IN (SELECT id FROM local_tracks)
+      ''');
+      final rows = await transaction.query(
+        'auto_downloads',
+        columns: const ['local_track_id'],
+      );
+      return {for (final row in rows) row['local_track_id']! as String};
+    });
+  }
+
+  Future<void> forgetAutoDownloads(Iterable<String> localTrackIds) async {
+    final ids = localTrackIds.toList(growable: false);
+    if (ids.isEmpty) return;
+    final db = await database;
+    await db.delete(
+      'auto_downloads',
+      where: 'local_track_id IN (${List.filled(ids.length, '?').join(', ')})',
+      whereArgs: ids,
+    );
+  }
+
   /// Records a skip; writing the same session again keeps one row.
   Future<void> recordPlaybackSkip(PlaybackSkip skip) async {
     final sessionId = _requiredText(skip.sessionId, 'sessionId');
@@ -2309,6 +2350,7 @@ class LocalDatabaseService {
     }
 
     await _createRecommendationTables(db);
+    await _createAutoDownloadTable(db);
     await _createPlaylistSyncTables(db);
     final syncConflictColumns = await _tableColumns(
       db,
@@ -2959,6 +3001,19 @@ class LocalDatabaseService {
         whereArgs: <Object?>[playlistId],
       );
     }
+  }
+
+  /// Downloads Songbrook made by itself (the most played songs), so they can
+  /// be marked and removed again. Created by the open-time repair, without a
+  /// schema version.
+  Future<void> _createAutoDownloadTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS auto_downloads (
+        local_track_id TEXT PRIMARY KEY,
+        video_id TEXT NOT NULL,
+        downloaded_at TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<void> _createRecommendationTables(DatabaseExecutor db) async {

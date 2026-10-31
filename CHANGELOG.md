@@ -50,6 +50,12 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   Continue listening in the background, so tapping one starts sooner. Only
   the stream address is fetched, not audio; it is skipped while a song is
   already loading.
+- Added Download your most played (Settings → Storage, off by default). On
+  Wi-Fi it keeps the 50 most played songs of the last 90 days downloaded and
+  removes the ones it downloaded that drop off the list, unless they are in a
+  playlist or favorites or playing. Songs you downloaded yourself are never
+  removed. Automatic downloads are marked in Downloaded songs, and queued
+  ones are cancelled when Wi-Fi is lost. Uses `connectivity_plus`.
 - Added Songbrook Connect (iPhone and Mac, same Wi-Fi network): pair an
   iPhone with the Mac once using a six-digit code. After that, the device
   that is not playing shows what the other one plays and controls it, and

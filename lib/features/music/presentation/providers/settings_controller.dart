@@ -130,6 +130,7 @@ class SettingsState {
     this.loudnessNormalizationEnabled = true,
     this.autoplayEnabled = true,
     this.stopPlaybackOnTaskRemoved = true,
+    this.autoDownloadMostPlayed = false,
     this.preferSongVersions = true,
     this.skipOffTopicSegments = true,
   });
@@ -175,6 +176,9 @@ class SettingsState {
   /// Android: stops playback when the app is swiped away from Recents.
   final bool stopPlaybackOnTaskRemoved;
 
+  /// Keeps the most played songs downloaded while on Wi-Fi.
+  final bool autoDownloadMostPlayed;
+
   /// Plays the song version of a music video when YouTube Music has one,
   /// without the video's intro, skits or different mix.
   final bool preferSongVersions;
@@ -212,6 +216,7 @@ class SettingsState {
     bool? loudnessNormalizationEnabled,
     bool? autoplayEnabled,
     bool? stopPlaybackOnTaskRemoved,
+    bool? autoDownloadMostPlayed,
     bool? preferSongVersions,
     bool? skipOffTopicSegments,
   }) {
@@ -260,6 +265,8 @@ class SettingsState {
       autoplayEnabled: autoplayEnabled ?? this.autoplayEnabled,
       stopPlaybackOnTaskRemoved:
           stopPlaybackOnTaskRemoved ?? this.stopPlaybackOnTaskRemoved,
+      autoDownloadMostPlayed:
+          autoDownloadMostPlayed ?? this.autoDownloadMostPlayed,
       preferSongVersions: preferSongVersions ?? this.preferSongVersions,
       skipOffTopicSegments: skipOffTopicSegments ?? this.skipOffTopicSegments,
     );
@@ -314,6 +321,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   static const _autoplayEnabledKey = 'settings.autoplayEnabled';
   static const _stopPlaybackOnTaskRemovedKey =
       'settings.stopPlaybackOnTaskRemoved';
+  static const _autoDownloadMostPlayedKey = 'settings.autoDownloadMostPlayed';
   static const _preferSongVersionsKey = 'settings.preferSongVersions';
   static const _skipOffTopicSegmentsKey = 'settings.skipOffTopicSegments';
   static const _mediaRootDirectoryName = 'BStream-Music';
@@ -329,6 +337,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
   Future<void> _loudnessNormalizationWriteTail = Future<void>.value();
   Future<void> _autoplayWriteTail = Future<void>.value();
   Future<void> _stopPlaybackOnTaskRemovedWriteTail = Future<void>.value();
+  Future<void> _autoDownloadMostPlayedWriteTail = Future<void>.value();
   Future<void> _preferSongVersionsWriteTail = Future<void>.value();
   Future<void> _skipOffTopicSegmentsWriteTail = Future<void>.value();
   Future<void> _appBackgroundWriteTail = Future<void>.value();
@@ -452,6 +461,8 @@ class SettingsController extends AsyncNotifier<SettingsState> {
     final autoplayEnabled = prefs.getBool(_autoplayEnabledKey) ?? true;
     final stopPlaybackOnTaskRemoved =
         prefs.getBool(_stopPlaybackOnTaskRemovedKey) ?? true;
+    final autoDownloadMostPlayed =
+        prefs.getBool(_autoDownloadMostPlayedKey) ?? false;
     final preferSongVersions = prefs.getBool(_preferSongVersionsKey) ?? true;
     final skipOffTopicSegments =
         prefs.getBool(_skipOffTopicSegmentsKey) ?? true;
@@ -638,6 +649,7 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       loudnessNormalizationEnabled: loudnessNormalizationEnabled,
       autoplayEnabled: autoplayEnabled,
       stopPlaybackOnTaskRemoved: stopPlaybackOnTaskRemoved,
+      autoDownloadMostPlayed: autoDownloadMostPlayed,
       preferSongVersions: preferSongVersions,
       skipOffTopicSegments: skipOffTopicSegments,
     );
@@ -1308,6 +1320,22 @@ class SettingsController extends AsyncNotifier<SettingsState> {
       await prefs.setBool(_autoplayEnabledKey, enabled);
     });
     _autoplayWriteTail = write.catchError((_) {});
+    await write;
+  }
+
+  Future<void> setAutoDownloadMostPlayed(bool enabled) async {
+    final current = state.asData?.value ?? await future;
+    if (current.autoDownloadMostPlayed == enabled) {
+      return;
+    }
+    state = AsyncData(current.copyWith(autoDownloadMostPlayed: enabled));
+    final write = _autoDownloadMostPlayedWriteTail.catchError((_) {}).then((
+      _,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_autoDownloadMostPlayedKey, enabled);
+    });
+    _autoDownloadMostPlayedWriteTail = write.catchError((_) {});
     await write;
   }
 

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,7 @@ import '../../../../services/player/player_service.dart';
 import '../../../../services/sponsorblock/sponsorblock_client.dart';
 import '../../../../services/connect/connect_models.dart';
 import '../../../../services/connect/remote_playback.dart';
+import '../../../../services/network/unmetered_network.dart';
 import '../../../../services/recommendations/recommendations.dart';
 import '../../../../services/sharing/bstream_track_link.dart';
 import '../../../../services/sharing/incoming_track_link_service.dart';
@@ -140,6 +142,7 @@ export 'player/remote_playback_retry_coordinator.dart';
 export '../../domain/entities/lyrics_romanization_language.dart';
 
 part 'app_strings_provider.dart';
+part 'auto_download_controller.dart';
 part 'continue_listening_prewarm.dart';
 part 'download_controller.dart';
 part 'download_directory_migrator.dart';

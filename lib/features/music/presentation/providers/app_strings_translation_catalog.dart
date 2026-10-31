@@ -2329,6 +2329,28 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '音量标准化',
     '音量を均一化',
   ],
+  'Download your most played': <String>[
+    'Baixar suas mais ouvidas',
+    'Télécharger vos titres les plus écoutés',
+    '가장 많이 들은 곡 다운로드',
+    '下载最常播放的歌曲',
+    'よく聴いた曲をダウンロード',
+  ],
+  'On Wi-Fi, keeps your 50 most played songs of the last 90 days downloaded and removes those that drop off the list.':
+      <String>[
+        'No Wi-Fi, mantém baixadas as 50 músicas que você mais ouviu nos últimos 90 dias e remove as que saem da lista.',
+        'En Wi-Fi, garde téléchargés vos 50 titres les plus écoutés des 90 derniers jours et supprime ceux qui sortent de la liste.',
+        'Wi-Fi에 연결되면 최근 90일 동안 가장 많이 들은 50곡을 다운로드해 두고, 목록에서 빠진 곡은 삭제합니다.',
+        '连接 Wi-Fi 时，保留最近 90 天最常播放的 50 首歌曲的下载，并删除掉出列表的歌曲。',
+        'Wi-Fi 接続時に、過去 90 日間でよく聴いた 50 曲をダウンロードしておき、リストから外れた曲は削除します。',
+      ],
+  'Downloaded automatically': <String>[
+    'Baixada automaticamente',
+    'Téléchargé automatiquement',
+    '자동으로 다운로드됨',
+    '已自动下载',
+    '自動でダウンロード済み',
+  ],
   'Most played': <String>[
     'Mais ouvidas',
     'Les plus écoutés',

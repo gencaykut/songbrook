@@ -84,6 +84,7 @@ dependencies:
   flutter_secure_storage: 10.0.0
   share_plus: ^13.3.0
   bonsoir: ^7.1.5
+  connectivity_plus: ^7.3.1
 
 # smtc_windows 1.1.0 was generated against this exact bridge version and its
 # runtime intentionally rejects a different codegen version.

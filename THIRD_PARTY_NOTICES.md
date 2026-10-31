@@ -97,6 +97,12 @@ Songbrook Connect uses the Dart `web_socket_channel` package (BSD-3-Clause)
 for its WebSocket transport. Source and license:
 <https://github.com/dart-lang/http/tree/master/pkgs/web_socket_channel>
 
+## connectivity_plus
+
+Automatic downloads of the most played songs use the Flutter Community
+`connectivity_plus` package (BSD-3-Clause) to wait for Wi-Fi. Source and
+license: <https://github.com/fluttercommunity/plus_plugins/tree/main/packages/connectivity_plus>
+
 ## SponsorBlock data
 
 Songbrook skips the non-music parts of music videos (the `music_offtopic`

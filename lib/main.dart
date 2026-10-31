@@ -200,6 +200,8 @@ class BStreamMusicApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(desktopMediaSessionProvider);
     ref.watch(homeScreenWidgetSyncProvider);
+    // Idle unless automatic downloads are turned on in Settings.
+    ref.watch(autoDownloadControllerProvider);
     // Keep the per-track lyrics offset synchronized even while its route is
     // closed, without rebuilding the app when the offset itself changes.
     ref.watch(lyricsOffsetControllerProvider.select((_) => null));

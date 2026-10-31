@@ -3324,6 +3324,14 @@ class _LocalTrackTileState extends ConsumerState<_LocalTrackTile> {
     final localAudioAvailable = ref
         .watch(localTrackAudioAvailabilityProvider(track))
         .maybeWhen(data: (available) => available, orElse: () => true);
+    // Downloads Songbrook keeps by itself are marked in the downloads list.
+    final autoDownloaded =
+        mode == _TrackListMode.downloads &&
+        ref.watch(
+          autoDownloadedTrackIdsProvider.select(
+            (ids) => ids.value?.contains(track.id) ?? false,
+          ),
+        );
     final remoteTrack = mode == _TrackListMode.playlist
         ? _remoteTrackInfoForLocal(track)
         : null;
@@ -3400,14 +3408,36 @@ class _LocalTrackTileState extends ConsumerState<_LocalTrackTile> {
                       ),
                   ],
                 ),
-                title: Text(
-                  track.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w700,
-                    color: AppColors.contentTitleFor(context),
-                  ),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        track.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: isCurrent
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          color: AppColors.contentTitleFor(context),
+                        ),
+                      ),
+                    ),
+                    if (autoDownloaded)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Tooltip(
+                          message: strings.autoDownloaded,
+                          child: Icon(
+                            Icons.download_for_offline_rounded,
+                            key: ValueKey('library-auto-download-${track.id}'),
+                            size: 16,
+                            semanticLabel: strings.autoDownloaded,
+                            color: AppColors.contentSubtitleFor(context),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 subtitle: Column(
                   mainAxisSize: MainAxisSize.min,

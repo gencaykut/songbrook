@@ -674,6 +674,14 @@ class AppStrings {
   String get downloadedSongs =>
       choose('Canciones descargadas', 'Downloaded songs');
   String get mostPlayed => choose('Lo más escuchado', 'Most played');
+  String get autoDownloadMostPlayed =>
+      choose('Descargar lo más escuchado', 'Download your most played');
+  String get autoDownloadMostPlayedSummary => choose(
+    'Con wifi, mantiene descargadas tus 50 canciones más escuchadas de los últimos 90 días y borra las que salen de la lista.',
+    'On Wi-Fi, keeps your 50 most played songs of the last 90 days downloaded and removes those that drop off the list.',
+  );
+  String get autoDownloaded =>
+      choose('Descarga automática', 'Downloaded automatically');
   String get notPlayedLately =>
       choose('Hace tiempo que no las escuchas', 'Not played lately');
   String get lastThirtyDays => choose('Últimos 30 días', 'Last 30 days');

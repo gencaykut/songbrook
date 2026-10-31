@@ -506,6 +506,10 @@ const Map<String, String> turkishAppStrings = <String, String>{
   'Normalize volume': 'Ses seviyesini dengele',
   'Autoplay': 'Otomatik oynatma',
   'Most played': 'En çok dinlediklerin',
+  'Download your most played': 'En çok dinlediklerini indir',
+  'On Wi-Fi, keeps your 50 most played songs of the last 90 days downloaded and removes those that drop off the list.':
+      'Wi-Fi\'deyken son 90 günde en çok dinlediğin 50 şarkıyı indirilmiş tutar, listeden düşenleri siler.',
+  'Downloaded automatically': 'Otomatik indirildi',
   'Not played lately': 'Bir süredir dinlemediklerin',
   'Last 30 days': 'Son 30 gün',
   'All time': 'Tüm zamanlar',

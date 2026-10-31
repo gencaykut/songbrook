@@ -712,6 +712,18 @@ class _SettingsPanelState extends ConsumerState<SettingsPanel> {
                   onTap: () => _openRoute(_SettingsRoute.storage),
                 ),
                 const SizedBox(height: appCardGap),
+                _PlaybackSwitchSettings(
+                  key: const ValueKey('settings-inline-auto-download'),
+                  switchKey: const ValueKey('settings-auto-download-switch'),
+                  enabled: state.autoDownloadMostPlayed,
+                  icon: Icons.download_for_offline_rounded,
+                  title: strings.autoDownloadMostPlayed,
+                  summary: strings.autoDownloadMostPlayedSummary,
+                  onEnabledChanged: ref
+                      .read(settingsControllerProvider.notifier)
+                      .setAutoDownloadMostPlayed,
+                ),
+                const SizedBox(height: appCardGap),
                 _SettingsEntryCard(
                   key: const ValueKey('storage-local-music-filters'),
                   icon: Icons.filter_alt_rounded,
