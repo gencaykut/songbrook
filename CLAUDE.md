@@ -161,6 +161,23 @@ bash macos/package_dmg.sh "Developer ID Application: AYKUT GENC (9K8FGUA9A3)" so
   - Android: GitHub Releases APK (+ Obtainium ile güncelleme), IzzyOnDroid deposu. F-Droid ana deposu Google Cast SDK (kapalı kaynak) yüzünden olmaz; Cast'siz build flavor gerekir (NewPipe gibi "NonFreeNet" uyarısıyla).
   - Android geliştirici doğrulaması (25 Ekim 2026 itibarıyla resmi kaynaklara göre): sertifikalı cihazlarda Play dışı uygulamalar doğrulanmış geliştiriciye kayıtlı olmalı. 30 Eylül 2026'da Brezilya, Endonezya, Singapur, Tayland'da başladı; 2027'de dünya geneli (Türkiye dahil). Play'de yayın yapmayan geliştirici için Android Developer Console: tam dağıtım hesabı 25 $ + kimlik doğrulaması, paket adı (`io.github.gencaykut.songbrook`) ve imza anahtarının SHA-256 parmak izi kaydedilir. Ücretsiz "sınırlı dağıtım" hesabı en fazla 20 cihaz, kimlik istemez. Kayıtsız uygulamalar kullanıcının bir kez açtığı "gelişmiş akış" (risk onayı, 7 gün ya da süresiz) ya da ADB ile kurulabilir; akış kapalıysa güncellemeler başarısız olur. Açık kaynak/IzzyOnDroid için Google'ın ayrı bir kayıt rehberi var. Karar: imza anahtarı repo dışında kalıcı tutulmalı (parmak izi kayda bağlanıyor); 2027 öncesi kayıt yapılmalı. Ayrıntılar değişebilir, dağıtımdan önce yeniden kontrol et.
 
+### Dağıtım iş sırası (1 Kasım'da konuşuldu; başlama zamanını kullanıcı söyler)
+
+Lisans kararı: BSD-2 kalıyor (upstream BSD-2; tek lisans, upstream'le iki yönlü taşınabilirlik). GitHub'da fork bağı yok, ayrı repo olarak kalacak; hukuken türev çalışma, atıf README ve Hakkında'da var.
+
+1. **Widget düzeltmesini telefonda dene:** `docs/manual-test-1.0.0.md` 12. bölüm (iOS kapalı uygulama yolu, Android tekrar/favori). Kurulumu kullanıcı söyleyince yap, teklif etme.
+2. **Repo adı `songbrook`:** `gh repo rename songbrook` (dışa dönük, onay al; GitHub eski adresi yönlendirir), `git remote set-url origin`, `AppConstants.githubRepository`, `app_metadata_test.dart`, `github_release_checker_test.dart`, CLAUDE.md, `docs/manual-test-1.0.0.md`. Ad boşta (1 Kasım), "yt" markası adda kalmaz.
+3. **Telif satırı:** `LICENSE`'a Bryam Contreras'ın satırını koruyarak "Copyright (c) 2026, Aykut Genç" ekle; README'nin License bölümünü güncelle.
+4. **LGPL bildirimleri:** `media_kit_libs_macos_audio`'nun paketlediği libmpv ve FFmpeg'in lisansını ve sürümünü paketin kendisinden doğrula (LGPL derleme olduğu varsayılıyor, doğrulanmadı); `THIRD_PARTY_NOTICES.md`'ye ve dmg'ye lisans metni + kaynak adresi ekle.
+5. **Android release imzası:** `~/.songbrook/songbrook-release.jks` (keytool, parolayı kullanıcı girer), `android/key.properties` git dışında; release APK; anahtarın SHA-256 parmak izini not et (Android doğrulama kaydına bağlanıyor). Anahtar yedeği kullanıcıda.
+6. **Sürüm paketleri:** Mac notarize dmg (`macos/package_dmg.sh`; `releases/latest/download/` için sürümsüz `Songbrook.dmg` kopyası da), iOS ipa (AltStore/Sideloadly), Android release APK. `AppStrings.releaseHighlights` ve CHANGELOG'u güncelle; sürüm değişirse beş yeri birlikte (bkz. Son durum).
+7. **Push:** önce `dart format --set-exit-if-changed .`, `flutter analyze`, `flutter test`; sonra tek `git push`.
+8. **Public + ilk Release:** repoyu public yap (onay al); `v1.0.0` etiketi `Release installers` iş akışını tetikler, ne ürettiğini (imzasız paket?) önce kontrol et; paketleri GitHub Release'e yükle.
+9. **GitHub Pages:** `gencaykut.github.io/songbrook`, ayrı klasör (`site/`) ya da `gh-pages` dalı (`docs/` geliştirici notları için kalır). İndirme sayfası; dmg Releases'ta kalır (Pages'e ikili dosya koyma), düğme `releases/latest/download/Songbrook.dmg`'ye gider; Obtainium bağlantısı. Private repoda Pages ücretli plan ister, public sonrası yapılır.
+10. **AltStore/SideStore kaynağı:** Pages'te source JSON (ipa Releases'ta); kullanıcı kaynağı bir kez ekler, güncellemeleri oradan alır.
+11. **IzzyOnDroid başvurusu** (F-Droid ana deposu Cast SDK yüzünden olmaz).
+12. **Android geliştirici doğrulaması:** 2027'den önce Android Developer Console kaydı (paket adı + imza parmak izi); kuralları dağıtımdan önce yeniden kontrol et.
+
 ### Açık kalan küçük konular
 
 - **Kuyruğa ekle / sıradaki olarak çal / kuyruktan kaldır (28 Ekim, kullanıcı: "şimdilik değil"):** Şarkı menülerinde ve kuyrukta yok (yalnız sürükleyip sıralama ve Benzer'den ekle-çal var). TuiTunes (MIT, TypeScript) incelendi; kodu basit, alınacak bir şey yok. Tekrar modları ve kalıcı geçmiş Songbrook'ta zaten daha kapsamlı; komut paleti yalnız Mac'te anlamlı, düşük öncelik. Yapılırsa: karıştırma, kaynak eşitlemesi (`_keepInsertedItems`), Connect'e iletme, çalan şarkıyı kaldırma.
