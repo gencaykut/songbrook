@@ -29,10 +29,10 @@ const Gallery = ({ images, onOpen }: GalleryProps) => (
 		</div>
 
 		<div
-			className="screenshots-scrollbar overflow-x-scroll overflow-y-visible py-6 scrollbar-gutter-stable"
+			className="screenshots-scrollbar overflow-x-auto overflow-y-visible py-6 scrollbar-gutter-stable"
 			style={{ WebkitOverflowScrolling: "touch" }}
 		>
-			<div className="flex gap-4">
+			<div className="mx-auto flex w-max gap-4">
 				{images.map((src, index) => (
 					<button
 						// biome-ignore lint/suspicious/noArrayIndexKey: screenshot list has no stable id

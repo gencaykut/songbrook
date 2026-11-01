@@ -7,6 +7,18 @@ Songbrook is a YouTube Music player for macOS, iOS, and Android, built with
 Flutter. It searches the YouTube Music catalog, streams and downloads songs,
 and keeps a local library with playlists, favorites, and lyrics.
 
+<p align="center">
+  <img src="site/public/assets/screenshots/1-home.jpg" alt="Home" width="200">
+  <img src="site/public/assets/screenshots/2-player.jpg" alt="Player" width="200">
+  <img src="site/public/assets/screenshots/3-queue.jpg" alt="Queue with Autoplay and Similar" width="200">
+  <img src="site/public/assets/screenshots/4-artist.jpg" alt="Artist page" width="200">
+</p>
+
+<p align="center">
+  <a href="https://gencaykut.github.io/songbrook/"><b>Download page</b></a> ·
+  <a href="https://github.com/gencaykut/songbrook/releases/latest">Latest release</a>
+</p>
+
 Songbrook is a fork of [BStream Music](https://github.com/BryamContreras/BStream-Music)
 by Bryam Contreras, released under the same BSD 2-Clause license. Most of the
 application, including its self-contained Dart InnerTube playback pipeline, comes
