@@ -75,3 +75,6 @@ app.*.map.json
 /tool/mp4/avdur
 /macos/Podfile.lock
 /ios/Podfile.lock
+
+# Local Claude Code notes (device identifiers)
+CLAUDE.local.md
