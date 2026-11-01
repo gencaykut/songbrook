@@ -1411,8 +1411,8 @@ class AppStrings {
     'Songbrook is a fork of the open-source project by Bryam Contreras.',
   );
   String get releaseHighlightsSummary => choose(
-    'Turco, volumen estable, búsqueda y más',
-    'Turkish, steady volume, search, and more',
+    'Connect, versiones de canción, turco y más',
+    'Connect, song versions, Turkish, and more',
   );
 
   /// Songbrook's release highlights, newest release only.
@@ -1422,20 +1422,28 @@ class AppStrings {
       'Turkish interface that follows the device language until you choose one.',
     ),
     choose(
+      'Songbrook Connect une tu iPhone y tu Mac: controla uno desde el otro y pasa la reproducción entre ellos.',
+      'Songbrook Connect links your iPhone and Mac: control one from the other and move playback between them.',
+    ),
+    choose(
+      'Los videos musicales suenan en su versión de canción cuando existe y, si no, se saltan sus partes sin música.',
+      'Music videos play their song version when there is one, and skip their non-music parts otherwise.',
+    ),
+    choose(
+      'La cola se abre sobre el reproductor, con canciones similares y un interruptor de reproducción automática.',
+      'The queue opens over the player, with similar songs and an Autoplay switch.',
+    ),
+    choose(
+      'La biblioteca muestra tus canciones más escuchadas y puede mantenerlas descargadas con Wi-Fi.',
+      'The library shows your most played songs and can keep them downloaded on Wi-Fi.',
+    ),
+    choose(
       'Las canciones más fuertes se bajan a un nivel estable, como en YouTube Music.',
       'Loud songs are lowered to a steady level, like on YouTube Music.',
     ),
     choose(
       'La búsqueda carga más resultados al desplazarte y ahora encuentra playlists.',
       'Search loads more results as you scroll and now finds playlists.',
-    ),
-    choose(
-      'En iOS, las canciones terminan a tiempo y el reproductor se cierra deslizándolo hacia abajo.',
-      'On iOS, songs now end on time and the player closes with a downward swipe.',
-    ),
-    choose(
-      'La reproducción es más fiable cuando YouTube cambia sus clientes.',
-      'Playback is more reliable when YouTube changes its clients.',
     ),
   ];
   String get githubRepositoryTitle =>

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0+130 — 2026-10-24
+## 1.0.0+130 — 2026-11-01
 
 First Songbrook version: the changes in the Songbrook fork since BStream Music
 1.2.9+129 (upstream `7d54c36`). The build number continues above upstream's.
@@ -79,6 +79,8 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   video's hash. On by default, with a switch in Playback settings.
 - Added a script that packages a Developer ID signed, notarized universal
   macOS DMG (`macos/package_dmg.sh`).
+  The app and the DMG include the license texts and source references of the
+  bundled libmpv (LGPL-2.1+), FFmpeg (LGPL-3.0+) and Mbed TLS (Apache-2.0).
 
 ### Changed
 
@@ -98,6 +100,9 @@ First Songbrook version: the changes in the Songbrook fork since BStream Music
   repository. About credits BStream Music instead of linking its donation page.
 - The app shows the name Songbrook in its header, window title, and media
   controls.
+- The home screen widget's buttons now act without opening the app: on iOS 17
+  and later, and for repeat and favorite on Android. On iOS a closed app still
+  comes to the front to run the action.
 
 ### Removed
 

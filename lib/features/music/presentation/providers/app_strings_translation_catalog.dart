@@ -2645,20 +2645,43 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '搜索在滚动时会加载更多结果，现在还能找到播放列表。',
     '検索はスクロールするとさらに結果を読み込み、プレイリストも見つかるようになりました。',
   ],
-  'On iOS, songs now end on time and the player closes with a downward swipe.':
+  'Songbrook Connect links your iPhone and Mac: control one from the other and move playback between them.': <String>[
+    'O Songbrook Connect une seu iPhone e seu Mac: controle um pelo outro e passe a reprodução entre eles.',
+    'Songbrook Connect relie votre iPhone et votre Mac : contrôlez l’un depuis l’autre et passez la lecture de l’un à l’autre.',
+    'Songbrook Connect가 iPhone과 Mac을 연결합니다. 한 기기에서 다른 기기를 제어하고 재생을 옮길 수 있습니다.',
+    'Songbrook Connect 连接你的 iPhone 和 Mac：在一台设备上控制另一台，并在两者之间转移播放。',
+    'Songbrook Connect で iPhone と Mac をつなぎ、一方から他方を操作したり再生を移したりできます。',
+  ],
+  'Music videos play their song version when there is one, and skip their non-music parts otherwise.':
       <String>[
-        'No iOS, as músicas agora terminam na hora certa e o player fecha ao deslizar para baixo.',
-        'Sur iOS, les chansons se terminent désormais à l’heure et le lecteur se ferme d’un glissement vers le bas.',
-        'iOS에서 노래가 제시간에 끝나며, 아래로 밀어 플레이어를 닫을 수 있습니다.',
-        '在 iOS 上，歌曲现在会准时结束，向下轻扫即可关闭播放器。',
-        'iOS で曲が時間どおりに終わり、下にスワイプするとプレーヤーが閉じます。',
+        'Videoclipes tocam a versão da música quando ela existe; caso contrário, as partes sem música são puladas.',
+        'Les clips jouent leur version chanson quand elle existe, sinon leurs passages sans musique sont sautés.',
+        '뮤직비디오는 노래 버전이 있으면 그것을 재생하고, 없으면 음악이 아닌 부분을 건너뜁니다.',
+        '音乐视频有歌曲版本时会播放歌曲版本，否则跳过其中的非音乐部分。',
+        'ミュージックビデオは曲バージョンがあればそれを再生し、なければ音楽以外の部分をスキップします。',
       ],
-  'Playback is more reliable when YouTube changes its clients.': <String>[
-    'A reprodução é mais confiável quando o YouTube muda seus clientes.',
-    'La lecture est plus fiable lorsque YouTube modifie ses clients.',
-    'YouTube가 클라이언트를 변경해도 재생이 더 안정적입니다.',
-    '当 YouTube 更改其客户端时，播放更加可靠。',
-    'YouTube がクライアントを変更しても再生がより安定します。',
+  'The queue opens over the player, with similar songs and an Autoplay switch.':
+      <String>[
+        'A fila abre sobre o player, com músicas semelhantes e uma opção de reprodução automática.',
+        'La file s’ouvre par-dessus le lecteur, avec des titres similaires et un interrupteur de lecture automatique.',
+        '재생 대기열이 플레이어 위에 열리며, 비슷한 노래와 자동 재생 스위치가 있습니다.',
+        '播放队列在播放器上方打开，附带相似歌曲和自动播放开关。',
+        '再生キューがプレーヤーの上に開き、似た曲と自動再生スイッチがあります。',
+      ],
+  'The library shows your most played songs and can keep them downloaded on Wi-Fi.':
+      <String>[
+        'A biblioteca mostra suas músicas mais ouvidas e pode mantê-las baixadas no Wi-Fi.',
+        'La bibliothèque affiche vos titres les plus écoutés et peut les garder téléchargés en Wi-Fi.',
+        '보관함에 가장 많이 들은 노래가 표시되며, Wi-Fi에서 자동으로 다운로드해 둘 수 있습니다.',
+        '音乐库会显示你最常听的歌曲，并可在 Wi-Fi 下保持下载。',
+        'ライブラリに最もよく聴いた曲が表示され、Wi-Fi 接続時にダウンロードしておくこともできます。',
+      ],
+  'Connect, song versions, Turkish, and more': <String>[
+    'Connect, versões de música, turco e mais',
+    'Connect, versions chanson, turc et plus',
+    'Connect, 노래 버전, 터키어 등',
+    'Connect、歌曲版本、土耳其语等',
+    'Connect、曲バージョン、トルコ語など',
   ],
   'Based on BStream Music': <String>[
     'Baseado no BStream Music',
@@ -2681,13 +2704,6 @@ const Map<String, List<String>> _appStringTranslations = <String, List<String>>{
     '버전, 크레딧 및 저장소',
     '版本、致谢和代码库',
     'バージョン、クレジット、リポジトリ',
-  ],
-  'Turkish, steady volume, search, and more': <String>[
-    'Turco, volume estável, pesquisa e mais',
-    'Turc, volume stable, recherche et plus',
-    '터키어, 일정한 볼륨, 검색 등',
-    '土耳其语、稳定音量、搜索等',
-    'トルコ語、一定の音量、検索など',
   ],
   'Apply': <String>['Aplicar', 'Appliquer', 'Apply', '应用', '適用'],
   'Timer duration': <String>[

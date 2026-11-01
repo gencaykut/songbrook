@@ -579,16 +579,20 @@ const Map<String, String> turkishAppStrings = <String, String>{
       "Yüksek sesli şarkılar YouTube Music'teki gibi dengeli bir seviyeye indirilir.",
   'Search loads more results as you scroll and now finds playlists.':
       'Arama kaydırdıkça daha fazla sonuç yükler ve artık çalma listelerini de bulur.',
-  'On iOS, songs now end on time and the player closes with a downward swipe.':
-      "iOS'ta şarkılar artık zamanında biter; oynatıcı aşağı kaydırılarak kapanır.",
-  'Playback is more reliable when YouTube changes its clients.':
-      'YouTube istemcilerini değiştirdiğinde çalma daha güvenilirdir.',
+  'Songbrook Connect links your iPhone and Mac: control one from the other and move playback between them.':
+      "Songbrook Connect iPhone ile Mac'i bağlar: birinden diğerini yönetir, çalmayı aralarında taşırsın.",
+  'Music videos play their song version when there is one, and skip their non-music parts otherwise.':
+      'Müzik videoları varsa şarkı sürümüyle çalar; yoksa müzik dışı bölümleri atlanır.',
+  'The queue opens over the player, with similar songs and an Autoplay switch.':
+      'Sıradakiler oynatıcının üzerinde açılır; benzer şarkılar ve otomatik oynatma anahtarıyla.',
+  'The library shows your most played songs and can keep them downloaded on Wi-Fi.':
+      "Kitaplık en çok dinlediğin şarkıları gösterir ve bunları Wi-Fi'da indirilmiş tutabilir.",
+  'Connect, song versions, Turkish, and more':
+      'Connect, şarkı sürümleri, Türkçe ve dahası',
   'Based on BStream Music': 'BStream Music tabanlı',
   'Songbrook is a fork of the open-source project by Bryam Contreras.':
       "Songbrook, Bryam Contreras'ın açık kaynak projesinin bir fork'udur.",
   'Version, credits, and repository': 'Sürüm, emeği geçenler ve depo',
-  'Turkish, steady volume, search, and more':
-      'Türkçe, dengeli ses, arama ve dahası',
   'Apply': 'Uygula',
   'Timer duration': 'Zamanlayıcı süresi',
   'Start': 'Başlat',
