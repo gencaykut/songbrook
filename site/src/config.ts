@@ -8,6 +8,7 @@ import type {
 
 const repository = "gencaykut/songbrook";
 const github = `https://github.com/${repository}`;
+const altStoreSource = "https://gencaykut.github.io/songbrook/altstore.json";
 
 export const site = {
 	name: "Songbrook",
@@ -61,7 +62,17 @@ export const downloads: Download[] = [
 			"Download the IPA file.",
 			"Install it with Sideloadly, AltStore or SideStore, signing in with your Apple ID.",
 		],
-		note: "With a free Apple ID the app has to be refreshed every 7 days; AltStore and SideStore do it for you.",
+		note: "In AltStore or SideStore, add the Songbrook source once to install it and get updates there. With a free Apple ID the app is refreshed every 7 days.",
+		secondary: [
+			{
+				label: "Add to AltStore",
+				url: `altstore://source?url=${altStoreSource}`,
+			},
+			{
+				label: "Add to SideStore",
+				url: `sidestore://source?url=${altStoreSource}`,
+			},
+		],
 	},
 	{
 		kind: "android",
@@ -74,10 +85,12 @@ export const downloads: Download[] = [
 			"Open it and allow your browser to install apps when asked.",
 		],
 		note: "Add Songbrook to Obtainium to get new versions automatically.",
-		secondary: {
-			label: "Add to Obtainium",
-			url: `https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/${github}`,
-		},
+		secondary: [
+			{
+				label: "Add to Obtainium",
+				url: `https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/${github}`,
+			},
+		],
 	},
 ];
 
@@ -147,7 +160,7 @@ export const faqs: FAQItem[] = [
 	{
 		question: "How do I install it on my iPhone?",
 		answer:
-			"Use Sideloadly, AltStore or SideStore on your computer with your Apple ID. A free Apple ID allows three such apps and needs a refresh every 7 days, which AltStore and SideStore do automatically.",
+			"Add the Songbrook source to AltStore or SideStore and install it from there, or install the IPA with Sideloadly. They sign it with your Apple ID; a free one allows three such apps and needs a refresh every 7 days, which AltStore and SideStore do automatically.",
 	},
 	{
 		question: "Where does my data go?",

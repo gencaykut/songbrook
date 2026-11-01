@@ -69,14 +69,15 @@ const Downloads = ({ items }: DownloadsProps) => {
 								>
 									{item.buttonLabel}
 								</a>
-								{item.secondary && (
+								{item.secondary?.map((extra) => (
 									<a
-										href={item.secondary.url}
+										key={extra.label}
+										href={extra.url}
 										className="button-base px-5 py-2.5 text-sm font-semibold text-heading transition-colors hover:bg-gray-50 dark:hover:bg-white/10"
 									>
-										{item.secondary.label}
+										{extra.label}
 									</a>
-								)}
+								))}
 							</div>
 							<p className="mt-3 min-h-4 text-xs text-muted">
 								{file ? `${file.name} · ${megabytes(file.size)}` : ""}

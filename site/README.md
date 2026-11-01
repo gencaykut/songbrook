@@ -11,6 +11,12 @@ Content lives in `src/config.ts`. The download buttons read the latest GitHub
 release in the browser, so a new release needs no change here; only the
 fallback version and date in `site` do.
 
+`pnpm build` first runs `scripts/altstore-source.mjs`, which writes
+`public/altstore.json` (git-ignored), the AltStore/SideStore source, from the
+releases that carry an IPA (size, date, and SHA-256 from `SHA256SUMS.txt`) and
+the privacy strings in `ios/Runner/Info.plist`. Publishing a release re-runs
+the Pages workflow on `main`, so the source picks up the new version.
+
 ```bash
 pnpm install
 pnpm dev          # http://localhost:3000

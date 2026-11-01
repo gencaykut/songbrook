@@ -9,7 +9,7 @@ export interface Download {
 	buttonLabel: string;
 	steps: string[];
 	note: string;
-	secondary?: { label: string; url: string };
+	secondary?: { label: string; url: string }[];
 }
 
 export interface Feature {
