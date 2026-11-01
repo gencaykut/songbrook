@@ -1,12 +1,11 @@
 name: Release installers
 
-# Songbrook: runs only for release tags and by hand, to save Actions minutes on
-# the private repository. Run `flutter analyze` and `flutter test` locally.
+# Songbrook: runs only by hand. Releases are built, signed and notarized
+# locally (macos/package_dmg.sh) and published with `gh release create`; this
+# workflow only uploads artifacts, and its Android job needs signing secrets.
+# Run `flutter analyze` and `flutter test` locally.
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
 
 permissions:
   contents: read
