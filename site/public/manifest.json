@@ -1,0 +1,20 @@
+{
+	"name": "Songbrook",
+	"short_name": "Songbrook",
+	"description": "A free, open-source YouTube Music player for Mac, iPhone and Android.",
+	"start_url": "./",
+	"display": "standalone",
+	"background_color": "#ffffff",
+	"theme_color": "#1e5aa8",
+	"orientation": "portrait-primary",
+	"scope": "./",
+	"lang": "en",
+	"categories": ["music", "entertainment"],
+	"icons": [
+		{
+			"src": "favicon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml"
+		}
+	]
+}

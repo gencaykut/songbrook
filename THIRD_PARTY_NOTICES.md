@@ -36,6 +36,12 @@ The license texts and these notes ([macos/licenses](macos/licenses)) ship in
 folder. The frameworks stay dynamically loaded and replaceable, and the source
 archives are attached to each GitHub release.
 
+## app-landing (download page)
+
+The download page in `site/` is adapted from
+[bohd4nx/app-landing](https://github.com/bohd4nx/app-landing) by Bohdan, MIT
+license ([site/LICENSE](site/LICENSE)). It is not part of the app.
+
 ## xml 6.6.1
 
 BStream Music uses the Dart `xml` package (MIT license) for bounded UPnP device
