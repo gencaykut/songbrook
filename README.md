@@ -72,16 +72,19 @@ distributed by this fork.
 
 ## Status
 
-Songbrook is in development. Its numbering restarts at 1.0.0; the build
-number continues above upstream's 129 so earlier test installs upgrade.
+**Download:** <https://gencaykut.github.io/songbrook/>, or the files on
+[GitHub Releases](https://github.com/gencaykut/songbrook/releases/latest).
+
+Songbrook's numbering restarts at 1.0.0; the build number continues above
+upstream's 129 so earlier test installs upgrade.
 
 Current version: **1.0.0+130**.
 
 | Platform | Minimum | Distribution |
 | --- | --- | --- |
 | macOS | 12.0, universal | Notarized DMG |
-| iOS | 15.0 | AltStore / Sideloadly (AltStore PAL in the EU), planned |
-| Android | 7.0 (API 24) | APK, planned; F-Droid later |
+| iOS | 15.0 | Unsigned IPA for Sideloadly, AltStore or SideStore |
+| Android | 7.0 (API 24) | Release-signed APK; Obtainium for updates |
 
 The App Store and Google Play are not targets.
 
