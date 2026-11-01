@@ -18,7 +18,7 @@ class AppConstants {
   static const androidExternalAudioChannel = 'bstream_music/external_audio';
   static const androidAppActivationChannel = 'bstream_music/app_activation';
   static const defaultSearchLimit = 20;
-  static const githubRepository = 'gencaykut/yt-music-app';
+  static const githubRepository = 'gencaykut/songbrook';
   static const githubRepositoryUrl = 'https://github.com/$githubRepository';
   static const appDownloadUrl = '$githubRepositoryUrl/releases/latest';
 

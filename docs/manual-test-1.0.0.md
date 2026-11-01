@@ -14,7 +14,7 @@ düş: ne yaptın, ne bekledin, ne oldu.
 - [ ] Başlıkta, kilit ekranında ve Denetim Merkezi'nde "Songbrook" yazıyor.
 - [ ] **Ayarlar → Uygulama hakkında:** sürüm 1.0.0 (130), BStream Music'e atıf
       kartı var, "1.0.0 sürümündeki yenilikler" bu sürümü anlatıyor, GitHub bağlantısı
-      `gencaykut/yt-music-app`'e gidiyor.
+      `gencaykut/songbrook`'e gidiyor.
 
 ## 2. Dil
 

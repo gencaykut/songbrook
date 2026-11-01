@@ -18,7 +18,7 @@ void main() {
       expect(
         requestedEndpoint,
         Uri.parse(
-          'https://api.github.com/repos/gencaykut/yt-music-app/releases/latest',
+          'https://api.github.com/repos/gencaykut/songbrook/releases/latest',
         ),
       );
       expect(result.currentVersion, '1.2.6');

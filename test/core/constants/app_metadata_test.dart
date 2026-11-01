@@ -49,11 +49,11 @@ void main() {
     );
     expect(
       AppConstants.githubRepositoryUrl,
-      'https://github.com/gencaykut/yt-music-app',
+      'https://github.com/gencaykut/songbrook',
     );
     expect(
       AppConstants.appDownloadUrl,
-      'https://github.com/gencaykut/yt-music-app/releases/latest',
+      'https://github.com/gencaykut/songbrook/releases/latest',
     );
     expect(
       AppConstants.upstreamRepositoryUrl,
