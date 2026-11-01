@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Songbrook</title>
+<meta name="description" content="Songbrook is a free, open-source YouTube Music player for macOS, iOS and Android.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f5f8fc;
+    --surface: #ffffff;
+    --text: #13202f;
+    --muted: #55657a;
+    --line: #dbe4ef;
+    --accent: #1e5aa8;
+    --accent-2: #4f9be0;
+    --on-accent: #ffffff;
+    --code: #eaf1f9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1520;
+      --surface: #142030;
+      --text: #e6eef8;
+      --muted: #9aabc0;
+      --line: #23344a;
+      --accent: #4f9be0;
+      --accent-2: #7db8ee;
+      --on-accent: #0d1520;
+      --code: #1b2a3d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a { color: var(--accent); }
+  main { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header.hero {
+    text-align: center;
+    padding: 56px 0 32px;
+  }
+  .hero img { width: 112px; height: 112px; border-radius: 26px; box-shadow: 0 10px 30px rgba(30, 90, 168, .3); }
+  h1 { font-size: 44px; line-height: 1.1; margin: 20px 0 8px; letter-spacing: -0.02em; }
+  .tagline { font-size: 19px; color: var(--muted); margin: 0 auto; max-width: 560px; }
+  .version { margin-top: 14px; font-size: 14px; color: var(--muted); }
+  h2 { font-size: 24px; margin: 48px 0 16px; letter-spacing: -0.01em; }
+  .downloads {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card h3 { margin: 0 0 4px; font-size: 20px; }
+  .req { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .card ol, .card p { font-size: 15px; margin: 0 0 16px; }
+  .card ol { padding-left: 20px; }
+  .card li + li { margin-top: 4px; }
+  .actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .button {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    color: var(--on-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .button.secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--line);
+  }
+  .size { display: block; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px 28px;
+    padding: 0;
+    list-style: none;
+  }
+  .features li { padding-left: 0; }
+  .features strong { display: block; }
+  .features span { color: var(--muted); font-size: 15px; }
+  code {
+    background: var(--code);
+    padding: 1px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    word-break: break-all;
+  }
+  footer {
+    margin: 56px 0 0;
+    padding: 24px 0 40px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer p { margin: 0 0 8px; }
+  @media (max-width: 520px) {
+    header.hero { padding-top: 40px; }
+    h1 { font-size: 36px; }
+    .tagline { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <img src="icon.svg" alt="" width="112" height="112">
+    <h1>Songbrook</h1>
+    <p class="tagline">A free, open-source YouTube Music player for Mac, iPhone and Android. Search, stream, download and keep your own library, without ads.</p>
+    <p class="version" id="version">Latest release on GitHub</p>
+  </header>
+
+  <h2>Download</h2>
+  <section class="downloads">
+    <article class="card">
+      <h3>macOS</h3>
+      <p class="req">macOS 12 or later · Apple silicon and Intel</p>
+      <ol>
+        <li>Open the disk image.</li>
+        <li>Drag Songbrook to Applications.</li>
+      </ol>
+      <p>Signed and notarized by Apple, so it opens without warnings.</p>
+      <div class="actions">
+        <a class="button" id="dmg" href="https://github.com/gencaykut/songbrook/releases/latest/download/Songbrook.dmg">Download for Mac</a>
+      </div>
+      <span class="size" id="dmg-size"></span>
+    </article>
+
+    <article class="card">
+      <h3>iPhone</h3>
+      <p class="req">iOS 15 or later · not on the App Store</p>
+      <ol>
+        <li>Download the IPA file.</li>
+        <li>Install it with <a href="https://sideloadly.io">Sideloadly</a>, <a href="https://altstore.io">AltStore</a> or <a href="https://sidestore.io">SideStore</a>, signing in with your Apple ID.</li>
+      </ol>
+      <p>With a free Apple ID the app must be refreshed every 7 days; AltStore and SideStore do this for you.</p>
+      <div class="actions">
+        <a class="button" id="ipa" href="https://github.com/gencaykut/songbrook/releases/latest">Download IPA</a>
+      </div>
+      <span class="size" id="ipa-size"></span>
+    </article>
+
+    <article class="card">
+      <h3>Android</h3>
+      <p class="req">Android 7 or later · not on Google Play</p>
+      <ol>
+        <li>Download the APK on your phone.</li>
+        <li>Open it and allow your browser to install apps when asked.</li>
+      </ol>
+      <p>To get updates automatically, add Songbrook to <a href="https://obtainium.imranr.dev">Obtainium</a>.</p>
+      <div class="actions">
+        <a class="button" id="apk" href="https://github.com/gencaykut/songbrook/releases/latest">Download APK</a>
+        <a class="button secondary" href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/gencaykut/songbrook">Add to Obtainium</a>
+      </div>
+      <span class="size" id="apk-size"></span>
+    </article>
+  </section>
+
+  <h2>What it does</h2>
+  <ul class="features">
+    <li><strong>The YouTube Music catalog</strong><span>Search songs, albums, artists and playlists, with radio and suggestions on Home.</span></li>
+    <li><strong>Downloads and a local library</strong><span>Save songs for offline listening, with playlists, favorites and synced lyrics.</span></li>
+    <li><strong>Songs, not music videos</strong><span>A music video plays its song version when there is one, and skips its non-music parts otherwise.</span></li>
+    <li><strong>Songbrook Connect</strong><span>Control your Mac from your iPhone, or move playback between them, on the same Wi-Fi.</span></li>
+    <li><strong>Steady volume</strong><span>Loud songs are lowered to an even level, as on YouTube Music.</span></li>
+    <li><strong>Your history stays on your device</strong><span>Most played lists, skip-aware suggestions, and your top songs kept downloaded on Wi-Fi.</span></li>
+  </ul>
+
+  <footer>
+    <p>Songbrook is open source under the BSD 2-Clause license: <a href="https://github.com/gencaykut/songbrook">source code</a> · <a href="https://github.com/gencaykut/songbrook/releases">all releases and checksums</a> · <a href="https://github.com/gencaykut/songbrook/issues">report a problem</a>.</p>
+    <p>It is a fork of <a href="https://github.com/BryamContreras/BStream-Music">BStream Music</a> by Bryam Contreras.</p>
+    <p>Songbrook is not affiliated with YouTube or Google, and stores no media. You are responsible for following copyright law and the terms of the services you use.</p>
+  </footer>
+</main>
+<script>
+  // Point the buttons at the latest release's files; the static links above
+  // still work if GitHub's API is unreachable or rate-limited.
+  (async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/gencaykut/songbrook/releases/latest');
+      if (!response.ok) return;
+      const release = await response.json();
+      const megabytes = (bytes) => `${Math.round(bytes / 1048576)} MB`;
+      const assets = release.assets || [];
+      const pick = (test) => assets.find((asset) => test(asset.name));
+      const wire = (id, asset) => {
+        if (!asset) return;
+        document.getElementById(id).href = asset.browser_download_url;
+        document.getElementById(`${id}-size`).textContent = `${asset.name} · ${megabytes(asset.size)}`;
+      };
+      wire('dmg', pick((name) => name === 'Songbrook.dmg') || pick((name) => name.endsWith('.dmg')));
+      wire('ipa', pick((name) => name.endsWith('.ipa')));
+      wire('apk', pick((name) => name.endsWith('.apk')));
+      const version = (release.tag_name || '').replace(/^v/, '');
+      const date = release.published_at
+        ? new Date(release.published_at).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '';
+      document.getElementById('version').innerHTML =
+        `Version ${version}${date ? ` · ${date}` : ''} · <a href="${release.html_url}">release notes</a>`;
+    } catch (_) {
+      // Keep the static links.
+    }
+  })();
+</script>
+</body>
+</html>

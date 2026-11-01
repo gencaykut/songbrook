@@ -78,3 +78,4 @@ app.*.map.json
 
 # Local Claude Code notes (device identifiers)
 CLAUDE.local.md
+/.claude/launch.json
