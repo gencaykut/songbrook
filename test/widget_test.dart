@@ -6906,8 +6906,10 @@ void main() {
       'Interfaz en turco',
       'nivel estable, como en YouTube Music',
       'ahora encuentra playlists',
-      'las canciones terminan a tiempo',
-      'cuando YouTube cambia sus clientes',
+      'Songbrook Connect une tu iPhone y tu Mac',
+      'suenan en su versión de canción',
+      'La cola se abre sobre el reproductor',
+      'tus canciones más escuchadas',
     ]) {
       expect(find.textContaining(highlight), findsOneWidget, reason: highlight);
     }
