@@ -182,5 +182,6 @@ On macOS, two tests fail for an environmental reason: they compare `/var` with
 ## License
 
 BSD 2-Clause. See [LICENSE](LICENSE). Copyright for the original BStream Music
-code remains with Bryam Contreras. Third-party components are listed in
+code remains with Bryam Contreras; Songbrook's changes are copyright Aykut Genç
+under the same license. Third-party components are listed in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -167,7 +167,7 @@ Lisans kararı: BSD-2 kalıyor (upstream BSD-2; tek lisans, upstream'le iki yön
 
 1. **Widget düzeltmesini telefonda dene: tamamlandı (1 Kasım, iPhone, başarılı).** Android tarafı cihazda denenmedi; kurulumu kullanıcı söyleyince yap, teklif etme.
 2. **Repo adı `songbrook`: tamamlandı (1 Kasım).** GitHub'da yeniden adlandırıldı, `origin` ve koddaki adresler (`AppConstants.githubRepository`, testler, dokümanlar) güncellendi.
-3. **Telif satırı:** `LICENSE`'a Bryam Contreras'ın satırını koruyarak "Copyright (c) 2026, Aykut Genç" ekle; README'nin License bölümünü güncelle.
+3. **Telif satırı: tamamlandı (1 Kasım).** `LICENSE`'ta Bryam Contreras'ın satırının altında "Copyright (c) 2026, Aykut Genç"; README'nin License bölümü Songbrook değişikliklerinin telifini aynı lisansla belirtiyor.
 4. **LGPL bildirimleri:** `media_kit_libs_macos_audio`'nun paketlediği libmpv ve FFmpeg'in lisansını ve sürümünü paketin kendisinden doğrula (LGPL derleme olduğu varsayılıyor, doğrulanmadı); `THIRD_PARTY_NOTICES.md`'ye ve dmg'ye lisans metni + kaynak adresi ekle.
 5. **Android release imzası:** `~/.songbrook/songbrook-release.jks` (keytool, parolayı kullanıcı girer), `android/key.properties` git dışında; release APK; anahtarın SHA-256 parmak izini not et (Android doğrulama kaydına bağlanıyor). Anahtar yedeği kullanıcıda.
 6. **Sürüm paketleri:** Mac notarize dmg (`macos/package_dmg.sh`; `releases/latest/download/` için sürümsüz `Songbrook.dmg` kopyası da), iOS ipa (AltStore/Sideloadly), Android release APK. `AppStrings.releaseHighlights` ve CHANGELOG'u güncelle; sürüm değişirse beş yeri birlikte (bkz. Son durum).
