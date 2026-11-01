@@ -44,6 +44,16 @@ mkdir -p "$staging"
 # unchanged; renaming the bundle directory does not affect its signature.
 /usr/bin/ditto "$built_app" "$app"
 
+# The LGPL libmpv/FFmpeg frameworks must ship with their notices; keep them
+# inside the app (before signing) and next to it in the DMG.
+copy_licenses() {
+  mkdir -p "$1"
+  cp "$script_dir"/licenses/*.txt "$1/"
+  cp "$root/LICENSE" "$1/Songbrook-LICENSE.txt"
+}
+copy_licenses "$app/Contents/Resources/Licenses"
+copy_licenses "$staging/Licenses"
+
 bash "$script_dir/sign_release_bundle.sh" "$app" "$signing_identity"
 for arch in $(/usr/bin/lipo -archs "$app/Contents/MacOS/bstream_music"); do
   bash "$script_dir/verify_release_bundle.sh" "$app" "$arch" "$version"

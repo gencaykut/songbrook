@@ -15,6 +15,27 @@ Terms: <https://developers.google.com/cast/docs/terms>
 AndroidX MediaRouter is licensed under Apache-2.0:
 <https://android.googlesource.com/platform/frameworks/support/+/androidx-main/LICENSE.txt>
 
+## libmpv, FFmpeg and Mbed TLS (macOS)
+
+The macOS app plays audio through `media_kit` (MIT), whose
+`media_kit_libs_macos_audio` 1.1.4 package bundles prebuilt dynamic frameworks
+from libmpv-darwin-build v0.6.0 (`audio-default`):
+
+- mpv 0.36.0, built with `-Dgpl=false`: GNU LGPL 2.1 or later.
+  Source: <https://github.com/mpv-player/mpv/tree/v0.36.0>
+- FFmpeg 6.0 (avcodec, avfilter, avformat, avutil, swresample, swscale), built
+  with `--enable-version3` and without `--enable-gpl`/`--enable-nonfree`:
+  GNU LGPL 3 or later. Source: <https://ffmpeg.org/releases/ffmpeg-6.0.tar.xz>
+- Mbed TLS 3.4.1: Apache-2.0.
+  Source: <https://github.com/Mbed-TLS/mbedtls/tree/v3.4.1>
+
+Build scripts: <https://github.com/media-kit/libmpv-darwin-build/tree/v0.6.0>
+
+The license texts and these notes ([macos/licenses](macos/licenses)) ship in
+`Songbrook.app/Contents/Resources/Licenses` and in the DMG's `Licenses`
+folder. The frameworks stay dynamically loaded and replaceable, and the source
+archives are attached to each GitHub release.
+
 ## xml 6.6.1
 
 BStream Music uses the Dart `xml` package (MIT license) for bounded UPnP device
